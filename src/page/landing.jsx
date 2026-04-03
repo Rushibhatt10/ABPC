@@ -222,7 +222,7 @@ const LandingPage = () => {
           {/* Hamburger (Mobile/Tablet Only) */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className={`flex items-center gap-3 pr-2 pl-4 py-1.5 rounded-full shadow-sm transition-all duration-300 hover:scale-105 lg:hidden ${isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-black/5 text-black hover:bg-black/10"}`}
+            className={`flex items-center gap-3 pr-2 pl-4 py-1.5 rounded-full shadow-sm transition-all duration-300 hover:scale-105 lg:hidden ${menuOpen ? 'opacity-0 pointer-events-none' : ''} ${isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-black/5 text-black hover:bg-black/10"}`}
             aria-label="Toggle menu"
           >
             <span className="text-[10px] font-bold uppercase tracking-widest hidden sm:block">Menu</span>
