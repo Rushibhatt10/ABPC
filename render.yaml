@@ -2,11 +2,8 @@ services:
   - type: web
     name: abpc
     env: static
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     staticPublishPath: dist
-    envVars:
-      - key: NODE_VERSION
-        value: 20.12.0
     routes:
       - type: rewrite
         source: /*
