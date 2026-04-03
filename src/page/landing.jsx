@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Phone, Sun, Moon, ArrowRight, X, Mail, MapPin, Star, Globe, Navigation, Bookmark, Clock } from "lucide-react";
+import { ThemeContext } from "../context/ThemeContext";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
@@ -18,6 +19,10 @@ const HamburgerIcon = ({ open }) => (
 const LandingPage = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [formStatus, setFormStatus] = useState('idle'); // idle | loading | success | error
+  const [formError, setFormError] = useState(null);
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  const isDark = theme === 'dark';
 
   const lScroll = useRef(null);
   const heroRef = useRef(null);
@@ -25,8 +30,6 @@ const LandingPage = () => {
   const textRefs = useRef([]);
   const parallaxImages = useRef([]);
   const collectionRef = useRef(null);
-
-  const isDark = false; // Fixed to light theme
 
   // Lenis Smooth Scroll
   useEffect(() => {
@@ -92,14 +95,47 @@ const LandingPage = () => {
     gsap.to(e.currentTarget, { x: 0, y: 0, duration: 0.7, ease: "elastic.out(1, 0.3)" });
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
+    setFormStatus('loading');
+    setFormError(null);
     const form = e.target;
-    const name = form.name.value.trim();
+    const fullName = form.name.value.trim();
+    const nameParts = fullName.split(' ');
+    const firstName = nameParts[0] || fullName;
+    const lastName = nameParts.slice(1).join(' ') || '';
     const email = form.email.value.trim();
+    const phone = form.phone.value.trim();
     const message = form.message.value.trim();
-    const text = encodeURIComponent(`Hello AB Pest Control Team,\n\nName: ${name}\nEmail: ${email}\nMessage: ${message}\n\nI would like to request a quote.`);
-    window.open(`https://wa.me/919374488004?text=${text}`, "_blank");
+
+    const FORM_ID = 'edb96039-1c44-4d9c-b93a-a97c1fec8c6f';
+    const API_KEY = 'sk_ZWRiOTYwMzktMWM0NC00ZDljLWI5M2EtYTk3YzFmZWM4YzZm';
+
+    try {
+      const res = await fetch(`https://forminit.com/f/${FORM_ID}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-KEY': API_KEY,
+        },
+        body: JSON.stringify({
+          blocks: [
+            { type: 'sender', properties: { email, firstName, lastName } },
+            { type: 'text', name: 'phone', value: phone || 'Not provided' },
+            { type: 'text', name: 'message', value: message },
+          ],
+        }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Submission failed. Please try again.');
+      }
+      setFormStatus('success');
+      form.reset();
+    } catch (err) {
+      setFormStatus('error');
+      setFormError(err.message || 'Something went wrong. Please try again.');
+    }
   };
 
   const scrollTo = (id) => {
@@ -132,8 +168,8 @@ const LandingPage = () => {
   ];
 
   const stats = [
-    { value: "500+", label: "Commercial Clients", color: "text-current" },
-    { value: "36+", label: "Years Experience", color: "text-current" },
+    { value: "10,000+", label: "Commercial Clients", color: "text-current" },
+    { value: "50+", label: "Years Experience", color: "text-current" },
   ];
 
   return (
@@ -169,7 +205,18 @@ const LandingPage = () => {
           ))}
         </div>
 
-        {/* Right Controls */}
+        {/* Top Right Controls */}
+        <div className="flex items-center gap-3 md:gap-5 z-50 absolute right-4 top-4">
+          <button
+            onClick={toggleTheme}
+            className={`p-2.5 rounded-full transition-all duration-300 hover:rotate-90 hover:scale-110 shadow-sm ${isDark ? "bg-white/10 text-white" : "bg-black/5 text-black"}`}
+            aria-label="Toggle theme"
+          >
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+        </div>
+
+        {/* Right Controls for mobile menu */}
         <div className="flex items-center gap-3 md:gap-5 z-50 relative">
           
           {/* Hamburger (Mobile/Tablet Only) */}
@@ -250,7 +297,7 @@ const LandingPage = () => {
           style={{ backgroundImage: "radial-gradient(circle at 20% 50%, #e85535 0%, transparent 60%), radial-gradient(circle at 80% 30%, #8db34b 0%, transparent 60%)" }} />
 
         <div className="relative z-10 max-w-5xl mx-auto text-center flex flex-col items-center gap-6 md:gap-10">
-          <span className="text-xs uppercase tracking-[0.35em] opacity-50 font-medium">Est. 1990 · Surat, Gujarat</span>
+          <span className="text-xs uppercase tracking-[0.35em] opacity-50 font-medium">Est. 1976 · Surat, Gujarat</span>
           <h1
             ref={el => el && !titleRefs.current.includes(el) && titleRefs.current.push(el)}
             className="font-serif uppercase leading-tight text-[clamp(2rem,8vw,5rem)] max-w-4xl"
@@ -326,13 +373,13 @@ const LandingPage = () => {
                 className="flex flex-col gap-4 text-base leading-relaxed opacity-85 mb-8 text-left w-full"
               >
                 <p>
-                  <strong>A.B. Pest Control Insecticide Services</strong> is a trusted pest management company based in Surat, serving clients across Gujarat since <strong>1990</strong>.
+                  <strong>A.B. Pest Control Insecticide Services</strong> is a trusted pest management company based in Surat, serving clients across India since <strong>1976</strong>.
                 </p>
                 <p>
                   We specialize in effective treatments for <strong>termites, bed bugs, cockroaches, and general pest control</strong>, delivering long-term protection—not just temporary solutions.
                 </p>
                 <p>
-                  Our approach is <strong>science-driven</strong>, focusing on pest behavior and root causes. With a <strong>trained, certified team</strong> and eco-safe methods under <strong>Integrated Pest Management (IPM)</strong>, we ensure safety, compliance, and complete customer satisfaction.
+                  Our approach is <strong>science-driven</strong>, focusing on pest behavior and root causes. With a <strong>trained team</strong> and eco-safe methods under <strong>Integrated Pest Management (IPM)</strong>, we ensure safety, compliance, and complete customer satisfaction.
                 </p>
                 
                 <div className={`mt-4 p-6 rounded-2xl border ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}>
@@ -386,6 +433,14 @@ const LandingPage = () => {
             Get In Touch
           </h2>
 
+          {formStatus === 'success' ? (
+            <div className={`w-full flex flex-col items-center justify-center gap-4 py-16 px-8 rounded-3xl border ${isDark ? 'border-green-500/30 bg-green-500/10' : 'border-green-500/30 bg-green-50'}`}>
+              <div className="text-5xl">✅</div>
+              <h3 className="text-2xl font-serif uppercase tracking-wide text-green-600">Message Sent!</h3>
+              <p className="text-sm opacity-70 text-center max-w-sm">Thank you for reaching out. Our team at A.B. Pest Control will get back to you shortly at <strong>abpestcontrol@gmail.com</strong>.</p>
+              <button onClick={() => setFormStatus('idle')} className="mt-2 text-xs uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity underline underline-offset-4">Send another message</button>
+            </div>
+          ) : (
           <form onSubmit={handleFormSubmit} className="w-full flex flex-col gap-5 md:gap-7 text-left">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-7">
               <div>
@@ -413,18 +468,28 @@ const LandingPage = () => {
                 className="w-full bg-transparent border-b-2 border-current/20 focus:border-current py-3 outline-none placeholder:opacity-40 text-base transition-colors duration-300 resize-none"
               />
             </div>
+            {formStatus === 'error' && (
+              <div className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                ⚠️ {formError}
+              </div>
+            )}
             <div className="flex justify-center pt-4">
               <button
                 type="submit"
+                disabled={formStatus === 'loading'}
                 onMouseMove={handleMagneticMove}
                 onMouseLeave={handleMagneticLeave}
-                className={`group flex items-center gap-3 px-10 py-4 rounded-full font-semibold text-sm uppercase tracking-widest transition-all duration-300 will-change-transform ${isDark ? "bg-white text-black hover:bg-gray-100" : "bg-[#0c0c0c] text-white hover:bg-[#333]"}`}
+                className={`group flex items-center gap-3 px-10 py-4 rounded-full font-semibold text-sm uppercase tracking-widest transition-all duration-300 will-change-transform disabled:opacity-60 disabled:cursor-not-allowed ${isDark ? "bg-white text-black hover:bg-gray-100" : "bg-[#0c0c0c] text-white hover:bg-[#333]"}`}
               >
-                Send
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                {formStatus === 'loading' ? (
+                  <><span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Sending...</>
+                ) : (
+                  <>Send <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" /></>
+                )}
               </button>
             </div>
           </form>
+          )}
 
           {/* Contact Info */}
           <div className="mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 w-full text-center">

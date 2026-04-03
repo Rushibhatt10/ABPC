@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ThemeContext } from "../context/ThemeContext";
 import gsap from "gsap";
 
 const insects = [
@@ -52,7 +53,8 @@ const insects = [
 ];
 
 export default function InsectsPage() {
-  const isDark = false; // Fixed to light theme
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === 'dark';
   const [activeSlide, setActiveSlide] = useState(0);
   const containerRef = useRef(null);
   const [isScrolling, setIsScrolling] = useState(false);
