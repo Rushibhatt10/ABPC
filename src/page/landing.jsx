@@ -205,36 +205,29 @@ const LandingPage = () => {
           ))}
         </div>
 
-        {/* Top Right Controls */}
-        <div className="flex items-center gap-3 md:gap-5 z-50 absolute right-4 top-4">
+        {/* Right Controls */}
+        <div className="flex items-center gap-3 md:gap-4 z-50 relative">
           <button
             onClick={toggleTheme}
-            className={`p-2.5 rounded-full transition-all duration-300 hover:rotate-90 hover:scale-110 shadow-sm ${isDark ? "bg-white/10 text-white" : "bg-black/5 text-black"}`}
+            className={`p-2.5 rounded-full shadow-sm transition-all duration-300 hover:rotate-90 hover:scale-110 ${isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-black/5 text-black hover:bg-black/10"}`}
             aria-label="Toggle theme"
           >
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-        </div>
 
-        {/* Right Controls for mobile menu */}
-        <div className="flex items-center gap-3 md:gap-5 z-50 relative">
-          
           {/* Hamburger (Mobile/Tablet Only) */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className={`flex items-center gap-3 pr-2 pl-4 py-1.5 rounded-full shadow-sm transition-all duration-300 hover:scale-105 lg:hidden ${menuOpen ? 'opacity-0 pointer-events-none' : ''} ${isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-black/5 text-black hover:bg-black/10"}`}
+            className={`p-2.5 rounded-full shadow-sm transition-all duration-300 hover:scale-105 lg:hidden ${menuOpen ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"} ${isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-black/5 text-black hover:bg-black/10"}`}
             aria-label="Toggle menu"
           >
-            <span className="text-[10px] font-bold uppercase tracking-widest hidden sm:block">Menu</span>
-            <div className={`p-1.5 flex items-center justify-center rounded-full ${isDark ? "bg-white/10" : "bg-black/10"}`}>
-               <HamburgerIcon open={menuOpen} />
-            </div>
+            <HamburgerIcon open={menuOpen} />
           </button>
         </div>
 
         {/* Modern Fullscreen Overlay Menu */}
         <div
-          className={`fixed inset-0 z-40 flex transition-all duration-500 ${menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} ${isDark ? "bg-[#0a0a0a]" : "bg-[#faf9f6]"}`}
+          className={`fixed inset-0 z-60 flex transition-all duration-500 ${menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} ${isDark ? "bg-[#0a0a0a]/80 backdrop-blur-xl" : "bg-[#faf9f6]/90 backdrop-blur-xl"}`}
           onClick={(e) => { if (e.currentTarget === e.target) setMenuOpen(false); }}
         >
           {/* Left decorative panel */}
@@ -254,38 +247,40 @@ const LandingPage = () => {
           </div>
 
           {/* Main nav links */}
-          <div className="flex-1 flex flex-col justify-center px-8 md:px-16 lg:px-24 gap-1">
-            {navLinks.map((link, i) => (
-              <button
-                key={link.label}
-                onClick={() => {
-                  if (link.url) { navigate(link.url); setMenuOpen(false); }
-                  else scrollTo(link.id);
-                }}
-                className={`group flex items-center justify-between w-full py-4 md:py-5 border-b text-left transition-all duration-300
-                  ${ isDark ? "border-white/8 hover:border-white/30" : "border-black/6 hover:border-black/20"}`}
-                style={{ transitionDelay: menuOpen ? `${i * 50 + 80}ms` : "0ms",
-                  transform: menuOpen ? "translateX(0)" : "translateX(-20px)",
-                  opacity: menuOpen ? 1 : 0 }}
-              >
-                <div className="flex items-center gap-4 md:gap-6">
-                  <span className={`text-[10px] font-mono opacity-30 w-5`}>0{i + 1}</span>
-                  <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif uppercase tracking-tight opacity-80 group-hover:opacity-100 transition-opacity">
-                    {link.label}
-                  </span>
-                </div>
-                <span className={`text-xl opacity-0 group-hover:opacity-40 transition-all duration-300 -translate-x-2 group-hover:translate-x-0`}>→</span>
-              </button>
-            ))}
+          <div className="flex-1 w-full h-dvh overflow-y-auto flex flex-col justify-start md:justify-center px-6 md:px-16 lg:px-24 pt-32 md:pt-0 pb-12">
+            <div className="flex flex-col gap-1 w-full mt-4 md:mt-0">
+              {navLinks.map((link, i) => (
+                <button
+                  key={link.label}
+                  onClick={() => {
+                    if (link.url) { navigate(link.url); setMenuOpen(false); }
+                    else scrollTo(link.id);
+                  }}
+                  className={`group flex items-center justify-between w-full py-4 md:py-5 border-b text-left transition-all duration-300
+                    ${ isDark ? "border-white/8 hover:border-white/30" : "border-black/6 hover:border-black/20"}`}
+                  style={{ transitionDelay: menuOpen ? `${i * 50 + 80}ms` : "0ms",
+                    transform: menuOpen ? "translateX(0)" : "translateX(-20px)",
+                    opacity: menuOpen ? 1 : 0 }}
+                >
+                  <div className="flex items-center gap-4 md:gap-6">
+                    <span className={`text-[10px] font-mono opacity-30 w-5`}>0{i + 1}</span>
+                    <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif uppercase tracking-tight opacity-80 group-hover:opacity-100 transition-opacity">
+                      {link.label}
+                    </span>
+                  </div>
+                  <span className={`text-xl opacity-0 group-hover:opacity-40 transition-all duration-300 -translate-x-2 group-hover:translate-x-0`}>→</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Close hint */}
+          {/* Toggle Button inside Menu */}
           <button
-            onClick={() => setMenuOpen(false)}
-            className={`absolute top-5 right-5 md:top-7 md:right-7 text-xs uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity flex items-center gap-2`}
+            onClick={() => setMenuOpen(!menuOpen)}
+            className={`absolute top-3 right-4 md:top-4 md:right-8 lg:right-12 p-2.5 rounded-full shadow-sm transition-all duration-300 hover:scale-105 z-50 ${isDark ? "bg-[#222] text-white border border-white/10" : "bg-white text-black border border-black/10"}`}
+            aria-label="Toggle menu"
           >
-            <X size={16} />
-            Close
+            <HamburgerIcon open={menuOpen} />
           </button>
         </div>
       </nav>

@@ -50,6 +50,15 @@ const insects = [
     desc: "Carriers of disease that chew wiring and contaminate food.",
     signs: ["Droppings leads along walls", "Gnaw marks on food", "Night-time scratching"],
   },
+  {
+    emoji: "🪵",
+title: "Wood Borers",
+image: "/wb.jpg",
+accent: "rgba(139, 94, 60, 0.15)", // Warm wood brown tint
+subtitle: "Beetles · Larvae",
+desc: "Silent destroyers that tunnel through wood, weakening furniture and structures from within.",
+signs: ["Tiny round exit holes in wood", "Fine powder (frass) near surfaces", "Hollow or weakened wooden structures"],
+  },
 ];
 
 export default function InsectsPage() {
