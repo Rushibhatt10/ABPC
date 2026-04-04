@@ -5,6 +5,8 @@ import { ThemeContext } from "../context/ThemeContext";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import Logo from "../components/Logo.jsx";
+import PremiumServices from "../components/PremiumServices.jsx";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -151,21 +153,6 @@ const LandingPage = () => {
     { label: "Know Your Insects", url: "/insects" },
   ];
 
-  const services = [
-    { num: "01", title: "Commercial Properties", desc: "Comprehensive pest management for offices, warehouses, and industrial facilities.", color: "text-blue-500", bg: "bg-blue-100", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /> },
-    { num: "02", title: "Food & Hospitality", desc: "Discreet treatments for restaurants, hotels, and food processing facilities.", color: "text-green-500", bg: "bg-green-100", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" /> },
-    { num: "03", title: "Prevention Programs", desc: "Ongoing monitoring and maintenance to prevent pest infestations year-round.", color: "text-purple-500", bg: "bg-purple-100", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> },
-    { num: "04", title: "Emergency Response", desc: "24/7 rapid response for urgent pest control situations, any time of day.", color: "text-orange-500", bg: "bg-orange-100", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /> },
-  ];
-
-  const insects = [
-    { title: "Cockroaches", emoji: "🪳", desc: "Fast breeders and food contamination risks." },
-    { title: "Termites", emoji: "🐜", desc: "Silent structural damage near water points." },
-    { title: "Rodents", emoji: "🐭", desc: "Health risks from droppings and wiring damage." },
-    { title: "Bed Bugs", emoji: "🐛", desc: "Expert hiders that feed on blood at night." },
-    { title: "Mosquitoes", emoji: "🦟", desc: "Carriers of disease and dangerous vectors." },
-    { title: "Spiders", emoji: "🕷️", desc: "Often harmless predators but unsettling to many." },
-  ];
 
   const stats = [
     { value: "10,000+", label: "Commercial Clients", color: "text-current" },
@@ -176,17 +163,13 @@ const LandingPage = () => {
     <div className={`min-h-screen w-full overflow-x-hidden transition-colors duration-700 ${isDark ? "bg-[#0c0c0c] text-[#f5f5f0]" : "bg-[#faf9f6] text-[#0c0c0c]"}`}>
 
       {/* ===== NAV ===== */}
-      <nav className={`fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-8 lg:px-12 py-3 md:py-4 transition-colors duration-700 ${isDark ? "bg-[#0c0c0c]/80 backdrop-blur-xl border-b border-white/5" : "bg-[#faf9f6]/80 backdrop-blur-xl border-b border-black/5"}`}>
+      <nav className={`fixed top-0 w-full z-50 flex justify-between items-center px-4 sm:px-6 md:px-8 lg:px-12 py-3 md:py-4 transition-colors duration-700 ${isDark ? "bg-[#0c0c0c]/80 backdrop-blur-xl border-b border-white/5" : "bg-[#faf9f6]/80 backdrop-blur-xl border-b border-black/5"}`}>
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 z-50 relative hover:scale-105 transition-transform duration-300 origin-left">
-          <div className={`p-1.5 rounded-full shadow-sm ${isDark ? "bg-white/5 shadow-white/5" : "bg-black/5 shadow-black/5"}`}>
-            <img src="/cropped_circle_image.png" alt="AB Pest Control Logo" className="w-8 h-8 md:w-10 md:h-10 object-contain" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xl md:text-2xl font-bebas tracking-tight uppercase leading-none" style={{ color: "#7A9A3A" }}>A.B. PEST CONTROL</span>
-            <span className="text-[7px] md:text-[9px] font-montserrat font-bold uppercase tracking-[0.6em] leading-none" style={{ color: "#F13A1D" }}>INSECTICIDE SERVICES</span>
-          </div>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/" className="z-50 relative hover:scale-105 transition-transform duration-300 origin-left">
+            <Logo variant="horizontal" className="max-w-[170px] sm:max-w-[220px]" />
+          </Link>
+        </div>
         
         {/* Desktop Nav Links */}
         <div className="hidden lg:flex items-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -230,14 +213,23 @@ const LandingPage = () => {
           className={`fixed inset-0 z-60 flex transition-all duration-500 ${menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} ${isDark ? "bg-[#0a0a0a]/80 backdrop-blur-xl" : "bg-[#faf9f6]/90 backdrop-blur-xl"}`}
           onClick={(e) => { if (e.currentTarget === e.target) setMenuOpen(false); }}
         >
+          <div className="absolute top-4 right-4 lg:hidden z-50">
+            <button
+              onClick={() => setMenuOpen(false)}
+              className={`p-3 rounded-full shadow-sm transition-all duration-300 ${isDark ? "bg-white/10 text-white hover:bg-white/20" : "bg-black/5 text-black hover:bg-black/10"}`}
+              aria-label="Close menu"
+            >
+              <X size={22} />
+            </button>
+          </div>
           {/* Left decorative panel */}
           <div
-            className={`hidden md:flex flex-col justify-between w-64 lg:w-80 shrink-0 p-10 border-r transition-transform duration-500 ${menuOpen ? "translate-x-0" : "-translate-x-full"} ${isDark ? "border-white/10 bg-[#111]" : "border-black/8 bg-white"}`}
+            className={`hidden md:flex flex-col justify-between w-64 lg:w-80 shrink-0 p-8 md:p-10 border-r transition-transform duration-500 ${menuOpen ? "translate-x-0" : "-translate-x-full"} ${isDark ? "border-white/10 bg-[#111]" : "border-black/8 bg-white"}`}
           >
-            <div>
-              <img src="/cropped_circle_image.png" alt="logo" className="w-12 h-12 object-contain mb-4" />
-              <p className={`text-xs uppercase tracking-[0.25em] opacity-40 leading-relaxed`}>AB Pest Control<br />Est. 1990 · Surat, Gujarat</p>
+            <div className="mb-4">
+              <Logo variant="horizontal" className="scale-90 origin-left" />
             </div>
+            <p className={`text-xs uppercase tracking-[0.25em] opacity-40 leading-relaxed`}>AB Pest Control<br />Est. 1990 · Surat, Gujarat</p>
             <div className="flex flex-col gap-3">
               <p className={`text-[10px] uppercase tracking-[0.25em] opacity-30 mb-1`}>Contact</p>
               <a href="tel:+919374488004" className="text-sm opacity-50 hover:opacity-100 transition-opacity">+91 93744 88004</a>
@@ -309,34 +301,7 @@ const LandingPage = () => {
       </section>
 
       {/* ===== SERVICES ===== */}
-      <section id="services" ref={collectionRef} className="w-full py-16 md:py-28 px-5 md:px-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-12 md:mb-20 gap-4 pb-6 border-b border-current/20">
-            <h2
-              ref={el => el && !titleRefs.current.includes(el) && titleRefs.current.push(el)}
-              className="text-2xl md:text-4xl font-serif uppercase tracking-widest"
-            >
-              Our Services
-            </h2>
-            <span className="text-sm tracking-[0.2em] opacity-50">01 — 04</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {services.map((s) => (
-              <div key={s.num} className={`group flex flex-col gap-5 p-6 md:p-8 rounded-2xl border transition-all duration-500 cursor-pointer ${isDark ? "border-white/10 hover:border-white/30 hover:bg-white/5" : "border-black/8 hover:border-black/20 hover:bg-black/3"}`}>
-                <div className={`w-14 h-14 ${s.bg} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shrink-0`}>
-                  <svg className={`w-7 h-7 ${s.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">{s.icon}</svg>
-                </div>
-                <div>
-                  <span className="text-xs uppercase tracking-widest opacity-40 mb-2 block">{s.num} /</span>
-                  <h3 className="text-lg md:text-xl font-serif uppercase tracking-wide mb-3">{s.title}</h3>
-                  <p className="text-sm md:text-base opacity-65 leading-relaxed">{s.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PremiumServices />
 
       {/* ===== ABOUT ===== */}
       <section id="about" className="w-full py-16 md:py-28 px-5 md:px-12">
@@ -618,12 +583,8 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-16 mb-10 md:mb-14">
             {/* Brand */}
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <img src="/cropped_circle_image.png" alt="AB Pest Control" className="w-10 h-10 object-contain" />
-                <div className="flex flex-col">
-                  <span className="text-lg md:text-xl font-bebas tracking-tight uppercase leading-none" style={{ color: "#7A9A3A" }}>A.B. PEST CONTROL</span>
-                  <span className="text-[6px] md:text-[8px] font-montserrat font-bold uppercase tracking-[0.4em] leading-none" style={{ color: "#F13A1D" }}>INSECTICIDE SERVICES</span>
-                </div>
+              <div className="mb-4">
+                <Logo variant="horizontal" />
               </div>
               <p className="text-sm text-white/60 leading-relaxed max-w-xs">
                 Trusted pest management across Surat & Gujarat since 1990. Licensed, insured, and 100% eco-responsible.
