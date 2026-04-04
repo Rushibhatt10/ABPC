@@ -199,7 +199,7 @@ const LandingPage = () => {
         {/* Logo */}
         <div className="flex items-center gap-3">
           <Link to="/" className="z-50 relative hover:scale-105 transition-transform duration-300 origin-left">
-            <Logo variant="horizontal" className="max-w-[170px] sm:max-w-[220px]" />
+            <Logo variant="horizontal" className="w-[190px] sm:w-[220px]" />
           </Link>
         </div>
         
