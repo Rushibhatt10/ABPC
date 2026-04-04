@@ -1,4 +1,3 @@
-import React from 'react';
 
 export default function Logo({ className = "", variant = "stacked" }) {
   const isHorizontal = variant === "horizontal";

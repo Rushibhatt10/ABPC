@@ -1,19 +1,11 @@
-import React, { createContext, useEffect, useState } from 'react';
-
-export const ThemeContext = createContext({
-  theme: 'light',
-  toggleTheme: () => {},
-});
+import React, { useEffect, useState } from 'react';
+import { ThemeContext } from './theme-context';
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('light');
-
-  useEffect(() => {
+  const [theme, setTheme] = useState(() => {
     const stored = localStorage.getItem('abpc_theme');
-    if (stored === 'dark' || stored === 'light') {
-      setTheme(stored);
-    }
-  }, []);
+    return stored === 'dark' || stored === 'light' ? stored : 'light';
+  });
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');

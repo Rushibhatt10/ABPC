@@ -1,6 +1,7 @@
-import React, { useRef, useState, useEffect, useContext, useCallback } from 'react';
+import { useRef, useState, useEffect, useContext, useCallback } from 'react';
+
 import { CheckCircle2 } from 'lucide-react';
-import { ThemeContext } from '../context/ThemeContext';
+import { ThemeContext } from '../context/theme-context';
 
 const premiumServicesData = [
   {
@@ -74,29 +75,10 @@ const premiumServicesData = [
 
 const PremiumServices = () => {
   const scrollRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const videoRefs = useRef([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const { theme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
-
-  const onMouseDown = (e) => {
-    setIsDragging(true);
-    setStartX(e.pageX - scrollRef.current.offsetLeft);
-    setScrollLeft(scrollRef.current.scrollLeft);
-  };
-
-  const onMouseLeave = () => setIsDragging(false);
-  const onMouseUp = () => setIsDragging(false);
-
-  const onMouseMove = (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX) * 2;
-    scrollRef.current.scrollLeft = scrollLeft - walk;
-  };
 
   const handleScroll = useCallback(() => {
     if (!scrollRef.current) return;
@@ -116,6 +98,20 @@ const PremiumServices = () => {
     el.addEventListener('scroll', handleScroll, { passive: true });
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
+
+  useEffect(() => {
+    videoRefs.current.forEach((video, idx) => {
+      if (!video) return;
+      if (idx === activeIndex) {
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {});
+        }
+      } else {
+        video.pause();
+      }
+    });
+  }, [activeIndex]);
 
   return (
     <section
@@ -173,14 +169,8 @@ const PremiumServices = () => {
         <style dangerouslySetInnerHTML={{ __html: '.ps-track::-webkit-scrollbar { display: none; }' }} />
         <div
           ref={scrollRef}
-          onMouseDown={onMouseDown}
-          onMouseLeave={onMouseLeave}
-          onMouseUp={onMouseUp}
-          onMouseMove={onMouseMove}
-          className={`ps-track flex gap-4 sm:gap-5 md:gap-7 overflow-x-auto snap-x snap-mandatory pb-6 md:pb-10 pt-1 md:pt-2 pr-2 sm:pr-0 select-none ${
-            isDragging ? 'cursor-grabbing snap-none' : 'cursor-grab'
-          }`}
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', touchAction: 'pan-x' }}
+          className="ps-track flex gap-4 sm:gap-5 md:gap-7 overflow-x-auto snap-x snap-mandatory pb-6 md:pb-10 pt-1 md:pt-2 pr-2 sm:pr-0 select-none overscroll-x-contain"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
         >
           {premiumServicesData.map((service, idx) => {
             const isActive = activeIndex === idx;
@@ -193,9 +183,19 @@ const PremiumServices = () => {
                     : 'bg-[#ffffff] shadow-[0_20px_60px_rgba(0,0,0,0.08)]'
                 } ${isActive ? 'ring-1 ring-[#95B15F]/30' : ''}`}
               >
-                <div className="w-full md:w-[48%] aspect-[5/4] sm:aspect-[4/3] md:aspect-auto md:h-auto relative overflow-hidden shrink-0">
+                <div className="w-full md:w-[48%] aspect-5/4 sm:aspect-4/3 md:aspect-auto md:h-auto relative overflow-hidden shrink-0">
                   {service.video ? (
-                    <video src={service.video} autoPlay muted loop playsInline className="w-full h-full object-cover pointer-events-none" />
+                    <video
+                      ref={(el) => {
+                        videoRefs.current[idx] = el;
+                      }}
+                      src={service.video}
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                      className="w-full h-full object-cover pointer-events-none"
+                    />
                   ) : (
                     <img
                       src={service.image}

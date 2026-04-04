@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Phone, Sun, Moon, ArrowRight, X, Mail, MapPin, Star, Globe, Navigation, Bookmark, Clock } from "lucide-react";
-import { ThemeContext } from "../context/ThemeContext";
+import { Phone, Sun, Moon, ArrowRight, X, Mail, MapPin, Star, Navigation, Bookmark, Clock } from "lucide-react";
+import { ThemeContext } from "../context/theme-context";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
@@ -21,8 +21,8 @@ const HamburgerIcon = ({ open }) => (
 const LandingPage = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [formStatus, setFormStatus] = useState('idle'); // idle | loading | success | error
-  const [formError, setFormError] = useState(null);
+  const [showAnkitPopup, setShowAnkitPopup] = useState(false);
+
   const { theme, toggleTheme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
 
@@ -31,7 +31,6 @@ const LandingPage = () => {
   const titleRefs = useRef([]);
   const textRefs = useRef([]);
   const parallaxImages = useRef([]);
-  const collectionRef = useRef(null);
 
   // Lenis Smooth Scroll
   useEffect(() => {
@@ -51,6 +50,18 @@ const LandingPage = () => {
       cancelAnimationFrame(rafId);
       lenis.destroy();
     };
+  }, []);
+
+  useEffect(() => {
+    try {
+      const hasSeenPopup = localStorage.getItem('abpc_ankit_popup_seen');
+      if (hasSeenPopup === '1') return;
+
+      const timer = setTimeout(() => setShowAnkitPopup(true), 1200);
+      return () => clearTimeout(timer);
+    } catch {
+      setShowAnkitPopup(true);
+    }
   }, []);
 
   // GSAP Animations
@@ -97,48 +108,7 @@ const LandingPage = () => {
     gsap.to(e.currentTarget, { x: 0, y: 0, duration: 0.7, ease: "elastic.out(1, 0.3)" });
   };
 
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    setFormStatus('loading');
-    setFormError(null);
-    const form = e.target;
-    const fullName = form.name.value.trim();
-    const nameParts = fullName.split(' ');
-    const firstName = nameParts[0] || fullName;
-    const lastName = nameParts.slice(1).join(' ') || '';
-    const email = form.email.value.trim();
-    const phone = form.phone.value.trim();
-    const message = form.message.value.trim();
 
-    const FORM_ID = 'edb96039-1c44-4d9c-b93a-a97c1fec8c6f';
-    const API_KEY = 'sk_ZWRiOTYwMzktMWM0NC00ZDljLWI5M2EtYTk3YzFmZWM4YzZm';
-
-    try {
-      const res = await fetch(`https://forminit.com/f/${FORM_ID}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': API_KEY,
-        },
-        body: JSON.stringify({
-          blocks: [
-            { type: 'sender', properties: { email, firstName, lastName } },
-            { type: 'text', name: 'phone', value: phone || 'Not provided' },
-            { type: 'text', name: 'message', value: message },
-          ],
-        }),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || 'Submission failed. Please try again.');
-      }
-      setFormStatus('success');
-      form.reset();
-    } catch (err) {
-      setFormStatus('error');
-      setFormError(err.message || 'Something went wrong. Please try again.');
-    }
-  };
 
   const scrollTo = (id) => {
     const el = document.getElementById(id);
@@ -159,8 +129,70 @@ const LandingPage = () => {
     { value: "50+", label: "Years Experience", color: "text-current" },
   ];
 
+  const dismissAnkitPopup = () => {
+    setShowAnkitPopup(false);
+    try {
+      localStorage.setItem('abpc_ankit_popup_seen', '1');
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  const openAnkitVideo = () => {
+    dismissAnkitPopup();
+    navigate('/insects');
+  };
+
   return (
     <div className={`min-h-screen w-full overflow-x-hidden transition-colors duration-700 ${isDark ? "bg-[#0c0c0c] text-[#f5f5f0]" : "bg-[#faf9f6] text-[#0c0c0c]"}`}>
+      {showAnkitPopup && (
+        <div
+          className="fixed inset-0 z-80 flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm"
+          onClick={dismissAnkitPopup}
+        >
+          <div
+            className={`w-full max-w-md rounded-3xl border shadow-2xl p-5 sm:p-6 ${isDark ? "bg-[#101010] border-white/10 text-white" : "bg-white border-black/10 text-black"}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.26em] opacity-50">Message From</p>
+                <h3 className="text-xl sm:text-2xl font-serif mt-1">Co-founder Ankit Bhatt</h3>
+              </div>
+              <button
+                type="button"
+                onClick={dismissAnkitPopup}
+                className={`p-2 rounded-full transition-colors ${isDark ? "bg-white/10 hover:bg-white hover:text-black" : "bg-black/5 hover:bg-black hover:text-white"}`}
+                aria-label="Close popup"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <p className="mt-3 text-sm sm:text-base leading-relaxed opacity-80">
+              Learn directly from Ankit Bhatt about common insects, warning signs, and prevention tips.
+            </p>
+
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={openAnkitVideo}
+                className={`flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-[11px] uppercase tracking-[0.2em] font-bold transition-all ${isDark ? "bg-white text-black hover:bg-white/85" : "bg-black text-white hover:bg-black/85"}`}
+              >
+                Watch Message
+                <ArrowRight size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={dismissAnkitPopup}
+                className={`px-4 py-2.5 rounded-full text-[11px] uppercase tracking-[0.2em] font-bold border transition-all ${isDark ? "border-white/20 bg-white/5 hover:bg-white/12" : "border-black/15 bg-black/5 hover:bg-black/10"}`}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ===== NAV ===== */}
       <nav className={`fixed top-0 w-full z-50 flex justify-between items-center px-4 sm:px-6 md:px-8 lg:px-12 py-3 md:py-4 transition-colors duration-700 ${isDark ? "bg-[#0c0c0c]/80 backdrop-blur-xl border-b border-white/5" : "bg-[#faf9f6]/80 backdrop-blur-xl border-b border-black/5"}`}>
@@ -229,7 +261,7 @@ const LandingPage = () => {
             <div className="mb-4">
               <Logo variant="horizontal" className="scale-90 origin-left" />
             </div>
-            <p className={`text-xs uppercase tracking-[0.25em] opacity-40 leading-relaxed`}>AB Pest Control<br />Est. 1990 · Surat, Gujarat</p>
+            <p className={`text-xs uppercase tracking-[0.25em] opacity-40 leading-relaxed`}>AB Pest Control<br />Est. 1990 Â· Surat, Gujarat</p>
             <div className="flex flex-col gap-3">
               <p className={`text-[10px] uppercase tracking-[0.25em] opacity-30 mb-1`}>Contact</p>
               <a href="tel:+919374488004" className="text-sm opacity-50 hover:opacity-100 transition-opacity">+91 93744 88004</a>
@@ -260,7 +292,7 @@ const LandingPage = () => {
                       {link.label}
                     </span>
                   </div>
-                  <span className={`text-xl opacity-0 group-hover:opacity-40 transition-all duration-300 -translate-x-2 group-hover:translate-x-0`}>→</span>
+                  <span className={`text-xl opacity-0 group-hover:opacity-40 transition-all duration-300 -translate-x-2 group-hover:translate-x-0`}>â†’</span>
                 </button>
               ))}
             </div>
@@ -284,7 +316,7 @@ const LandingPage = () => {
           style={{ backgroundImage: "radial-gradient(circle at 20% 50%, #e85535 0%, transparent 60%), radial-gradient(circle at 80% 30%, #8db34b 0%, transparent 60%)" }} />
 
         <div className="relative z-10 max-w-5xl mx-auto text-center flex flex-col items-center gap-6 md:gap-10">
-          <span className="text-xs uppercase tracking-[0.35em] opacity-50 font-medium">Est. 1976 · Surat, Gujarat</span>
+          <span className="text-xs uppercase tracking-[0.35em] opacity-50 font-medium">Est. 1976 Â· Surat, Gujarat</span>
           <h1
             ref={el => el && !titleRefs.current.includes(el) && titleRefs.current.push(el)}
             className="font-serif uppercase leading-tight text-[clamp(2rem,8vw,5rem)] max-w-4xl"
@@ -295,7 +327,7 @@ const LandingPage = () => {
             ref={el => el && !textRefs.current.includes(el) && textRefs.current.push(el)}
             className="text-base md:text-xl font-light opacity-70 leading-relaxed max-w-2xl"
           >
-            Protect your home and business with professional, eco-friendly pest control services tailored for every space — from kitchens to warehouses.
+            Protect your home and business with professional, eco-friendly pest control services tailored for every space â€” from kitchens to warehouses.
           </p>
         </div>
       </section>
@@ -336,7 +368,7 @@ const LandingPage = () => {
                   <strong>A.B. Pest Control Insecticide Services</strong> is a trusted pest management company based in Surat, serving clients across India since <strong>1976</strong>.
                 </p>
                 <p>
-                  We specialize in effective treatments for <strong>termites, bed bugs, cockroaches, and general pest control</strong>, delivering long-term protection—not just temporary solutions.
+                  We specialize in effective treatments for <strong>termites, bed bugs, cockroaches, and general pest control</strong>, delivering long-term protectionâ€”not just temporary solutions.
                 </p>
                 <p>
                   Our approach is <strong>science-driven</strong>, focusing on pest behavior and root causes. With a <strong>trained team</strong> and eco-safe methods under <strong>Integrated Pest Management (IPM)</strong>, we ensure safety, compliance, and complete customer satisfaction.
@@ -393,19 +425,15 @@ const LandingPage = () => {
             Get In Touch
           </h2>
 
-          {formStatus === 'success' ? (
-            <div className={`w-full flex flex-col items-center justify-center gap-4 py-16 px-8 rounded-3xl border ${isDark ? 'border-green-500/30 bg-green-500/10' : 'border-green-500/30 bg-green-50'}`}>
-              <div className="text-5xl">✅</div>
-              <h3 className="text-2xl font-serif uppercase tracking-wide text-green-600">Message Sent!</h3>
-              <p className="text-sm opacity-70 text-center max-w-sm">Thank you for reaching out. Our team at A.B. Pest Control will get back to you shortly at <strong>abpestcontrol@gmail.com</strong>.</p>
-              <button onClick={() => setFormStatus('idle')} className="mt-2 text-xs uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity underline underline-offset-4">Send another message</button>
-            </div>
-          ) : (
-          <form onSubmit={handleFormSubmit} className="w-full flex flex-col gap-5 md:gap-7 text-left">
+          <form
+            action="https://forminit.com/f/u4rh087l0jt"
+            method="POST"
+            className="w-full flex flex-col gap-5 md:gap-7 text-left"
+          >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-7">
               <div>
                 <input
-                  type="text" name="name" placeholder="Your Name" required
+                  type="text" name="full_name" placeholder="Your Name" required
                   className="w-full bg-transparent border-b-2 border-current/20 focus:border-current py-3 outline-none placeholder:opacity-40 text-base transition-colors duration-300"
                 />
               </div>
@@ -418,7 +446,7 @@ const LandingPage = () => {
             </div>
             <div>
               <input
-                type="tel" name="phone" placeholder="Phone Number"
+                type="tel" name="phone_number" placeholder="Phone Number"
                 className="w-full bg-transparent border-b-2 border-current/20 focus:border-current py-3 outline-none placeholder:opacity-40 text-base transition-colors duration-300"
               />
             </div>
@@ -428,28 +456,17 @@ const LandingPage = () => {
                 className="w-full bg-transparent border-b-2 border-current/20 focus:border-current py-3 outline-none placeholder:opacity-40 text-base transition-colors duration-300 resize-none"
               />
             </div>
-            {formStatus === 'error' && (
-              <div className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                ⚠️ {formError}
-              </div>
-            )}
             <div className="flex justify-center pt-4">
               <button
                 type="submit"
-                disabled={formStatus === 'loading'}
                 onMouseMove={handleMagneticMove}
                 onMouseLeave={handleMagneticLeave}
-                className={`group flex items-center gap-3 px-10 py-4 rounded-full font-semibold text-sm uppercase tracking-widest transition-all duration-300 will-change-transform disabled:opacity-60 disabled:cursor-not-allowed ${isDark ? "bg-white text-black hover:bg-gray-100" : "bg-[#0c0c0c] text-white hover:bg-[#333]"}`}
+                className={`group flex items-center gap-3 px-10 py-4 rounded-full font-semibold text-sm uppercase tracking-widest transition-all duration-300 will-change-transform ${isDark ? "bg-white text-black hover:bg-gray-100" : "bg-[#0c0c0c] text-white hover:bg-[#333]"}`}
               >
-                {formStatus === 'loading' ? (
-                  <><span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Sending...</>
-                ) : (
-                  <>Send <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" /></>
-                )}
+                Send <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           </form>
-          )}
 
           {/* Contact Info */}
           <div className="mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 w-full text-center">
@@ -490,7 +507,7 @@ const LandingPage = () => {
             <div className="md:ml-auto flex flex-col gap-2 text-sm opacity-70">
               <div className="flex items-start gap-2">
                 <MapPin size={16} className="mt-0.5 shrink-0" />
-                <span>Surat, Gujarat — Service available across the city</span>
+                <span>Surat, Gujarat â€” Service available across the city</span>
               </div>
             </div>
           </div>
@@ -537,9 +554,9 @@ const LandingPage = () => {
                   <div className="text-sm md:text-base">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-green-600">Open</span>
-                      <span className="opacity-50">⋅ Closes 6 PM</span>
+                      <span className="opacity-50">• Closes 6 PM</span>
                     </div>
-                    <p className="text-xs opacity-50 mt-1">Hours: 10:00 AM – 6:00 PM</p>
+                    <p className="text-xs opacity-50 mt-1">Hours: 10:00 AM - 6:00 PM</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 border-t border-current/5 pt-4">
@@ -617,8 +634,8 @@ const LandingPage = () => {
           </div>
 
           <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row gap-3 justify-between items-center text-xs text-white/40">
-            <span>© {new Date().getFullYear()} AB Pest Control. All rights reserved.</span>
-            <span>Licensed &amp; Insured · Est. 1990</span>
+            <span>Â© {new Date().getFullYear()} AB Pest Control. All rights reserved.</span>
+            <span>Licensed &amp; Insured Â· Est. 1976</span>
           </div>
         </div>
       </footer>
@@ -645,3 +662,5 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
+
+

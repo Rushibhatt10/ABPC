@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import "./Preloader.css";
 
+const pseudoRandom = (seed) => {
+  const x = Math.sin(seed * 9999) * 10000;
+  return x - Math.floor(x);
+};
+
 function BugSVG({ className }) {
   return (
     <svg viewBox="0 0 120 160" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -84,17 +89,17 @@ function SprayParticles({ visible }) {
   if (!visible) return null;
 
   const particleCount = 45;
-  const spreadBase = window.innerWidth < 768 ? 200 : 350;
+  const spreadBase = typeof window !== "undefined" && window.innerWidth < 768 ? 200 : 350;
 
   const particles = Array.from({ length: particleCount }, (_, i) => ({
     id: i,
-    tx: `${(80 + Math.random() * spreadBase)}px`,
-    ty: `${(Math.random() - 0.5) * (spreadBase * 0.8)}px`,
-    s: 1 + Math.random() * 2.5,
-    delay: Math.random() * 0.8,
-    duration: 0.6 + Math.random() * 0.8,
-    size: 2 + Math.random() * 10,
-    startY: (Math.random() - 0.5) * 15, // Tighter start Y for focused nozzle feel
+    tx: `${80 + pseudoRandom(i + 1) * spreadBase}px`,
+    ty: `${(pseudoRandom(i + 101) - 0.5) * (spreadBase * 0.8)}px`,
+    s: 1 + pseudoRandom(i + 201) * 2.5,
+    delay: pseudoRandom(i + 301) * 0.8,
+    duration: 0.6 + pseudoRandom(i + 401) * 0.8,
+    size: 2 + pseudoRandom(i + 501) * 10,
+    startY: (pseudoRandom(i + 601) - 0.5) * 15, // Tighter start Y for focused nozzle feel
   }));
 
   return (

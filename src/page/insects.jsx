@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useContext, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Play, Search, X } from "lucide-react";
-import { ThemeContext } from "../context/ThemeContext";
+import { ThemeContext } from "../context/theme-context";
 import gsap from "gsap";
 
 const insects = [
@@ -61,9 +61,10 @@ signs: ["Tiny round exit holes in wood", "Fine powder (frass) near surfaces", "H
   },
 ];
 
+const SWIPE_THRESHOLD = 56;
+const SLIDE_ANIMATION_DURATION = 0.55;
+
 export default function InsectsPage() {
-  const SWIPE_THRESHOLD = 56;
-  const SLIDE_ANIMATION_DURATION = 0.55;
   const { theme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
   const [activeSlide, setActiveSlide] = useState(0);
@@ -93,22 +94,30 @@ export default function InsectsPage() {
     setActiveSlide(targetIndex);
   }, [activeSlide]);
 
+  const nextSlide = useCallback(() => {
+    goToSlide(activeSlide + 1);
+  }, [goToSlide, activeSlide]);
+
+  const prevSlide = useCallback(() => {
+    goToSlide(activeSlide - 1);
+  }, [goToSlide, activeSlide]);
+
   // Swipe Support
-  const handleTouchStart = (e) => {
+  const handleTouchStart = useCallback((e) => {
     const touch = e.targetTouches[0];
     touchGesture.current.startX = touch.clientX;
     touchGesture.current.startY = touch.clientY;
     touchGesture.current.endX = touch.clientX;
     touchGesture.current.endY = touch.clientY;
-  };
+  }, []);
 
-  const handleTouchMove = (e) => {
+  const handleTouchMove = useCallback((e) => {
     const touch = e.targetTouches[0];
     touchGesture.current.endX = touch.clientX;
     touchGesture.current.endY = touch.clientY;
-  };
+  }, []);
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     const { startX, startY, endX, endY } = touchGesture.current;
     const deltaX = startX - endX;
     const deltaY = startY - endY;
@@ -119,15 +128,7 @@ export default function InsectsPage() {
     }
 
     touchGesture.current = { startX: 0, startY: 0, endX: 0, endY: 0 };
-  };
-
-  const nextSlide = () => {
-    goToSlide(activeSlide + 1);
-  };
-
-  const prevSlide = () => {
-    goToSlide(activeSlide - 1);
-  };
+  }, [nextSlide, prevSlide]);
 
   useEffect(() => {
     if (showIntroVideo) return;
@@ -160,7 +161,7 @@ export default function InsectsPage() {
         { y: 0, opacity: 1, duration: 0.45, stagger: 0.08, ease: "power2.out", overwrite: "auto" }
       );
     }
-  }, [SLIDE_ANIMATION_DURATION, activeSlide, showIntroVideo, unlockAnimation]);
+  }, [activeSlide, showIntroVideo, unlockAnimation]);
 
   useEffect(() => {
     return () => {
@@ -385,7 +386,7 @@ export default function InsectsPage() {
 
       {isVideoOpen && (
         <div
-          className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-sm p-4 sm:p-6 flex items-center justify-center"
+          className="fixed inset-0 z-70 bg-black/75 backdrop-blur-sm p-4 sm:p-6 flex items-center justify-center"
           onClick={() => setIsVideoOpen(false)}
         >
           <div
