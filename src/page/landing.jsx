@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useContext } from"react";
+﻿import { useState, useEffect, useRef, useContext } from"react";
 import { Link, useNavigate } from"react-router-dom";
 import { Phone, Sun, Moon, ArrowRight, X, Mail, MapPin, Star, Navigation, Bookmark, Clock } from"lucide-react";
 import { ThemeContext } from"../context/theme-context";
@@ -244,7 +244,7 @@ const LandingPage = () => {
 
  {/* Modern Fullscreen Overlay Menu */}
  <div
- className={`fixed inset-0 z-[60] flex transition-all duration-500 ${menuOpen ?"opacity-100 pointer-events-auto" :"opacity-0 pointer-events-none"} ${isDark ?"bg-[#0c0c0c]" :"bg-[#faf9f6]"}`}
+ className={`fixed inset-0 z-60 flex transition-all duration-500 ${menuOpen ?"opacity-100 pointer-events-auto" :"opacity-0 pointer-events-none"} ${isDark ?"bg-[#0c0c0c]" :"bg-[#faf9f6]"}`}
   onClick={(e) => { if (e.currentTarget === e.target) setMenuOpen(false); }}
  >
  <div className="absolute top-[calc(env(safe-area-inset-top)+0.75rem)] right-4 lg:hidden z-50">
