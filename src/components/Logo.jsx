@@ -44,18 +44,19 @@ export default function Logo({ className ="", variant ="stacked" }) {
  {/* Typography Area */}
  {isHorizontal ? (
  <div className="flex flex-col text-left select-none">
- <span 
- className="uppercase leading-none tracking-tight whitespace-nowrap" 
- style={{ 
- fontFamily: 'Impact,"Arial Narrow","Arial Black", sans-serif', 
- fontSize: '1.4rem',
- color: '#8AA844', 
- transform: 'scaleY(1.2)', 
- transformOrigin: 'left top',
- }}
- >
- A.B. Pest Control
- </span>
+  <span 
+  className="uppercase leading-none tracking-tight whitespace-nowrap" 
+  style={{ 
+  fontFamily: '"Bebas Neue", Impact, "Arial Narrow", sans-serif', 
+  fontSize: '1.8rem',
+  color: '#8AA844', 
+  transform: 'scaleY(1.1)', 
+  transformOrigin: 'left top',
+  fontWeight: 400
+  }}
+  >
+  A.B. Pest Control
+  </span>
  <span 
  className="uppercase font-medium pt-1 whitespace-nowrap" 
  style={{ 
@@ -71,20 +72,21 @@ export default function Logo({ className ="", variant ="stacked" }) {
  ) : (
  <div className="flex flex-col items-center text-center select-none w-full">
  {/* Main Title */}
- <div 
- className="uppercase leading-none w-full flex justify-center whitespace-nowrap" 
- style={{ 
- fontFamily: 'Impact,"Arial Narrow","Arial Black", sans-serif', 
- fontSize: 'min(13vw, 7rem)',
- color: '#8AA844',
- transform: 'scaleY(1.35)', 
- transformOrigin: 'top',
- letterSpacing: '0.02em',
- lineHeight: 1
- }}
- >
- A.B. PEST CONTROL
- </div>
+  <div 
+  className="uppercase leading-none w-full flex justify-center whitespace-nowrap" 
+  style={{ 
+  fontFamily: '"Bebas Neue", Impact, "Arial Narrow", sans-serif', 
+  fontSize: 'min(15vw, 8rem)',
+  color: '#8AA844',
+  transform: 'scaleY(1.15)', 
+  transformOrigin: 'top',
+  letterSpacing: '0.02em',
+  lineHeight: 1,
+  fontWeight: 400
+  }}
+  >
+  A.B. PEST CONTROL
+  </div>
  
  {/* Subtitle */}
  <div 

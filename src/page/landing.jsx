@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useContext } from"react";
+import { useState, useEffect, useRef, useContext } from"react";
 import { Link, useNavigate } from"react-router-dom";
 import { Phone, Sun, Moon, ArrowRight, X, Mail, MapPin, Star, Navigation, Bookmark, Clock } from"lucide-react";
 import { ThemeContext } from"../context/theme-context";
@@ -11,7 +11,7 @@ import PremiumServices from"../components/PremiumServices.jsx";
 gsap.registerPlugin(ScrollTrigger);
 
 const HamburgerIcon = ({ open }) => (
- <div className="flex flex-col justify-center items-end gap-1.5 w-6.5 h-6 cursor-pointer group">
+  <div className="flex flex-col justify-center items-end gap-1.5 w-[26px] h-6 cursor-pointer group">
  <span className={`block h-0.5 bg-current transition-all duration-400 ease-in-out origin-center rounded-full ${open ?"w-full rotate-45 translate-y-2" :"w-full group-hover:w-4"}`} />
  <span className={`block h-0.5 bg-current transition-all duration-400 ease-in-out rounded-full ${open ?"opacity-0 scale-x-0 w-full" :"w-5 group-hover:w-full"}`} />
  <span className={`block h-0.5 bg-current transition-all duration-400 ease-in-out origin-center rounded-full ${open ?"w-full -rotate-45 -translate-y-2" :"w-3 group-hover:w-5"}`} />
@@ -205,7 +205,7 @@ useEffect(() => {
  {/* Logo */}
  <div className="flex items-center gap-3">
  <Link to="/" className="z-50 relative hover:scale-105 transition-transform duration-300 origin-left">
- <Logo variant="horizontal" className="w-148px min-[370px]:w-170px sm:w-220px" />
+  <Logo variant="horizontal" className="w-[148px] min-[370px]:w-[170px] sm:w-[220px]" />
  </Link>
  </div>
  
@@ -618,7 +618,7 @@ useEffect(() => {
  </div>
 
  {/* Map */}
- <div className="flex-1 h-137.5 lg:h-auto min-h-125 rounded-[2.5rem] overflow-hidden shadow-2xl border border-current/10 relative group bg-black/5">
+  <div className="flex-1 h-[550px] lg:h-auto min-h-[500px] rounded-[2.5rem] overflow-hidden shadow-2xl border border-current/10 relative group bg-black/5">
  <iframe
  title="AB Pest Control Location"
  className="absolute inset-0 w-full h-full grayscale-[0.3] contrast-[1.2] group-hover:grayscale-0 transition-all duration-1000 ease-out"
@@ -629,7 +629,7 @@ useEffect(() => {
  referrerPolicy="no-referrer-when-downgrade"
  />
  {/* Glassmorphic Overlay elements */}
- <div className="absolute inset-0 pointer-events-none border-12px border-transparent group-hover:border-white/5 transition-all duration-1000 rounded-[2.5rem]" />
+  <div className="absolute inset-0 pointer-events-none border-12 border-transparent group-hover:border-white/5 transition-all duration-1000 rounded-[2.5rem]" />
  
  <a
  href="https://maps.app.goo.gl/RuymFAmDy4fV91To6"

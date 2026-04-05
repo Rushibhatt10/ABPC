@@ -149,7 +149,7 @@ function CardContent({ title, subtitle, desc }) {
       )}
 
       {/* ACCENT LINE */}
-      <div className="mt-5 h-2px w-10 bg-gradient from-green-400 to-lime-300 rounded-full" />
+      <div className="mt-5 h-[2px] w-10 bg-linear-to-r from-green-400 to-lime-300 rounded-full" />
 
       <p className="mt-3 text-[10px] text-white/30 tracking-[0.3em]">
         PROFILE

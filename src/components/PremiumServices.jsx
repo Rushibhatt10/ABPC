@@ -121,12 +121,12 @@ const PremiumServices = () => {
  }`}
  >
  <div
- className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-900px h-900px blur-160px rounded-full pointer-events-none ${
+ className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] blur-[160px] rounded-full pointer-events-none ${
  isDark ? 'bg-[#95B15F]/6' : 'bg-[#95B15F]/4'
  }`}
  />
 
- <div className="max-w-1440px mx-auto px-4 sm:px-5 md:px-14 relative z-10">
+ <div className="max-w-[1440px] mx-auto px-4 sm:px-5 md:px-14 relative z-10">
  <div className="mb-10 sm:mb-12 md:mb-20 flex flex-col items-center text-center">
  <span className="text-[#95B15F] text-sm md:text-base uppercase tracking-[0.3em] opacity-80 mb-4 block">
  Our Services
@@ -168,7 +168,7 @@ const PremiumServices = () => {
  return (
  <div
  key={service.id}
- className={`snap-center shrink-0 w-[94vw] sm:w-[90vw] md:w-820px lg:w-980px min-h-0 md:min-h-520px max-h-none md:max-h-[72vh] relative group rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col md:flex-row transition-all duration-700 ${
+ className={`snap-center shrink-0 w-[94vw] sm:w-[90vw] md:w-[820px] lg:w-[980px] min-h-0 md:min-h-[520px] max-h-none md:max-h-[72vh] relative group rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col md:flex-row transition-all duration-700 ${
  isDark
  ? 'bg-[#141414] shadow-[0_20px_60px_rgba(0,0,0,0.5)]'
  : 'bg-[#ffffff] shadow-[0_20px_60px_rgba(0,0,0,0.08)]'
