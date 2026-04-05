@@ -52,16 +52,20 @@ const LandingPage = () => {
  };
  }, []);
 
- useEffect(() => {
+useEffect(() => {
+ let popupTimer;
  try {
  const hasSeenPopup = localStorage.getItem('abpc_ankit_popup_seen');
- if (hasSeenPopup === '1') return;
+ if (hasSeenPopup === '1') return undefined;
 
- const timer = setTimeout(() => setShowAnkitPopup(true), 1200);
- return () => clearTimeout(timer);
+ popupTimer = setTimeout(() => setShowAnkitPopup(true), 1200);
  } catch {
- setShowAnkitPopup(true);
+ popupTimer = setTimeout(() => setShowAnkitPopup(true), 0);
  }
+
+ return () => {
+ if (popupTimer) clearTimeout(popupTimer);
+ };
  }, []);
 
  // GSAP Animations
