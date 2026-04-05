@@ -150,10 +150,10 @@ useEffect(() => {
  };
 
  return (
- <div className={`min-h-[100dvh] w-full overflow-x-hidden pb-[env(safe-area-inset-bottom)] transition-colors duration-700 ${isDark ?"bg-[#0c0c0c] text-[#f5f5f0]" :"bg-[#faf9f6] text-[#0c0c0c]"}`}>
+ <div className={`min-h-dvh w-full overflow-x-hidden safe-bottom-pad transition-colors duration-700 ${isDark ?"bg-[#0c0c0c] text-[#f5f5f0]" :"bg-[#faf9f6] text-[#0c0c0c]"}`}>
  {showAnkitPopup && (
  <div
- className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm"
+ className="fixed inset-0 z-80 flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm"
  onClick={dismissAnkitPopup}
  >
  <div
@@ -205,7 +205,7 @@ useEffect(() => {
  {/* Logo */}
  <div className="flex items-center gap-3">
  <Link to="/" className="z-50 relative hover:scale-105 transition-transform duration-300 origin-left">
- <Logo variant="horizontal" className="w-[148px] min-[370px]:w-[170px] sm:w-[220px]" />
+ <Logo variant="horizontal" className="w-148px min-[370px]:w-170px sm:w-220px" />
  </Link>
  </div>
  
@@ -424,57 +424,100 @@ useEffect(() => {
 
  {/* ===== CONTACT ===== */}
  <section id="contact" className="w-full py-16 md:py-28 px-5 md:px-12">
- <div className="max-w-3xl mx-auto flex flex-col items-center text-center">
- <span className="text-xs uppercase tracking-[0.3em] opacity-50 mb-4 block">Ready to Protect Your Space?</span>
- <h2
- ref={el => el && !titleRefs.current.includes(el) && titleRefs.current.push(el)}
- className="text-4xl sm:text-5xl md:text-7xl uppercase tracking-tight mb-10 md:mb-14"
- >
- Get In Touch
- </h2>
+  <div className="max-w-3xl mx-auto flex flex-col items-center text-center">
+    <span className="text-xs uppercase tracking-[0.3em] opacity-50 mb-4 block">
+      Ready to Protect Your Space?
+    </span>
 
- <form
- action="https://forminit.com/f/u4rh087l0jt"
- method="POST"
- className="w-full flex flex-col gap-5 md:gap-7 text-left"
- >
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-7">
- <div>
- <input
- type="text" name="full_name" placeholder="Your Name" required
- className="w-full bg-transparent border-b-2 border-current/20 focus:border-current py-3 outline-none placeholder:opacity-40 text-base transition-colors duration-300"
- />
- </div>
- <div>
- <input
- type="email" name="email" placeholder="Email Address" required
- className="w-full bg-transparent border-b-2 border-current/20 focus:border-current py-3 outline-none placeholder:opacity-40 text-base transition-colors duration-300"
- />
- </div>
- </div>
- <div>
- <input
- type="tel" name="phone_number" placeholder="Phone Number"
- className="w-full bg-transparent border-b-2 border-current/20 focus:border-current py-3 outline-none placeholder:opacity-40 text-base transition-colors duration-300"
- />
- </div>
- <div>
- <textarea
- name="message" placeholder="Tell us about your pest control needs..." rows={4} required
- className="w-full bg-transparent border-b-2 border-current/20 focus:border-current py-3 outline-none placeholder:opacity-40 text-base transition-colors duration-300 resize-none"
- />
- </div>
- <div className="flex justify-center pt-4">
- <button
- type="submit"
- onMouseMove={handleMagneticMove}
- onMouseLeave={handleMagneticLeave}
- className={`group flex items-center gap-3 px-10 py-4 rounded-full font-semibold text-sm uppercase tracking-widest transition-all duration-300 will-change-transform ${isDark ?"bg-white text-black hover:bg-gray-100" :"bg-[#0c0c0c] text-white hover:bg-[#333]"}`}
- >
- Send <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
- </button>
- </div>
- </form>
+    <h2
+      ref={el => el && !titleRefs.current.includes(el) && titleRefs.current.push(el)}
+      className="text-4xl sm:text-5xl md:text-7xl uppercase tracking-tight mb-10 md:mb-14"
+    >
+      Get In Touch
+    </h2>
+
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+
+        const form = e.target;
+        const data = new FormData(form);
+
+        try {
+          const res = await fetch("https://forminit.com/f/u4rh087l0jt", {
+            method: "POST",
+            body: data,
+          });
+
+          if (res.ok) {
+            alert("Message sent successfully ✅");
+            form.reset();
+          } else {
+            alert("Something went wrong ❌");
+          }
+        } catch {
+          alert("Network error ❌");
+        }
+      }}
+      className="w-full flex flex-col gap-5 md:gap-7 text-left"
+    >
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-7">
+        <div>
+          <input
+            type="text"
+            name="full_name"
+            placeholder="Your Name"
+            required
+            className="w-full bg-transparent border-b-2 border-current/20 focus:border-current py-3 outline-none placeholder:opacity-40 text-base transition-colors duration-300"
+          />
+        </div>
+
+        <div>
+          <input
+            type="email"
+            name="email"
+            placeholder="Email Address"
+            required
+            className="w-full bg-transparent border-b-2 border-current/20 focus:border-current py-3 outline-none placeholder:opacity-40 text-base transition-colors duration-300"
+          />
+        </div>
+      </div>
+
+      <div>
+        <input
+          type="tel"
+          name="phone_number"
+          placeholder="Phone Number"
+          className="w-full bg-transparent border-b-2 border-current/20 focus:border-current py-3 outline-none placeholder:opacity-40 text-base transition-colors duration-300"
+        />
+      </div>
+
+      <div>
+        <textarea
+          name="message"
+          placeholder="Tell us about your pest control needs..."
+          rows={4}
+          required
+          className="w-full bg-transparent border-b-2 border-current/20 focus:border-current py-3 outline-none placeholder:opacity-40 text-base transition-colors duration-300 resize-none"
+        />
+      </div>
+
+      <div className="flex justify-center pt-4">
+        <button
+          type="submit"
+          onMouseMove={handleMagneticMove}
+          onMouseLeave={handleMagneticLeave}
+          className={`group flex items-center gap-3 px-10 py-4 rounded-full font-semibold text-sm uppercase tracking-widest transition-all duration-300 will-change-transform ${
+            isDark
+              ? "bg-white text-black hover:bg-gray-100"
+              : "bg-[#0c0c0c] text-white hover:bg-[#333]"
+          }`}
+        >
+          Send
+          <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+        </button>
+      </div>
+    </form>
 
  {/* Contact Info */}
  <div className="mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 w-full text-center">
@@ -575,7 +618,7 @@ useEffect(() => {
  </div>
 
  {/* Map */}
- <div className="flex-1 h-[34.375rem] lg:h-auto min-h-[31.25rem] rounded-[2.5rem] overflow-hidden shadow-2xl border border-current/10 relative group bg-black/5">
+ <div className="flex-1 h-137.5 lg:h-auto min-h-125 rounded-[2.5rem] overflow-hidden shadow-2xl border border-current/10 relative group bg-black/5">
  <iframe
  title="AB Pest Control Location"
  className="absolute inset-0 w-full h-full grayscale-[0.3] contrast-[1.2] group-hover:grayscale-0 transition-all duration-1000 ease-out"
@@ -586,7 +629,7 @@ useEffect(() => {
  referrerPolicy="no-referrer-when-downgrade"
  />
  {/* Glassmorphic Overlay elements */}
- <div className="absolute inset-0 pointer-events-none border-[12px] border-transparent group-hover:border-white/5 transition-all duration-1000 rounded-[2.5rem]" />
+ <div className="absolute inset-0 pointer-events-none border-12px border-transparent group-hover:border-white/5 transition-all duration-1000 rounded-[2.5rem]" />
  
  <a
  href="https://maps.app.goo.gl/RuymFAmDy4fV91To6"
@@ -644,6 +687,9 @@ useEffect(() => {
  <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row gap-3 justify-between items-center text-xs text-white/40">
  <span>© {new Date().getFullYear()} AB Pest Control. All rights reserved.</span>
  <span>Licensed & Insured · Est. 1976</span>
+ <Link to="/rushzzz" className="uppercase tracking-[0.2em] hover:text-white transition-colors">
+ MADE BY RUSHI BHATT
+ </Link>
  </div>
  </div>
  </footer>

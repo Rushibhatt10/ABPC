@@ -9,7 +9,7 @@ export default function VideoPage() {
   const navigate = useNavigate();
 
   return (
-    <div className={`min-h-[100dvh] pb-[env(safe-area-inset-bottom)] flex flex-col justify-center items-center w-full relative transition-colors duration-700 ${isDark ? "bg-[#0a0a0a] text-[#f5f5f0]" : "bg-[#faf9f6] text-[#0c0c0c]"}`}>
+    <div className={`min-h-100dvh safe-bottom-pad flex flex-col justify-center items-center w-full relative transition-colors duration-700 ${isDark ? "bg-[#0a0a0a] text-[#f5f5f0]" : "bg-[#faf9f6] text-[#0c0c0c]"}`}>
       <div className="fixed top-0 z-20 w-full px-4 sm:px-5 md:px-12 pt-[calc(env(safe-area-inset-top)+0.55rem)] pb-3 sm:pt-[calc(env(safe-area-inset-top)+0.8rem)] sm:pb-4 md:py-6 flex justify-between items-center gap-3">
         <button onClick={() => navigate(-1)} className="flex items-center gap-3 group">
           <div className={`p-2 rounded-full transition-all duration-300 ${isDark ? "bg-white/10 group-hover:bg-white text-white group-hover:text-black" : "bg-black/10 group-hover:bg-black text-black group-hover:text-white border border-black/5"}`}>
@@ -40,7 +40,7 @@ export default function VideoPage() {
       </div>
       
       {/* Decorative grain and accent similar to insects page */}
-      <div className="fixed inset-0 pointer-events-none z-[40] opacity-[0.03] mix-blend-overlay"
+      <div className="fixed inset-0 pointer-events-none z-40 opacity-[0.03] mix-blend-overlay"
         style={{ backgroundImage: `url('https://grainy-gradients.vercel.app/noise.svg')` }} />
     </div>
   );

@@ -170,7 +170,7 @@ export default function InsectsPage() {
 
  return (
  <div 
- className={`min-h-[100dvh] h-[100dvh] w-full overflow-hidden pb-[env(safe-area-inset-bottom)] transition-colors duration-700 relative touch-pan-y ${isDark ?"bg-[#0a0a0a] text-[#f5f5f0]" :"bg-[#faf9f6] text-[#0c0c0c]"}`}
+ className={`min-h-100dvh h-100dvh w-full overflow-hidden safe-bottom-pad transition-colors duration-700 relative touch-pan-y ${isDark ?"bg-[#0a0a0a] text-[#f5f5f0]" :"bg-[#faf9f6] text-[#0c0c0c]"}`}
  onTouchStart={handleTouchStart}
  onTouchMove={handleTouchMove}
  onTouchEnd={handleTouchEnd}
@@ -182,7 +182,7 @@ export default function InsectsPage() {
  />
 
  {/* Visual Grain Texture */}
- <div className="fixed inset-0 pointer-events-none z-[40] opacity-[0.03] mix-blend-overlay"
+ <div className="fixed inset-0 pointer-events-none z-40 opacity-[0.03] mix-blend-overlay"
  style={{ backgroundImage: `url('https://grainy-gradients.vercel.app/noise.svg')` }} />
 
  {/* Dynamic Header (Compact) */}

@@ -102,6 +102,10 @@ section[id] {
   scroll-margin-top: calc(84px + var(--safe-top));
 }
 
+.safe-bottom-pad {
+  padding-bottom: var(--safe-bottom);
+}
+
 h1,
 h2 {
   font-family: var(--heading);
