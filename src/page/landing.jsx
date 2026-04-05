@@ -316,29 +316,29 @@ useEffect(() => {
  </nav>
 
  <main className={`transition-all duration-500 ease-in-out ${menuOpen ? "blur-xl scale-[0.98] brightness-75 pointer-events-none" : "blur-0 scale-100 brightness-100"}`}>
- {/* ===== HERO ===== */}
- <section ref={heroRef} className="relative w-full min-h-screen flex flex-col justify-center items-center px-5 md:px-12 pt-28 md:pt-32 pb-16 md:pb-24 overflow-hidden">
- {/* Decorative background */}
- <div className={`absolute inset-0 opacity-[0.03] pointer-events-none`}
- style={{ backgroundImage:"radial-gradient(circle at 20% 50%, #e85535 0%, transparent 60%), radial-gradient(circle at 80% 30%, #8db34b 0%, transparent 60%)" }} />
+  {/* ===== HERO ===== */}
+  <section ref={heroRef} className="relative w-full min-h-dvh flex flex-col justify-center items-center px-4 sm:px-6 md:px-12 pt-[calc(env(safe-area-inset-top)+3.5rem)] pb-12 overflow-hidden">
+  {/* Decorative background */}
+  <div className={`absolute inset-0 opacity-[0.03] pointer-events-none`}
+  style={{ backgroundImage:"radial-gradient(circle at 20% 50%, #e85535 0%, transparent 60%), radial-gradient(circle at 80% 30%, #8db34b 0%, transparent 60%)" }} />
 
- <div className="relative z-10 max-w-5xl mx-auto text-center flex flex-col items-center gap-6 md:gap-10">
- <span className="text-xs uppercase tracking-[0.35em] opacity-50 font-medium">Est. 1976 · Surat, Gujarat</span>
- <h1
- ref={el => el && !titleRefs.current.includes(el) && titleRefs.current.push(el)}
- className="uppercase leading-tight text-[clamp(2rem,8vw,5rem)] max-w-4xl"
- >
- GET COMPLETE SOLUTIONS
- </h1>
- <span className="text-xs uppercase tracking-[0.35em] opacity-50 font-large">RECEDENTIAL/COMMERCIAL/INDUSTRIAL</span>
- <p
- ref={el => el && !textRefs.current.includes(el) && textRefs.current.push(el)}
- className="text-base md:text-xl opacity-70 leading-relaxed max-w-2xl"
- >
- Protect your home/business/industry places with professional, eco-friendly pest control services tailored for every space from kitchens to warehouses.
- </p>
- </div>
- </section>
+  <div className="relative z-10 max-w-5xl mx-auto text-center flex flex-col items-center gap-5 sm:gap-6 md:gap-10">
+  <span className="text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.35em] opacity-50 font-medium">Est. 1976 · Surat, Gujarat</span>
+  <h1
+  ref={el => el && !titleRefs.current.includes(el) && titleRefs.current.push(el)}
+  className="uppercase leading-[1.1] text-[clamp(1.75rem,9vw,5rem)] max-w-4xl"
+  >
+  GET COMPLETE SOLUTIONS
+  </h1>
+  <span className="text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.35em] opacity-50 font-semibold px-2">RECEDENTIAL / COMMERCIAL / INDUSTRIAL</span>
+  <p
+  ref={el => el && !textRefs.current.includes(el) && textRefs.current.push(el)}
+  className="text-sm sm:text-base md:text-xl opacity-70 leading-relaxed max-w-2xl px-4 sm:px-0"
+  >
+  Protect your home, business, or industrial space with professional, eco-friendly pest control services tailored for every space — from kitchens to warehouses.
+  </p>
+  </div>
+  </section>
 
  {/* ===== SERVICES ===== */}
  <PremiumServices />
