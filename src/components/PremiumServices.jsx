@@ -132,19 +132,7 @@ const PremiumServices = () => {
  Our Services
  </span>
 
- <div
- className={`flex flex-col items-center gap-6 pb-7 border-b w-full ${
- isDark ? 'border-white/8' : 'border-black/8'
- }`}
- >
- <h2 className="text-3xl sm:text-4xl md:text-5xl uppercase leading-tight max-w-3xl">
- Complete Protection Solutions
- <br className="hidden md:block" />
- <span className="font-medium">
- {' '}
- for Home/Business/Industry
- </span>
- </h2>
+ 
 
  <div className={`hidden md:flex items-center gap-3 mt-4 ${isDark ? 'text-white/30' : 'text-black/30'}`}>
  <span className="text-[10px] uppercase tracking-widest font-medium">
@@ -249,7 +237,6 @@ const PremiumServices = () => {
  <span className={`text-xs tabular-nums ${isDark ? 'text-white/55' : 'text-black/55'}`}>
  {String(activeIndex + 1).padStart(2, '0')} / {String(premiumServicesData.length).padStart(2, '0')}
  </span>
- </div>
  </div>
  </section>
  );

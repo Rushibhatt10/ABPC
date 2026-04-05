@@ -317,25 +317,25 @@ useEffect(() => {
 
  <main className={`transition-all duration-500 ease-in-out ${menuOpen ? "blur-xl scale-[0.98] brightness-75 pointer-events-none" : "blur-0 scale-100 brightness-100"}`}>
   {/* ===== HERO ===== */}
-  <section ref={heroRef} className="relative w-full min-h-dvh flex flex-col justify-center items-center px-4 sm:px-6 md:px-12 pt-[calc(env(safe-area-inset-top)+3.5rem)] pb-12 overflow-hidden">
+  <section ref={heroRef} className="relative w-full min-h-dvh flex flex-col justify-center items-center px-4 sm:px-6 md:px-12 pt-[calc(env(safe-area-inset-top)+1rem)] pb-12 overflow-hidden">
   {/* Decorative background */}
   <div className={`absolute inset-0 opacity-[0.03] pointer-events-none`}
   style={{ backgroundImage:"radial-gradient(circle at 20% 50%, #e85535 0%, transparent 60%), radial-gradient(circle at 80% 30%, #8db34b 0%, transparent 60%)" }} />
 
-  <div className="relative z-10 max-w-5xl mx-auto text-center flex flex-col items-center gap-5 sm:gap-6 md:gap-10">
-  <span className="text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.35em] opacity-50 font-medium">Est. 1976 · Surat, Gujarat</span>
+  <div className="relative z-10 max-w-5xl mx-auto text-center flex flex-col items-center gap-4 sm:gap-6 md:gap-10">
+  <span className="text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.35em] opacity-40 font-medium">Est. 1976 · Surat, Gujarat</span>
   <h1
   ref={el => el && !titleRefs.current.includes(el) && titleRefs.current.push(el)}
-  className="uppercase leading-[1.1] text-[clamp(1.75rem,9vw,5rem)] max-w-4xl"
+  className="uppercase leading-[1.05] text-[clamp(1.85rem,10vw,6rem)] max-w-4xl"
   >
-  GET COMPLETE SOLUTIONS
+  COMPLETE PROTECTION SOLUTIONS
   </h1>
-  <span className="text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.35em] opacity-50 font-semibold px-2">RECEDENTIAL / COMMERCIAL / INDUSTRIAL</span>
+  <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.35em] opacity-50 font-semibold px-2">For Home / Business / Industry</span>
   <p
   ref={el => el && !textRefs.current.includes(el) && textRefs.current.push(el)}
   className="text-sm sm:text-base md:text-xl opacity-70 leading-relaxed max-w-2xl px-4 sm:px-0"
   >
-  Protect your home, business, or industrial space with professional, eco-friendly pest control services tailored for every space — from kitchens to warehouses.
+  Protecting your space with professional, eco-friendly pest control services tailored for every environment — from kitchens to warehouses.
   </p>
   </div>
   </section>
