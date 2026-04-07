@@ -69,7 +69,7 @@ const premiumServicesData = [
  'Flexible service timing',
  'Free inspection available'
  ],
- image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=1200&auto=format&fit=crop'
+ video: 'ABAB.mp4'
  }
 ];
 

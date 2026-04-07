@@ -166,7 +166,7 @@ export default function Preloader({ onComplete }) {
 
  return (
  <div
- className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden preloader-bg"
+ className="fixed inset-0 z-9999 flex flex-col items-center justify-center overflow-hidden preloader-bg"
  style={{
  transition:"background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
  }}

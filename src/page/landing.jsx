@@ -132,7 +132,7 @@ useEffect(() => {
 
  const stats = [
  { value:"10,000+", label:"Recedential/Commercial/Industrial Clients", color:"text-current" },
- { value:"50+", label:"Years Experience & Building Trust", color:"text-current" },
+ { value:"45+", label:"Years Experience & Building Trust", color:"text-current" },
  ];
 
  const dismissAnkitPopup = () => {
@@ -323,7 +323,7 @@ useEffect(() => {
   style={{ backgroundImage:"radial-gradient(circle at 20% 50%, #e85535 0%, transparent 60%), radial-gradient(circle at 80% 30%, #8db34b 0%, transparent 60%)" }} />
 
   <div className="relative z-10 max-w-5xl mx-auto text-center flex flex-col items-center gap-4 sm:gap-6 md:gap-10">
-  <span className="text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.35em] opacity-40 font-medium">Est. 1976 · Surat, Gujarat</span>
+  <span className="text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.35em] opacity-40 font-medium">Est. 1980 · Surat, Gujarat</span>
   <h1
   ref={el => el && !titleRefs.current.includes(el) && titleRefs.current.push(el)}
   className="uppercase leading-[1.05] text-[clamp(1.85rem,10vw,6rem)] max-w-4xl"
@@ -348,16 +348,33 @@ useEffect(() => {
  <div className="max-w-7xl mx-auto">
  <div className="flex flex-col lg:flex-row gap-12 md:gap-16 items-center justify-between">
  
- {/* Left Image Holder (Bakul Bhatt) */}
- <div className="flex flex-col items-center gap-4 shrink-0 lg:w-1/4">
- <div className={`w-48 h-48 md:w-56 md:h-56 xl:w-64 xl:h-64 rounded-full overflow-hidden border border-current/10 shadow-xl group relative ${isDark ?"bg-[#111]" :"bg-gray-100"}`}>
- <img src="/bakul_bhatt.jpg" alt="Bakul Bhatt - Founder" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" onError={(e) => { e.target.src = isDark ?"https://ui-avatars.com/api/?name=Bakul+Bhatt&background=222&color=fff&size=256" :"https://ui-avatars.com/api/?name=Bakul+Bhatt&background=ddd&color=000&size=256"; }} />
- </div>
- <div className="text-center">
- <h3 className="text-xl uppercase tracking-widest">Bakul Bhatt</h3>
- <p className="text-xs opacity-60 uppercase tracking-widest mt-1">Founder</p>
- </div>
- </div>
+{/* Left Image Holder (Bakul Bhatt) */}
+<div className="flex flex-col items-center gap-4 shrink-0 lg:w-1/4">
+  
+  <div
+    className={`w-48 h-48 md:w-56 md:h-56 xl:w-64 xl:h-64 
+    rounded-full overflow-hidden border border-current/10 shadow-xl 
+    group relative ${isDark ? "bg-[#111]" : "bg-gray-100"}`}
+  >
+    <img
+      src="/bb.jpeg"
+      alt="Bakul Bhatt - Founder"
+      className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+      onError={(e) => {
+        e.target.src = isDark
+          ? "https://ui-avatars.com/api/?name=Bakul+Bhatt&background=222&color=fff&size=256"
+          : "https://ui-avatars.com/api/?name=Bakul+Bhatt&background=ddd&color=000&size=256";
+      }}
+    />
+  </div>
+
+  <div className="text-center">
+    <h3 className="text-xl uppercase tracking-widest">Bakul Bhatt</h3>
+    <p className="text-xs opacity-60 uppercase tracking-widest mt-1">
+      Founder
+    </p>
+  </div>
+</div>
 
  {/* Center Content */}
  <div className="flex-1 flex flex-col items-center text-center max-w-2xl">
@@ -373,7 +390,7 @@ useEffect(() => {
  className="flex flex-col gap-4 text-base leading-relaxed opacity-85 mb-8 text-left w-full"
  >
  <p>
- <strong>A.B. Pest Control Insecticide Services</strong> is a trusted pest management company based in Surat, serving clients across India since <strong>1976</strong>.
+ <strong>A.B. Pest Control Insecticide Services</strong> is a trusted pest management company based in Surat, serving clients across India since <strong>1980</strong>.
  </p>
  <p>
  We specialize in effective treatments for <strong>termites, bed bugs, cockroaches, and general pest control</strong>, delivering long-term protection not just temporary solutions.
@@ -655,7 +672,7 @@ useEffect(() => {
  <Logo variant="horizontal" />
  </div>
  <p className="text-sm text-white/60 leading-relaxed max-w-xs">
- Trusted pest management across Surat & Gujarat since 1976. Licensed, insured, and 100% eco-responsible.
+ Trusted pest management across Surat & Gujarat since 1980. Licensed, insured, and 100% eco-responsible.
  </p>
  </div>
 
@@ -686,9 +703,9 @@ useEffect(() => {
 
  <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row gap-3 justify-between items-center text-xs text-white/40">
  <span>© {new Date().getFullYear()} AB Pest Control. All rights reserved.</span>
- <span>Licensed & Insured · Est. 1976</span>
+ <span>Licensed & Insured · Est. 1980</span>
  <Link to="/rushzzz" className="uppercase tracking-[0.2em] hover:text-white transition-colors">
- MADE BY RUSHI BHATT
+ SITE DEVELOPED BY RUSHI BHATT
  </Link>
  </div>
  </div>
