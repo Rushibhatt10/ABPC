@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+:root {
+  --bg-soft: #f3f8f4;
+  --brand: #1f7a42;
+  --brand-dark: #13562d;
+  --brand-soft: #eaf7ef;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --card-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 0% 0%, #e1f3e8 0%, rgba(225, 243, 232, 0) 45%),
+    radial-gradient(circle at 100% 100%, #dfeff6 0%, rgba(223, 239, 246, 0) 40%),
+    var(--bg-soft);
+  color: var(--text-main);
+  font-family: "Segoe UI", "Poppins", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+.app-card {
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  box-shadow: var(--card-shadow);
+  padding: 1rem;
+}
+
+.surface-card {
+  border-radius: 0.9rem;
+  border: 1px solid #dbe3ec;
+  background: #ffffff;
+  padding: 0.85rem;
+}
+
+.field-label {
+  margin-bottom: 0.35rem;
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.field-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #d5dee8;
+  background: #fff;
+  padding: 0.75rem 0.85rem;
+  font-size: 0.95rem;
+  color: #0f172a;
+  outline: none;
+}
+
+.field-input:focus {
+  border-color: #63ad84;
+  box-shadow: 0 0 0 3px rgba(99, 173, 132, 0.2);
+}
+
+.primary-btn {
+  width: 100%;
+  border: none;
+  border-radius: 0.85rem;
+  background: linear-gradient(135deg, var(--brand), #2c9a57);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.78rem 1rem;
+}
+
+.primary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.secondary-btn {
+  width: 100%;
+  border-radius: 0.85rem;
+  border: 1px solid #b7d9c4;
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding: 0.72rem 0.9rem;
+}
+
+.ghost-btn {
+  border-radius: 0.75rem;
+  border: 1px solid #d8e1ea;
+  background: #fff;
+  color: #334155;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 0.55rem 0.65rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+}
+
+.section-title {
+  margin-bottom: 0.6rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid #dce5ef;
+  padding: 0.45rem;
+  text-align: left;
+  font-size: 0.8rem;
+}
+
+.data-table th {
+  background: #f8fafc;
+}
