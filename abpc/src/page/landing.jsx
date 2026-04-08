@@ -138,6 +138,8 @@ useEffect(() => {
   const navLinks = [
     { label: "Services", id: "services" },
     { label: "About", id: "about" },
+    { label: "Video", url: "/video" },
+    { label: "Location", id: "location" },
     { label: "Contact", id: "contact" },
     { label: "CRM Admin", url: "/admin/login" },
   ];

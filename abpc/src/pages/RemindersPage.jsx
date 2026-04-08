@@ -355,7 +355,7 @@ export default function RemindersPage() {
             placeholder="Service name for auto visits"
             value={form.serviceName}
           />
-          <button className="primary-btn" disabled={saving} type="submit">
+          <button className="primary-btn btn-create" disabled={saving} type="submit">
             {saving ? "Creating..." : "Create AMC + Auto Schedule"}
           </button>
         </form>
@@ -450,7 +450,7 @@ export default function RemindersPage() {
                 </p>
                 <p className="mt-1 text-xs text-slate-500">Visits: {(amc.scheduledVisits || []).join(", ")}</p>
                 <button
-                  className="mt-2 w-full rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700"
+                  className="danger-btn mt-2 text-xs"
                   disabled={busyAction === amc.id}
                   onClick={() => deleteAmcContract(amc)}
                   type="button"
@@ -466,7 +466,7 @@ export default function RemindersPage() {
       <section className="app-card space-y-2">
         <p className="section-title">Data Controls</p>
         <button
-          className="w-full rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800"
+          className="warning-btn"
           disabled={busyAction === "clearPast"}
           onClick={clearPastVisitsNow}
           type="button"
@@ -474,7 +474,7 @@ export default function RemindersPage() {
           {busyAction === "clearPast" ? "Deleting..." : "Delete Past Visits Now"}
         </button>
         <button
-          className="w-full rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700"
+          className="danger-btn"
           disabled={busyAction === "deleteAll"}
           onClick={deleteAllDataNow}
           type="button"

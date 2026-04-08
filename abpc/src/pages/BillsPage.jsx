@@ -334,17 +334,22 @@ export default function BillsPage() {
           {error}
         </section>
       ) : null}
-      <section className="app-card">
+      <section className="app-card section-shell">
+        <div>
+          <p className="section-kicker">Billing Center</p>
+          <p className="section-title">Quotations And Bills</p>
+          <p className="section-subtitle">Create documents at the top and review all saved records in dedicated sections below.</p>
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <button
-            className={`ghost-btn ${tab === "quotations" ? "border-emerald-300 bg-emerald-50" : ""}`}
+            className={`ghost-btn ${tab === "quotations" ? "btn-toggle-active" : ""}`}
             onClick={() => setTab("quotations")}
             type="button"
           >
             Quotations
           </button>
           <button
-            className={`ghost-btn ${tab === "invoices" ? "border-emerald-300 bg-emerald-50" : ""}`}
+            className={`ghost-btn ${tab === "invoices" ? "btn-toggle-active" : ""}`}
             onClick={() => setTab("invoices")}
             type="button"
           >
@@ -357,8 +362,11 @@ export default function BillsPage() {
       {tab === "quotations" ? (
         <>
           <form className="space-y-4" onSubmit={saveQuotation}>
-            <section className="app-card space-y-3">
-              <p className="section-title">Create Estimate</p>
+            <section className="app-card section-shell">
+              <div>
+                <p className="section-kicker">New Entry</p>
+                <p className="section-title">Create Estimate</p>
+              </div>
               <input
                 className="field-input"
                 onChange={(event) => setQuotationForm((prev) => ({ ...prev, date: event.target.value }))}
@@ -388,10 +396,10 @@ export default function BillsPage() {
               ) : null}
             </section>
 
-            <section className="app-card space-y-3">
+            <section className="app-card section-shell">
               <p className="text-sm font-bold text-slate-900">Estimate Items</p>
               {quotationForm.items.map((item, index) => (
-                <div key={`quote-item-${index}`} className="surface-card space-y-2">
+                <div key={`quote-item-${index}`} className="saved-card space-y-2">
                   <input
                     className="field-input"
                     onChange={(event) => handleQuotationItemChange(index, "itemName", event.target.value)}
@@ -439,7 +447,7 @@ export default function BillsPage() {
                 </div>
               ))}
               <button
-                className="secondary-btn"
+                className="secondary-btn btn-view"
                 onClick={() => setQuotationForm((prev) => ({ ...prev, items: [...prev.items, createQuoteItem()] }))}
                 type="button"
               >
@@ -451,7 +459,7 @@ export default function BillsPage() {
               </div>
             </section>
 
-            <section className="app-card space-y-3">
+            <section className="app-card section-shell">
               <p className="text-sm font-bold text-slate-900">Details</p>
               <textarea
                 className="field-input min-h-20"
@@ -480,40 +488,58 @@ export default function BillsPage() {
               />
             </section>
 
-            <button className="primary-btn" disabled={busy} type="submit">
+            <button className="primary-btn btn-save" disabled={busy} type="submit">
               {busy ? "Saving..." : "Save Quotation"}
             </button>
           </form>
 
-          <section className="app-card">
-            <p className="section-title">Quotation List</p>
-            <div className="space-y-2">
+          <section className="app-card saved-section">
+            <div>
+              <p className="section-kicker">Saved Things</p>
+              <p className="section-title">Saved Quotations</p>
+            </div>
+            <div className="summary-strip">
+              <div className="mini-stat">
+                <p className="mini-stat-label">Stored</p>
+                <p className="mini-stat-value">{quotations.length}</p>
+              </div>
+              <div className="mini-stat">
+                <p className="mini-stat-label">Customers</p>
+                <p className="mini-stat-value">{new Set(quotations.map((item) => item.customerId)).size}</p>
+              </div>
+              <div className="mini-stat">
+                <p className="mini-stat-label">Value</p>
+                <p className="mini-stat-value">{formatCurrency(quotations.reduce((sum, item) => sum + Number(item.totalAmount || 0), 0))}</p>
+              </div>
+            </div>
+            <div className="saved-list">
               {!quotations.length ? (
                 <p className="text-sm text-slate-500">No quotations yet.</p>
               ) : (
                 [...quotations].reverse().map((quotation) => (
-                  <article key={quotation.id} className="surface-card">
-                    <div className="flex items-start justify-between gap-2">
+                  <article key={quotation.id} className="saved-card">
+                    <div className="saved-card-top">
                       <div>
-                        <p className="text-sm font-bold text-slate-900">{quotation.estimateNumber}</p>
-                        <p className="text-xs text-slate-500">{quotation.customerName}</p>
-                        <p className="text-xs text-slate-500">{formatDateDisplay(quotation.date)}</p>
+                        <p className="saved-card-title">{quotation.estimateNumber}</p>
+                        <p className="saved-card-meta">{quotation.customerName}</p>
+                        <p className="saved-card-meta">{formatDateDisplay(quotation.date)}</p>
                       </div>
-                      <p className="text-sm font-bold text-slate-900">{formatCurrency(quotation.totalAmount)}</p>
+                      <p className="saved-card-amount">{formatCurrency(quotation.totalAmount)}</p>
                     </div>
-                    <div className="mt-2 grid grid-cols-3 gap-2">
-                      <Link className="ghost-btn text-center" to={`/admin/quotations/${quotation.id}`}>
+                    <div className="saved-card-note">Status: {quotation.status || "Draft"}</div>
+                    <div className="saved-card-actions grid grid-cols-3">
+                      <Link className="ghost-btn btn-view text-center" to={`/admin/quotations/${quotation.id}`}>
                         View
                       </Link>
-                      <button className="ghost-btn" onClick={() => openQuotationOnWhatsApp(quotation)} type="button">
+                      <button className="primary-btn btn-send text-xs" onClick={() => openQuotationOnWhatsApp(quotation)} type="button">
                         WhatsApp
                       </button>
-                      <button className="ghost-btn" onClick={() => convertQuotationToInvoice(quotation)} type="button">
+                      <button className="primary-btn btn-convert text-xs" onClick={() => convertQuotationToInvoice(quotation)} type="button">
                         Convert
                       </button>
                     </div>
                     <button
-                      className="mt-2 w-full rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700"
+                      className="danger-btn text-xs"
                       disabled={deletingId === quotation.id}
                       onClick={() => deleteQuotation(quotation)}
                       type="button"
@@ -529,8 +555,11 @@ export default function BillsPage() {
       ) : (
         <>
           <form className="space-y-4" onSubmit={saveInvoice}>
-            <section className="app-card space-y-3">
-              <p className="section-title">Create Tax Invoice</p>
+            <section className="app-card section-shell">
+              <div>
+                <p className="section-kicker">New Entry</p>
+                <p className="section-title">Create Tax Invoice</p>
+              </div>
               <input
                 className="field-input"
                 onChange={(event) => setInvoiceForm((prev) => ({ ...prev, date: event.target.value }))}
@@ -557,10 +586,10 @@ export default function BillsPage() {
               ) : null}
             </section>
 
-            <section className="app-card space-y-3">
+            <section className="app-card section-shell">
               <p className="text-sm font-bold text-slate-900">Invoice Items</p>
               {invoiceForm.items.map((item, index) => (
-                <div key={`invoice-item-${index}`} className="surface-card space-y-2">
+                <div key={`invoice-item-${index}`} className="saved-card space-y-2">
                   <input
                     className="field-input"
                     onChange={(event) => handleInvoiceItemChange(index, "itemName", event.target.value)}
@@ -610,7 +639,7 @@ export default function BillsPage() {
                 </div>
               ))}
               <button
-                className="secondary-btn"
+                className="secondary-btn btn-view"
                 onClick={() => setInvoiceForm((prev) => ({ ...prev, items: [...prev.items, createInvoiceItem()] }))}
                 type="button"
               >
@@ -618,7 +647,7 @@ export default function BillsPage() {
               </button>
             </section>
 
-            <section className="app-card space-y-2">
+            <section className="app-card section-shell">
               <p className="text-sm font-bold text-slate-900">Summary</p>
               <div className="surface-card flex justify-between text-sm">
                 <span>Subtotal</span>
@@ -666,36 +695,53 @@ export default function BillsPage() {
               />
             </section>
 
-            <button className="primary-btn" disabled={busy} type="submit">
+            <button className="primary-btn btn-create" disabled={busy} type="submit">
               {busy ? "Saving..." : "Save Invoice"}
             </button>
           </form>
 
-          <section className="app-card">
-            <p className="section-title">Invoice List</p>
-            <div className="space-y-2">
+          <section className="app-card saved-section">
+            <div>
+              <p className="section-kicker">Saved Things</p>
+              <p className="section-title">Saved Bills</p>
+            </div>
+            <div className="summary-strip">
+              <div className="mini-stat">
+                <p className="mini-stat-label">Stored</p>
+                <p className="mini-stat-value">{invoices.length}</p>
+              </div>
+              <div className="mini-stat">
+                <p className="mini-stat-label">Pending</p>
+                <p className="mini-stat-value">{invoices.filter((item) => Number(item.balance || 0) > 0).length}</p>
+              </div>
+              <div className="mini-stat">
+                <p className="mini-stat-label">Collected</p>
+                <p className="mini-stat-value">{formatCurrency(invoices.reduce((sum, item) => sum + Number(item.received || 0), 0))}</p>
+              </div>
+            </div>
+            <div className="saved-list">
               {!invoices.length ? (
                 <p className="text-sm text-slate-500">No invoices yet.</p>
               ) : (
                 [...invoices].reverse().map((invoice) => (
-                  <article key={invoice.id} className="surface-card">
-                    <div className="flex items-start justify-between gap-2">
+                  <article key={invoice.id} className="saved-card">
+                    <div className="saved-card-top">
                       <div>
-                        <p className="text-sm font-bold text-slate-900">{invoice.invoiceNumber}</p>
-                        <p className="text-xs text-slate-500">{invoice.customerName}</p>
-                        <p className="text-xs text-slate-500">{formatDateDisplay(invoice.date)}</p>
+                        <p className="saved-card-title">{invoice.invoiceNumber}</p>
+                        <p className="saved-card-meta">{invoice.customerName}</p>
+                        <p className="saved-card-meta">{formatDateDisplay(invoice.date)}</p>
                       </div>
                       <span className="status-pill">{invoice.status || "Pending"}</span>
                     </div>
-                    <p className="mt-2 text-xs text-slate-500">
+                    <p className="saved-card-note">
                       Total: {formatCurrency(invoice.total)} | Balance: {formatCurrency(invoice.balance)}
                     </p>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <Link className="ghost-btn text-center" to={`/admin/invoices/${invoice.id}`}>
+                    <div className="saved-card-actions grid grid-cols-2">
+                      <Link className="ghost-btn btn-view text-center" to={`/admin/invoices/${invoice.id}`}>
                         View
                       </Link>
                       <button
-                        className="ghost-btn"
+                        className="primary-btn btn-pay text-xs"
                         disabled={false}
                         onClick={() => markInvoicePaid(invoice)}
                         type="button"
@@ -704,7 +750,7 @@ export default function BillsPage() {
                       </button>
                     </div>
                     <button
-                      className="mt-2 w-full rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700"
+                      className="danger-btn text-xs"
                       disabled={deletingId === invoice.id}
                       onClick={() => deleteInvoice(invoice)}
                       type="button"

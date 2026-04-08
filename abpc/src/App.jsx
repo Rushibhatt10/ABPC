@@ -41,6 +41,7 @@ function App() {
 
             <Route path="/admin" element={<AdminRoutes />}>
               <Route index element={<HomePage />} />
+              <Route path="homepage" element={<HomePage />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="new-job" element={<NewJobPage />} />
               <Route path="bills" element={<BillsPage />} />

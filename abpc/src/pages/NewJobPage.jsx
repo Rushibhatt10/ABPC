@@ -237,14 +237,14 @@ export default function NewJobPage() {
 
           <div className="grid grid-cols-2 gap-2">
             <button
-              className={`ghost-btn ${form.pricingMode === "per_sq_ft" ? "border-emerald-300 bg-emerald-50" : ""}`}
+              className={`ghost-btn ${form.pricingMode === "per_sq_ft" ? "btn-toggle-active" : ""}`}
               onClick={() => setForm((prev) => ({ ...prev, pricingMode: "per_sq_ft" }))}
               type="button"
             >
               Per sq ft
             </button>
             <button
-              className={`ghost-btn ${form.pricingMode === "fixed" ? "border-emerald-300 bg-emerald-50" : ""}`}
+              className={`ghost-btn ${form.pricingMode === "fixed" ? "btn-toggle-active" : ""}`}
               onClick={() => setForm((prev) => ({ ...prev, pricingMode: "fixed" }))}
               type="button"
             >
@@ -325,7 +325,7 @@ export default function NewJobPage() {
         </section>
 
         {success ? <p className="text-sm font-semibold text-emerald-700">{success}</p> : null}
-        <button className="primary-btn" disabled={saving} type="submit">
+        <button className="primary-btn btn-create" disabled={saving} type="submit">
           {saving ? "Saving..." : "Create Job"}
         </button>
       </form>
@@ -344,7 +344,7 @@ export default function NewJobPage() {
                 </p>
                 <p className="text-xs text-slate-500">Total {formatCurrency(job.totalAmount)}</p>
                 <button
-                  className="mt-2 w-full rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700"
+                  className="danger-btn mt-2 text-xs"
                   disabled={deletingJobId === job.id}
                   onClick={() => deleteJob(job)}
                   type="button"

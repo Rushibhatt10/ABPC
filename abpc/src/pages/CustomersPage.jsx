@@ -135,9 +135,13 @@ export default function CustomersPage() {
           {message}
         </section>
       ) : null}
-      <section className="app-card">
-        <p className="section-title">Add Customer</p>
-        <form className="space-y-3" onSubmit={handleSubmit}>
+      <section className="app-card section-shell">
+        <div>
+          <p className="section-kicker">Customer Entry</p>
+          <p className="section-title">Add Customer</p>
+          <p className="section-subtitle">Keep the same workflow, just with cleaner spacing and better alignment.</p>
+        </div>
+        <form className="form-stack" onSubmit={handleSubmit}>
           <div>
             <label className="field-label" htmlFor="customerName">
               Name
@@ -198,30 +202,53 @@ export default function CustomersPage() {
             </select>
           </div>
 
-          <button className="primary-btn" disabled={saving} type="submit">
+          <button className="primary-btn btn-save" disabled={saving} type="submit">
             {saving ? "Saving..." : "Save Customer"}
           </button>
         </form>
       </section>
 
-      <section className="app-card">
-        <p className="section-title">Customer List</p>
-        <div className="space-y-2">
+      <section className="app-card saved-section">
+        <div>
+          <p className="section-kicker">Saved Things</p>
+          <p className="section-title">Stored Customers</p>
+          <p className="section-subtitle">All saved customers are grouped here in a dedicated section.</p>
+        </div>
+        <div className="summary-strip">
+          <div className="mini-stat">
+            <p className="mini-stat-label">Customers</p>
+            <p className="mini-stat-value">{customers.length}</p>
+          </div>
+          <div className="mini-stat">
+            <p className="mini-stat-label">Quotations</p>
+            <p className="mini-stat-value">{quotations.length}</p>
+          </div>
+          <div className="mini-stat">
+            <p className="mini-stat-label">Bills</p>
+            <p className="mini-stat-value">{invoices.length}</p>
+          </div>
+        </div>
+        <div className="saved-list">
           {!customers.length ? (
             <p className="text-sm text-slate-500">No customers added yet.</p>
           ) : (
             customers.map((customer) => (
               <button
                 key={customer.id}
-                className={`surface-card w-full text-left ${
-                  selectedCustomerId === customer.id ? "border-emerald-300 bg-emerald-50" : ""
+                className={`saved-card w-full text-left ${
+                  selectedCustomerId === customer.id ? "active" : ""
                 }`}
                 onClick={() => setSelectedCustomerId(customer.id)}
                 type="button"
               >
-                <p className="text-sm font-bold text-slate-900">{customer.name}</p>
-                <p className="text-xs text-slate-500">{customer.phone}</p>
-                <p className="mt-1 text-xs text-slate-500">{customer.propertyType}</p>
+                <div className="saved-card-top">
+                  <div>
+                    <p className="saved-card-title">{customer.name}</p>
+                    <p className="saved-card-meta">{customer.phone}</p>
+                  </div>
+                  <span className="status-pill">{customer.propertyType}</span>
+                </div>
+                <div className="saved-card-note">{customer.address}</div>
               </button>
             ))
           )}
@@ -229,15 +256,32 @@ export default function CustomersPage() {
       </section>
 
       {selectedCustomer ? (
-        <section className="app-card">
-          <p className="section-title">Customer History</p>
-          <div className="space-y-2 text-sm">
-            <div className="surface-card">
+        <section className="app-card section-shell">
+          <div>
+            <p className="section-kicker">Saved Details</p>
+            <p className="section-title">Customer History</p>
+          </div>
+          <div className="summary-strip">
+            <div className="mini-stat">
+              <p className="mini-stat-label">Visits</p>
+              <p className="mini-stat-value">{history.visits.length}</p>
+            </div>
+            <div className="mini-stat">
+              <p className="mini-stat-label">Quotations</p>
+              <p className="mini-stat-value">{history.quotationList.length}</p>
+            </div>
+            <div className="mini-stat">
+              <p className="mini-stat-label">Bills</p>
+              <p className="mini-stat-value">{history.invoiceList.length}</p>
+            </div>
+          </div>
+          <div className="space-y-3 text-sm">
+            <div className="saved-card">
               <p className="font-bold text-slate-900">{selectedCustomer.name}</p>
               <p className="text-slate-500">{selectedCustomer.phone}</p>
               <p className="mt-1 text-slate-500">{selectedCustomer.address}</p>
             </div>
-            <div className="surface-card">
+            <div className="saved-card">
               <p className="font-semibold text-slate-700">Past services / visits: {history.visits.length}</p>
               {history.visits.slice(0, 3).map((visit) => (
                 <p key={visit.id} className="text-xs text-slate-500">
@@ -245,7 +289,7 @@ export default function CustomersPage() {
                 </p>
               ))}
             </div>
-            <div className="surface-card">
+            <div className="saved-card">
               <p className="font-semibold text-slate-700">Quotations: {history.quotationList.length}</p>
               {history.quotationList.slice(0, 3).map((quote) => (
                 <p key={quote.id} className="text-xs text-slate-500">
@@ -253,7 +297,7 @@ export default function CustomersPage() {
                 </p>
               ))}
             </div>
-            <div className="surface-card">
+            <div className="saved-card">
               <p className="font-semibold text-slate-700">Bills / Invoices: {history.invoiceList.length}</p>
               {history.invoiceList.slice(0, 3).map((invoice) => (
                 <p key={invoice.id} className="text-xs text-slate-500">
@@ -264,7 +308,7 @@ export default function CustomersPage() {
           </div>
           <div className="mt-3">
             <button
-              className="w-full rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700"
+              className="danger-btn"
               disabled={deleting}
               onClick={deleteCustomer}
               type="button"

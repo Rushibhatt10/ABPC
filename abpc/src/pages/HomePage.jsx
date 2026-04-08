@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { CalendarDays, Clock3, FileText, IndianRupee, Receipt, TrendingUp, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { ensureDefaultServices, updateRecord } from "../utils/firestoreHelpers";
 import { endOfDay, formatCurrency, formatDateDisplay, getTodayISO, startOfDay, toDateObject } from "../utils/format";
@@ -116,7 +117,7 @@ function WorkerJobCard({ job, onSave, saving, disabled }) {
           Save Progress
         </button>
         <button
-          className="primary-btn"
+          className="primary-btn btn-complete"
           disabled={saving || disabled}
           onClick={() => onSave(job.id, draft, true)}
           type="button"
@@ -191,28 +192,84 @@ function AdminDashboard({ profile }) {
   }, [amc, customers.length, invoices, jobs, quotations.length, services.length]);
 
   const summaryCards = [
-    { label: "Leads Dashboard", value: totals.leads },
-    { label: "Services Dashboard", value: totals.services },
-    { label: "Customer Management", value: totals.customers },
-    { label: "Quotations", value: totals.quotations },
-    { label: "Invoices", value: totals.invoices },
-    { label: "Service Scheduling", value: totals.schedules },
-    { label: "Reports", value: totals.reports },
+    {
+      label: "Total Revenue",
+      value: totals.reports,
+      tone: "dashboard-stat-green",
+      icon: <TrendingUp className="h-5 w-5" />,
+    },
+    {
+      label: "Pending Payments",
+      value: formatCurrency(
+        invoices.filter((invoice) => Number(invoice.balance || 0) > 0).reduce((sum, invoice) => sum + Number(invoice.balance || 0), 0),
+      ),
+      tone: "dashboard-stat-amber",
+      icon: <Clock3 className="h-5 w-5" />,
+    },
+    {
+      label: "Today's Jobs",
+      value: jobs.filter((job) => String(job.scheduledDate) === String(getTodayISO())).length,
+      tone: "dashboard-stat-blue",
+      icon: <CalendarDays className="h-5 w-5" />,
+    },
+    {
+      label: "Total Customers",
+      value: totals.customers,
+      tone: "dashboard-stat-violet",
+      icon: <Users className="h-5 w-5" />,
+    },
+  ];
+
+  const hasAnySavedData = customers.length || quotations.length || invoices.length || jobs.length;
+
+  const savedOverview = [
+    {
+      title: "Customers",
+      count: customers.length,
+      subtitle: "Profiles saved in CRM",
+      to: "/admin/customers",
+      action: "Open Customers",
+      icon: <Users className="h-4 w-4" />,
+    },
+    {
+      title: "Quotations",
+      count: quotations.length,
+      subtitle: "Drafts and estimates",
+      to: "/admin/bills",
+      action: "Open Quotations",
+      icon: <FileText className="h-4 w-4" />,
+    },
+    {
+      title: "Bills",
+      count: invoices.length,
+      subtitle: "Invoices and payment records",
+      to: "/admin/bills",
+      action: "Open Bills",
+      icon: <Receipt className="h-4 w-4" />,
+    },
   ];
 
   return (
     <div className="space-y-4">
-      <section className="app-card">
-        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Welcome</p>
-        <h2 className="mt-1 text-xl font-extrabold text-slate-900">{profile?.name || "Team"} Dashboard</h2>
-        <p className="mt-1 text-sm text-slate-500">Simple daily control panel for AB Pest Control operations.</p>
+      <section className="app-card dashboard-hero">
+        <div className="dashboard-hero-top">
+          <div>
+            <p className="section-kicker">Dashboard</p>
+            <h2 className="mt-1 text-2xl font-extrabold text-slate-900">{profile?.name || "Team"} Overview</h2>
+            <p className="mt-1 text-sm text-slate-500">Modern daily control panel for bills, quotations, jobs, and customers.</p>
+          </div>
+          <div className="dashboard-icon-wrap">
+            <IndianRupee className="h-5 w-5" />
+          </div>
+        </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="dashboard-stat-grid">
         {summaryCards.map((card) => (
-          <article key={card.label} className="surface-card">
-            <p className="text-xs font-semibold text-slate-500">{card.label}</p>
-            <p className="mt-2 text-lg font-extrabold text-slate-900">{card.value}</p>
+          <article key={card.label} className={`dashboard-stat-card ${card.tone}`}>
+            <div className="dashboard-stat-icon">{card.icon}</div>
+            <p className="dashboard-stat-value">{card.value}</p>
+            <p className="dashboard-stat-label">{card.label}</p>
           </article>
         ))}
       </section>
@@ -239,9 +296,40 @@ function AdminDashboard({ profile }) {
         <Link className="secondary-btn text-center" to="/admin/new-job">
           Create New Job
         </Link>
-        <Link className="secondary-btn text-center" to="/admin/bills">
+        <Link className="secondary-btn text-center btn-view" to="/admin/bills">
           Create Quote / Bill
         </Link>
+      </section>
+
+      <section className="app-card saved-section">
+        <div>
+          <p className="section-kicker">Admin Records</p>
+          <p className="section-title">Customers, Quotations, And Bills</p>
+          <p className="section-subtitle">One separate section where admin can quickly see all stored records.</p>
+        </div>
+        {hasAnySavedData ? (
+          <div className="saved-record-grid">
+            {savedOverview.map((item) => (
+              <Link key={item.title} className="saved-record-chip saved-record-link" to={item.to}>
+                <div className="saved-record-badge">{item.icon}</div>
+                <div className="min-w-0 flex-1">
+                  <strong>{item.title}</strong>
+                  <span>{item.subtitle}</span>
+                </div>
+                <div className="text-right">
+                  <p className="mini-stat-value">{item.count}</p>
+                  <p className="text-[11px] font-semibold text-emerald-700">{item.action}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="dashboard-empty-state">
+            <div className="dashboard-empty-icon">🪲</div>
+            <p className="dashboard-empty-title">No data yet</p>
+            <p className="dashboard-empty-copy">Start by adding customers, quotations, bills, or jobs.</p>
+          </div>
+        )}
       </section>
 
       <section className="app-card">

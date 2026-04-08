@@ -26,7 +26,7 @@ export default function AppShell({ children }) {
             <p className="text-sm font-black uppercase tracking-tight text-slate-900 leading-none mb-1">{profile?.name || "Ankit Bhatt"}</p>
             <button
               type="button"
-              className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-emerald-700 transition"
+              className="ghost-btn px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-emerald-700"
               onClick={handleLogout}
             >
               Log Out

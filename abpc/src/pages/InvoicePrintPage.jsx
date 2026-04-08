@@ -29,116 +29,154 @@ export default function InvoicePrintPage() {
   }
 
   return (
-    <article className="bg-white p-6 shadow-lg rounded-lg max-w-4xl mx-auto my-8">
+    <div className="bg-[#f5f5f5] min-h-screen py-6 px-2 sm:px-4">
+      <article className="bg-white max-w-5xl mx-auto shadow rounded overflow-hidden text-sm">
 
-      <header className="border-b pb-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="bg-green-500 text-white px-4 py-1 font-bold inline-block">
-              TAX INVOICE
-            </h1>
-            <p className="font-bold mt-2">A B Pest Control Insecticide Services</p>
-            <p className="text-xs text-gray-500">
-              SHOP NO: 4 B J HOUSE HANUMAN CHAR RASTA GOPIPURA, SURAT
-            </p>
-          </div>
+        {/* HEADER */}
+        <div className="bg-green-500 text-white px-4 py-3 flex justify-between items-center">
+          <h1 className="font-bold text-lg tracking-wide">TAX INVOICE</h1>
+          <Logo variant="horizontal" className="h-8" />
+        </div>
 
-          <div className="w-48 text-right">
-            <Logo variant="horizontal" className="justify-end" />
+        {/* COMPANY */}
+        <div className="px-4 py-3 border-b">
+          <h2 className="font-bold text-green-600 text-base">
+            A B PEST CONTROL INSECTICIDE SERVICES
+          </h2>
+          <div className="flex flex-col sm:flex-row sm:justify-between text-xs mt-1 gap-2">
+            <div>
+              SHOP NO: 4 B J HOUSE HANUMAN CHAR RASTA GOPIPURA <br />
+              MAIN ROAD SURAT
+            </div>
+            <div className="text-left sm:text-right">
+              Phone: 9825188413 <br />
+              Email: abpestcontrol@gmail.com
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 mt-4 text-sm">
+        {/* BILL + INVOICE */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-4 py-3 border-b">
           <div>
-            <p><b>Bill To:</b> {invoice.customerName}</p>
-            <p>{invoice.customerAddress}</p>
-            <p>Phone: {invoice.customerPhone}</p>
-          </div>
-
-          <div className="text-right">
+            <p className="text-green-600 font-semibold">Invoice Details</p>
             <p><b>Invoice No:</b> {invoice.invoiceNumber}</p>
             <p><b>Date:</b> {formatDateDisplay(invoice.date)}</p>
             <p><b>Place:</b> Gujarat</p>
           </div>
+
+          <div>
+            <p className="text-green-600 font-semibold">Bill To</p>
+            <p className="font-bold uppercase">{invoice.customerName}</p>
+            <p>{invoice.customerAddress}</p>
+            <p>Contact: {invoice.customerPhone}</p>
+          </div>
         </div>
-      </header>
 
-      <section className="mt-4">
-        <table className="w-full border text-sm">
-          <thead className="bg-green-500 text-white">
-            <tr>
-              <th className="border p-2">#</th>
-              <th className="border p-2">Item</th>
-              <th className="border p-2">Qty</th>
-              <th className="border p-2">Price</th>
-              <th className="border p-2">Discount</th>
-              <th className="border p-2">Amount</th>
-            </tr>
-          </thead>
+        {/* TABLE */}
+        <div className="overflow-x-auto">
+          <table className="w-full border text-xs sm:text-sm">
+            <thead className="bg-green-500 text-white">
+              <tr>
+                <th className="border p-2">#</th>
+                <th className="border p-2 text-left">Item name</th>
+                <th className="border p-2">Qty</th>
+                <th className="border p-2">Unit</th>
+                <th className="border p-2">Price/unit</th>
+                <th className="border p-2">Discount</th>
+                <th className="border p-2">Amount</th>
+              </tr>
+            </thead>
 
-          <tbody>
-            {(invoice.items || []).map((item, index) => (
-              <tr key={index}>
-                <td className="border p-2 text-center">{index + 1}</td>
-                <td className="border p-2">{item.itemName}</td>
-                <td className="border p-2 text-center">{item.quantity}</td>
-                <td className="border p-2 text-center">{formatCurrency(item.price)}</td>
-                <td className="border p-2 text-center">{formatCurrency(item.discount)}</td>
-                <td className="border p-2 text-center font-semibold">
-                  {formatCurrency(item.finalAmount)}
+            <tbody>
+              {(invoice.items || []).map((item, index) => (
+                <tr key={index}>
+                  <td className="border p-2 text-center">{index + 1}</td>
+                  <td className="border p-2 font-semibold">
+                    {item.itemName}
+                  </td>
+                  <td className="border p-2 text-center">{item.quantity}</td>
+                  <td className="border p-2 text-center">UNIT</td>
+                  <td className="border p-2 text-center">
+                    {formatCurrency(item.price)}
+                  </td>
+                  <td className="border p-2 text-center">
+                    {formatCurrency(item.discount)}
+                  </td>
+                  <td className="border p-2 text-center font-bold">
+                    {formatCurrency(item.finalAmount)}
+                  </td>
+                </tr>
+              ))}
+
+              {/* TOTAL ROW */}
+              <tr className="bg-green-100 font-bold">
+                <td colSpan="5" className="border p-2 text-right">Total</td>
+                <td className="border p-2 text-center">
+                  {formatCurrency(invoice.discountTotal)}
+                </td>
+                <td className="border p-2 text-center">
+                  {formatCurrency(invoice.total)}
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+            </tbody>
+          </table>
+        </div>
 
-      <div className="flex justify-end mt-4">
-        <div className="w-72 border text-sm">
-          <div className="flex justify-between p-2 border-b">
-            <span>Sub Total</span>
-            <span>{formatCurrency(invoice.subtotal)}</span>
+        {/* LOWER SECTION */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 py-4">
+
+          {/* PAY TO */}
+          <div className="text-xs space-y-1">
+            <p className="font-bold text-green-600">Pay To:</p>
+            <p>Bank: SUTEX COOPERATIVE BANK LIMITED</p>
+            <p>Account No: 000610021002444</p>
+            <p>IFSC: SUTB0248006</p>
+            <p>Account Holder: A.B Pest Control</p>
+
+            <div className="mt-3">
+              <p className="font-bold text-green-600">Description</p>
+              <p className="whitespace-pre-wrap">
+                {invoice.warranty}
+              </p>
+            </div>
           </div>
-          <div className="flex justify-between p-2 border-b">
-            <span>Discount</span>
-            <span>{formatCurrency(invoice.discountTotal)}</span>
-          </div>
-          <div className="flex justify-between p-2 bg-green-100 font-bold">
-            <span>Total</span>
-            <span>{formatCurrency(invoice.total)}</span>
-          </div>
-          <div className="flex justify-between p-2 border-t">
-            <span>Received</span>
-            <span>{formatCurrency(invoice.received)}</span>
-          </div>
-          <div className="flex justify-between p-2 font-bold">
-            <span>Balance</span>
-            <span>{formatCurrency(invoice.balance)}</span>
-          </div>
-          <div className="flex justify-between p-2 border-t">
-            <span>Payment Mode</span>
-            <span>{invoice.paymentMode}</span>
+
+          {/* TOTAL BOX */}
+          <div className="border text-xs">
+            <div className="flex justify-between p-2 border-b">
+              <span>Sub Total</span>
+              <span>{formatCurrency(invoice.subtotal)}</span>
+            </div>
+            <div className="flex justify-between p-2 border-b">
+              <span>Discount</span>
+              <span>{formatCurrency(invoice.discountTotal)}</span>
+            </div>
+            <div className="flex justify-between p-2 bg-green-500 text-white font-bold">
+              <span>Total</span>
+              <span>{formatCurrency(invoice.total)}</span>
+            </div>
+            <div className="flex justify-between p-2 border-b">
+              <span>Received</span>
+              <span>{formatCurrency(invoice.received)}</span>
+            </div>
+            <div className="flex justify-between p-2 font-bold border-b">
+              <span>Balance</span>
+              <span>{formatCurrency(invoice.balance)}</span>
+            </div>
+            <div className="flex justify-between p-2">
+              <span>Payment Mode</span>
+              <span>{invoice.paymentMode}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="mt-4 text-sm">
-        <p className="font-bold">Pay To:</p>
-        <p>Bank: SUTEX COOPERATIVE BANK LIMITED</p>
-        <p>Account No: 000610021002444</p>
-        <p>IFSC: SUTB0248006</p>
-      </div>
+        {/* TERMS */}
+        <div className="px-4 pb-4 text-[11px] whitespace-pre-wrap">
+          <p className="font-bold text-green-600">Terms & Conditions</p>
+          <p>{invoice.terms}</p>
+        </div>
 
-      <div className="mt-4 text-sm">
-        <p className="font-bold">Description</p>
-        <p className="whitespace-pre-wrap">{invoice.warranty}</p>
-      </div>
-
-      <div className="mt-4 text-xs text-gray-600 whitespace-pre-wrap">
-        <p className="font-bold">Terms & Conditions</p>
-        <p>{invoice.terms}</p>
-      </div>
-
-    </article>
+      </article>
+    </div>
   );
 }
