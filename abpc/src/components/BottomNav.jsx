@@ -25,7 +25,7 @@ export default function BottomNav({ isWorker }) {
               return (
                 <span
                   className={`flex flex-col items-center justify-center gap-1 rounded-3xl py-2 text-center transition-all ${
-                    item.featured ? "translate-y-[-16px]" : ""
+                    item.featured ? "translate-y-16px" : ""
                   } ${
                     isActive && !item.featured
                       ? "text-emerald-600"

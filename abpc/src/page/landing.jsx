@@ -8,11 +8,12 @@ import Lenis from"lenis";
 import Logo from"../components/Logo.jsx";
 import PremiumServices from"../components/PremiumServices.jsx";
 import { createRecord } from"../utils/localDb";
+import InsectEdgePopups from "../components/InsectEdgePopups";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const HamburgerIcon = ({ open }) => (
-  <div className="flex flex-col justify-center items-end gap-1.5 w-[26px] h-6 cursor-pointer group">
+  <div className="flex flex-col justify-center items-end gap-1.5 w-26px h-6 cursor-pointer group">
  <span className={`block h-0.5 bg-current transition-all duration-400 ease-in-out origin-center rounded-full ${open ?"w-full rotate-45 translate-y-2" :"w-full group-hover:w-4"}`} />
  <span className={`block h-0.5 bg-current transition-all duration-400 ease-in-out rounded-full ${open ?"opacity-0 scale-x-0 w-full" :"w-5 group-hover:w-full"}`} />
  <span className={`block h-0.5 bg-current transition-all duration-400 ease-in-out origin-center rounded-full ${open ?"w-full -rotate-45 -translate-y-2" :"w-3 group-hover:w-5"}`} />
@@ -220,7 +221,7 @@ useEffect(() => {
  {/* Logo */}
  <div className="flex items-center gap-3">
  <Link to="/" className="z-50 relative hover:scale-105 transition-transform duration-300 origin-left">
-  <Logo variant="horizontal" className="w-[148px] min-[370px]:w-[170px] sm:w-[220px]" />
+  <Logo variant="horizontal" className="w-148px min-[370px]:w-170px sm:w-220px" />
  </Link>
  </div>
  
@@ -340,6 +341,8 @@ useEffect(() => {
  </nav>
 
  <main className={`transition-all duration-500 ease-in-out ${menuOpen ? "blur-xl scale-[0.98] brightness-75 pointer-events-none" : "blur-0 scale-100 brightness-100"}`}>
+  
+    <InsectEdgePopups />
   {/* ===== HERO ===== */}
   <section ref={heroRef} className="relative w-full min-h-dvh flex flex-col justify-center items-center px-4 sm:px-6 md:px-12 pt-[calc(env(safe-area-inset-top)+1rem)] pb-12 overflow-hidden">
   {/* Decorative background */}
@@ -362,6 +365,9 @@ useEffect(() => {
   Protecting your space with professional, eco-friendly pest control services tailored for every environment — from kitchens to warehouses.
   </p>
   </div>
+
+
+
   </section>
 
  {/* ===== SERVICES ===== */}
@@ -660,7 +666,7 @@ useEffect(() => {
  </div>
 
  {/* Map */}
-  <div className="flex-1 h-[550px] lg:h-auto min-h-[500px] rounded-[2.5rem] overflow-hidden shadow-2xl border border-current/10 relative group bg-black/5">
+  <div className="flex-1 h-550px lg:h-auto min-h-500px rounded-[2.5rem] overflow-hidden shadow-2xl border border-current/10 relative group bg-black/5">
  <iframe
  title="AB Pest Control Location"
  className="absolute inset-0 w-full h-full grayscale-[0.3] contrast-[1.2] group-hover:grayscale-0 transition-all duration-1000 ease-out"
