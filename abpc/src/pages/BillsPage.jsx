@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, deleteRecord, nextDocumentNumber, updateRecord } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getTodayISO, getWhatsAppNumber, toNumber } from "../utils/format";
-import { listRecords, subscribeDb } from "../utils/localDb";
+import { subscribeCollection } from "../utils/firestoreHelpers";
 
 const defaultMethodology =
   "Methodology: Drilling at regular intervals, chemical injection through nozzles, and final sealing for complete treatment.";
@@ -33,6 +33,7 @@ export default function BillsPage() {
   const [customers, setCustomers] = useState([]);
   const [quotations, setQuotations] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [priceList, setPriceList] = useState([]);
   const [busy, setBusy] = useState(false);
   const [deletingId, setDeletingId] = useState("");
   const [message, setMessage] = useState("");
@@ -61,15 +62,70 @@ export default function BillsPage() {
   });
 
   useEffect(() => {
-    const load = () => {
-      setCustomers(listRecords("customers"));
-      setQuotations(listRecords("quotations"));
-      setInvoices(listRecords("invoices"));
-    };
-    load();
-    const unsubscribe = subscribeDb(load);
-    return unsubscribe;
+    const unsubscribers = [
+      subscribeCollection("customers", setCustomers),
+      subscribeCollection("quotations", setQuotations),
+      subscribeCollection("invoices", setInvoices),
+      subscribeCollection("priceList", setPriceList),
+    ];
+
+    return () => unsubscribers.forEach((unsub) => unsub());
   }, []);
+
+  const [pricePicker, setPricePicker] = useState({ category: "", bhk: "1" });
+
+  const selectedPriceRow = useMemo(() => {
+    if (!pricePicker.category) return null;
+    return priceList.find((row) => row.category === pricePicker.category) || null;
+  }, [priceList, pricePicker.category]);
+
+  const selectedPriceValue = useMemo(() => {
+    const row = selectedPriceRow;
+    if (!row) return null;
+    const entry = row.bhkPrices?.[pricePicker.bhk] || null;
+    const editable = entry?.editable;
+    const base = entry?.base;
+    const price = editable ?? base ?? null;
+    return typeof price === "number" ? price : null;
+  }, [pricePicker.bhk, selectedPriceRow]);
+
+  const addFromPriceListToQuotation = () => {
+    if (!selectedPriceRow || selectedPriceValue === null) {
+      setMessage("Select a price list entry that has been initialized.");
+      return;
+    }
+    setQuotationForm((prev) => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        {
+          itemName: selectedPriceRow.serviceName || selectedPriceRow.category,
+          quantity: "1",
+          unit: "job",
+          unitPrice: String(selectedPriceValue),
+        },
+      ],
+    }));
+  };
+
+  const addFromPriceListToInvoice = () => {
+    if (!selectedPriceRow || selectedPriceValue === null) {
+      setMessage("Select a price list entry that has been initialized.");
+      return;
+    }
+    setInvoiceForm((prev) => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        {
+          itemName: selectedPriceRow.serviceName || selectedPriceRow.category,
+          quantity: "1",
+          price: String(selectedPriceValue),
+          discount: "0",
+        },
+      ],
+    }));
+  };
 
   const quotationCustomer = useMemo(
     () => customers.find((customer) => customer.id === quotationForm.customerId) || null,
@@ -398,6 +454,37 @@ export default function BillsPage() {
 
             <section className="app-card section-shell">
               <p className="text-sm font-bold text-slate-900">Estimate Items</p>
+              <div className="saved-card space-y-2">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Add from price list</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    className="field-input"
+                    onChange={(e) => setPricePicker((p) => ({ ...p, category: e.target.value }))}
+                    value={pricePicker.category}
+                  >
+                    <option value="">Select category</option>
+                    {priceList.map((row) => (
+                      <option key={row.id} value={row.category}>
+                        {row.category}
+                      </option>
+                    ))}
+                  </select>
+                  <select className="field-input" onChange={(e) => setPricePicker((p) => ({ ...p, bhk: e.target.value }))} value={pricePicker.bhk}>
+                    <option value="1">1 BHK</option>
+                    <option value="2">2 BHK</option>
+                    <option value="3">3 BHK</option>
+                    <option value="4">4 BHK</option>
+                    <option value="bunglow">Bunglow</option>
+                  </select>
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-600">
+                  <span>Selected price</span>
+                  <span className="font-bold">{selectedPriceValue === null ? "-" : formatCurrency(selectedPriceValue)}</span>
+                </div>
+                <button className="secondary-btn btn-view" onClick={addFromPriceListToQuotation} type="button">
+                  Add Item
+                </button>
+              </div>
               {quotationForm.items.map((item, index) => (
                 <div key={`quote-item-${index}`} className="saved-card space-y-2">
                   <input
@@ -588,6 +675,37 @@ export default function BillsPage() {
 
             <section className="app-card section-shell">
               <p className="text-sm font-bold text-slate-900">Invoice Items</p>
+              <div className="saved-card space-y-2">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Add from price list</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    className="field-input"
+                    onChange={(e) => setPricePicker((p) => ({ ...p, category: e.target.value }))}
+                    value={pricePicker.category}
+                  >
+                    <option value="">Select category</option>
+                    {priceList.map((row) => (
+                      <option key={row.id} value={row.category}>
+                        {row.category}
+                      </option>
+                    ))}
+                  </select>
+                  <select className="field-input" onChange={(e) => setPricePicker((p) => ({ ...p, bhk: e.target.value }))} value={pricePicker.bhk}>
+                    <option value="1">1 BHK</option>
+                    <option value="2">2 BHK</option>
+                    <option value="3">3 BHK</option>
+                    <option value="4">4 BHK</option>
+                    <option value="bunglow">Bunglow</option>
+                  </select>
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-600">
+                  <span>Selected price</span>
+                  <span className="font-bold">{selectedPriceValue === null ? "-" : formatCurrency(selectedPriceValue)}</span>
+                </div>
+                <button className="secondary-btn btn-view" onClick={addFromPriceListToInvoice} type="button">
+                  Add Item
+                </button>
+              </div>
               {invoiceForm.items.map((item, index) => (
                 <div key={`invoice-item-${index}`} className="saved-card space-y-2">
                   <input

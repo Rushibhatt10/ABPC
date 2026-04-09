@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { formatCurrency, formatDateDisplay } from "../utils/format";
 import Logo from "../components/Logo";
-import { getRecord, subscribeDb } from "../utils/localDb";
+import { subscribeDoc } from "../utils/firestoreHelpers";
 
 export default function QuotationPrintPage() {
   const { id } = useParams();
@@ -10,13 +10,11 @@ export default function QuotationPrintPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = () => {
-      if (!id) return;
-      setQuotation(getRecord("quotations", id));
+    if (!id) return undefined;
+    const unsubscribe = subscribeDoc("quotations", id, (next) => {
+      setQuotation(next);
       setLoading(false);
-    };
-    load();
-    const unsubscribe = subscribeDb(load);
+    });
     return unsubscribe;
   }, [id]);
 

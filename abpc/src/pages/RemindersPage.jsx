@@ -18,7 +18,7 @@ import {
   toLocalISODate,
   toNumber,
 } from "../utils/format";
-import { listRecords, subscribeDb } from "../utils/localDb";
+import { subscribeCollection } from "../utils/firestoreHelpers";
 
 const buildSchedule = (startDate, endDate, count) => {
   const parsedStart = startOfDay(startDate);
@@ -76,16 +76,14 @@ export default function RemindersPage() {
   });
 
   useEffect(() => {
-    const load = () => {
-      setCustomers(listRecords("customers"));
-      setJobs(listRecords("jobs"));
-      setInvoices(listRecords("invoices"));
-      setAmcList(listRecords("amc"));
-    };
+    const unsubscribers = [
+      subscribeCollection("customers", setCustomers),
+      subscribeCollection("jobs", setJobs),
+      subscribeCollection("invoices", setInvoices),
+      subscribeCollection("amc", setAmcList),
+    ];
 
-    load();
-    const unsubscribe = subscribeDb(load);
-    return unsubscribe;
+    return () => unsubscribers.forEach((unsub) => unsub());
   }, []);
 
   const selectedCustomer = useMemo(

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, deleteRecord, ensureDefaultServices, nextDocumentNumber } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getTodayISO, toNumber } from "../utils/format";
-import { listRecords, subscribeDb } from "../utils/localDb";
+import { subscribeCollection } from "../utils/firestoreHelpers";
 
 const defaultForm = {
   customerId: "",
@@ -31,27 +31,26 @@ export default function NewJobPage() {
   useEffect(() => {
     ensureDefaultServices().catch(() => {});
 
-    const load = () => {
-      setCustomers(listRecords("customers"));
-      const list = listRecords("services");
-      setServices(list);
-      setJobs(listRecords("jobs"));
-      setForm((prev) => {
-        if (prev.serviceId || !list.length) return prev;
-        const first = list[0];
-        return {
-          ...prev,
-          serviceId: first.id,
-          pricingMode: first.pricingType || "per_sq_ft",
-          unitPrice: first.unitPrice ? String(first.unitPrice) : "",
-          fixedPrice: first.fixedPrice ? String(first.fixedPrice) : "",
-        };
-      });
-    };
+    const unsubscribers = [
+      subscribeCollection("customers", setCustomers),
+      subscribeCollection("services", (list) => {
+        setServices(list);
+        setForm((prev) => {
+          if (prev.serviceId || !list.length) return prev;
+          const first = list[0];
+          return {
+            ...prev,
+            serviceId: first.id,
+            pricingMode: first.pricingType || "per_sq_ft",
+            unitPrice: first.unitPrice ? String(first.unitPrice) : "",
+            fixedPrice: first.fixedPrice ? String(first.fixedPrice) : "",
+          };
+        });
+      }),
+      subscribeCollection("jobs", setJobs),
+    ];
 
-    load();
-    const unsubscribe = subscribeDb(load);
-    return unsubscribe;
+    return () => unsubscribers.forEach((unsub) => unsub());
   }, []);
 
   const selectedCustomer = useMemo(

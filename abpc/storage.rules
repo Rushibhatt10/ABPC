@@ -1,0 +1,30 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Images: max 2 MB, must be image type
+    match /reports/images/{jobId}/{reportId}/{fileName} {
+      allow read:  if signedIn();
+      allow write: if signedIn()
+                   && request.resource.size <= 2 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Audio: max 1 MB, must be audio type
+    match /reports/audio/{jobId}/{reportId}/{fileName} {
+      allow read:  if signedIn();
+      allow write: if signedIn()
+                   && request.resource.size <= 1 * 1024 * 1024
+                   && request.resource.contentType.matches('audio/.*');
+    }
+
+    // Deny everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

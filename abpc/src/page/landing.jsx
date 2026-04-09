@@ -7,7 +7,7 @@ import { ScrollTrigger } from"gsap/ScrollTrigger";
 import Lenis from"lenis";
 import Logo from"../components/Logo.jsx";
 import PremiumServices from"../components/PremiumServices.jsx";
-import { createRecord } from"../utils/localDb";
+import { createRecord } from"../utils/firestoreHelpers";
 import InsectEdgePopups from "../components/InsectEdgePopups";
 
 gsap.registerPlugin(ScrollTrigger);

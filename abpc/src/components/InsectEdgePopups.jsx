@@ -4,10 +4,10 @@ export default function InsectEdgePopups() {
   const navigate = useNavigate();
 
   const insects = [
-    { emoji: "🐜", position: "left-4 top-[30%]" },
-    { emoji: "🪳", position: "right-4 top-[45%]" },
-    { emoji: "🦟", position: "left-[25%] bottom-6" },
-    { emoji: "🐛", position: "right-[20%] top-[15%]" },
+    { emoji: "🐜", position: "left-3 sm:left-4 top-[30%]" },
+    { emoji: "🪳", position: "right-3 sm:right-4 top-[45%]" },
+    { emoji: "🦟", position: "left-3 sm:left-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)]" },
+    { emoji: "🐛", position: "right-3 sm:right-4 top-[15%]" },
   ];
 
   return (
@@ -32,7 +32,7 @@ export default function InsectEdgePopups() {
           bg-white/90 backdrop-blur-md text-black shadow-xl border border-black/10
           opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 
           transition-all duration-300 whitespace-nowrap">
-            Know About Me →
+            Know Your Insects →
           </div>
         </button>
       ))}

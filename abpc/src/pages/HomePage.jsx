@@ -1,426 +1,430 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarDays, Clock3, FileText, IndianRupee, Receipt, TrendingUp, Users } from "lucide-react";
+import {
+  Users, Briefcase, TrendingUp, Clock, CheckCircle2,
+  AlertCircle, Calendar, ArrowRight, Plus, FileText, Receipt,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { ensureDefaultServices, updateRecord } from "../utils/firestoreHelpers";
-import { endOfDay, formatCurrency, formatDateDisplay, getTodayISO, startOfDay, toDateObject } from "../utils/format";
-import { listRecords, subscribeDb } from "../utils/localDb";
+import { subscribeCollection, subscribeQuery, updateRecord } from "../utils/firestoreHelpers";
+import { formatCurrency, getTodayISO, formatDateDisplay } from "../utils/format";
+import { collection, query, where } from "firebase/firestore";
+import { firestoreDb } from "../firebase/firestore";
 
-const checklistKeys = [
-  { key: "inspectionDone", label: "Inspection done" },
-  { key: "chemicalApplied", label: "Chemical applied" },
-  { key: "areaCovered", label: "Area covered" },
-  { key: "customerSatisfied", label: "Customer satisfied" },
-];
+function StatCard({ label, value, icon: Icon, color, sub }) {
+  const colors = {
+    green: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    amber: "bg-amber-50 text-amber-700 border-amber-100",
+    blue: "bg-blue-50 text-blue-700 border-blue-100",
+    violet: "bg-violet-50 text-violet-700 border-violet-100",
+    rose: "bg-rose-50 text-rose-700 border-rose-100",
+  };
+  const iconColors = {
+    green: "bg-emerald-100 text-emerald-600",
+    amber: "bg-amber-100 text-amber-600",
+    blue: "bg-blue-100 text-blue-600",
+    violet: "bg-violet-100 text-violet-600",
+    rose: "bg-rose-100 text-rose-600",
+  };
+  return (
+    <div className={`rounded-2xl border p-5 ${colors[color]}`}>
+      <div className="flex items-start justify-between mb-3">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconColors[color]}`}>
+          <Icon className="w-5 h-5" />
+        </div>
+      </div>
+      <p className="text-2xl font-black text-slate-900">{value}</p>
+      <p className="text-sm font-semibold mt-0.5">{label}</p>
+      {sub && <p className="text-xs mt-1 opacity-70">{sub}</p>}
+    </div>
+  );
+}
 
-const buildChecklistDraft = (job) => ({
-  inspectionDone: Boolean(job?.checklist?.inspectionDone),
-  chemicalApplied: Boolean(job?.checklist?.chemicalApplied),
-  areaCovered: Boolean(job?.checklist?.areaCovered),
-  customerSatisfied: Boolean(job?.checklist?.customerSatisfied),
-});
-
-const fileToDataUrl = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+function WorkerJobCard({ job, onComplete, saving }) {
+  const [notes, setNotes] = useState(job.notes || "");
+  const [checklist, setChecklist] = useState({
+    inspectionDone: job.checklist?.inspectionDone || false,
+    chemicalApplied: job.checklist?.chemicalApplied || false,
+    areaCovered: job.checklist?.areaCovered || false,
+    customerSatisfied: job.checklist?.customerSatisfied || false,
   });
 
-function WorkerJobCard({ job, onSave, saving, disabled }) {
-  const [draft, setDraft] = useState(() => ({
-    checklist: buildChecklistDraft(job),
-    notes: job.notes || "",
-    images: Array.isArray(job.images) ? job.images : [],
-  }));
+  const checks = [
+    { key: "inspectionDone", label: "Inspection done" },
+    { key: "chemicalApplied", label: "Chemical applied" },
+    { key: "areaCovered", label: "Area covered" },
+    { key: "customerSatisfied", label: "Customer satisfied" },
+  ];
 
-  const refreshDraftFromJob = () => {
-    setDraft({
-      checklist: buildChecklistDraft(job),
-      notes: job.notes || "",
-      images: Array.isArray(job.images) ? job.images : [],
-    });
-  };
-
-  const handleImageChange = async (event) => {
-    const selectedFiles = Array.from(event.target.files || []).slice(0, 2);
-    if (!selectedFiles.length) return;
-    const imagePayload = await Promise.all(selectedFiles.map((file) => fileToDataUrl(file)));
-    setDraft((prev) => ({ ...prev, images: imagePayload }));
-  };
-
-  const statusClass = job.status === "completed" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800";
+  const isCompleted = job.status === "completed";
+  const allChecked = Object.values(checklist).every(Boolean);
+  const progress = Object.values(checklist).filter(Boolean).length;
 
   return (
-    <article className="app-card">
-      <div className="mb-2 flex items-start justify-between gap-2">
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <h3 className="text-sm font-bold text-slate-900">{job.customerName || "Customer"}</h3>
-          <p className="text-xs text-slate-500">{job.serviceName || "Service"}</p>
-          <p className="text-xs text-slate-500">Scheduled: {formatDateDisplay(job.scheduledDate)}</p>
+          <h3 className="font-bold text-slate-900">{job.customerName || "Customer"}</h3>
+          <p className="text-sm text-slate-500 mt-0.5">{job.serviceType || job.serviceName || "Service"}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{job.address}</p>
         </div>
-        <span className={`status-pill ${statusClass}`}>{job.status || "pending"}</span>
+        <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex-shrink-0 ${
+          isCompleted ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+        }`}>
+          {isCompleted ? "Completed" : "Pending"}
+        </span>
       </div>
 
-      <div className="space-y-2">
-        {checklistKeys.map((item) => (
-          <label key={item.key} className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              checked={draft.checklist[item.key]}
-              className="h-4 w-4 accent-emerald-600"
-              onChange={(event) =>
-                setDraft((prev) => ({
-                  ...prev,
-                  checklist: {
-                    ...prev.checklist,
-                    [item.key]: event.target.checked,
-                  },
-                }))
-              }
-              type="checkbox"
-            />
-            {item.label}
-          </label>
-        ))}
+      {!isCompleted && (
+        <>
+          {/* Progress bar */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-slate-500">Progress</span>
+              <span className="text-xs font-bold text-slate-700">{progress}/4</span>
+            </div>
+            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-[var(--brand)] transition-all duration-300"
+                style={{ width: `${(progress / 4) * 100}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2 mb-4">
+            {checks.map((c) => (
+              <label key={c.key} className="flex items-center gap-2.5 text-sm text-slate-700 cursor-pointer hover:bg-slate-50 px-2 py-1.5 rounded-lg transition-colors">
+                <input
+                  type="checkbox"
+                  checked={checklist[c.key]}
+                  onChange={(e) => setChecklist((p) => ({ ...p, [c.key]: e.target.checked }))}
+                  className="w-4 h-4 accent-emerald-600 rounded"
+                />
+                <span className={checklist[c.key] ? "text-slate-900 font-medium" : ""}>{c.label}</span>
+                {checklist[c.key] && <CheckCircle2 className="w-4 h-4 text-emerald-600 ml-auto" />}
+              </label>
+            ))}
+          </div>
+
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Add notes about the work done..."
+            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:border-[var(--brand)] mb-3"
+            rows={2}
+          />
+
+          {allChecked ? (
+            <button
+              onClick={() => onComplete(job.id, { checklist, notes })}
+              disabled={saving}
+              className="w-full py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors disabled:opacity-60 shadow-sm"
+            >
+              {saving ? "Saving..." : "✓ Mark Completed"}
+            </button>
+          ) : (
+            <div className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-400 text-sm font-bold text-center">
+              Complete all steps to finish
+            </div>
+          )}
+        </>
+      )}
+
+      {isCompleted && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-emerald-600 text-sm font-semibold">
+            <CheckCircle2 className="w-4 h-4" />
+            Job completed
+          </div>
+          {job.notes && (
+            <div className="px-3 py-2 bg-slate-50 rounded-xl">
+              <p className="text-xs font-bold text-slate-500 mb-1">Notes:</p>
+              <p className="text-sm text-slate-700">{job.notes}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WorkerDashboard({ profile }) {
+  const workerName = profile?.workerTag || profile?.name || "";
+  const [jobs, setJobs] = useState([]);
+  const [msg, setMsg] = useState({ type: "", text: "" });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const q = query(
+      collection(firestoreDb, "jobs"),
+      where("assignedTo", "array-contains", workerName)
+    );
+    return subscribeQuery(q, setJobs);
+  }, [workerName]);
+
+  const sortedJobs = useMemo(() =>
+    [...jobs].sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)),
+    [jobs]
+  );
+
+  const todayJobs = useMemo(() => {
+    const today = getTodayISO();
+    return sortedJobs.filter((j) => String(j.scheduledDate) === today || !j.scheduledDate);
+  }, [sortedJobs]);
+
+  const showMsg = (type, text) => {
+    setMsg({ type, text });
+    setTimeout(() => setMsg({ type: "", text: "" }), 4000);
+  };
+
+  const handleComplete = async (jobId, data) => {
+    setSaving(true);
+    try {
+      await updateRecord("jobs", jobId, {
+        status: "completed",
+        checklist: data.checklist,
+        notes: data.notes,
+        completedAt: new Date().toISOString(),
+        completedBy: workerName,
+      });
+      showMsg("success", "Job marked as completed!");
+    } catch (err) {
+      showMsg("error", err.message || "Failed to update job");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-black text-slate-900">Good day, {profile?.name} 👋</h1>
+        <p className="text-slate-500 mt-1">Here are your assigned jobs for today.</p>
       </div>
 
-      <div className="mt-3">
-        <label className="field-label" htmlFor={`notes-${job.id}`}>
-          Notes
-        </label>
-        <textarea
-          id={`notes-${job.id}`}
-          className="field-input min-h-20"
-          onChange={(event) => setDraft((prev) => ({ ...prev, notes: event.target.value }))}
-          placeholder="Add notes for this visit..."
-          value={draft.notes}
-        />
+      {msg.text && (
+        <div className={`px-4 py-3 rounded-xl text-sm font-medium border ${
+          msg.type === "success" ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-rose-50 border-rose-200 text-rose-700"
+        }`}>
+          {msg.text}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <StatCard label="Total Jobs" value={jobs.length} icon={Briefcase} color="blue" />
+        <StatCard label="Today's Jobs" value={todayJobs.length} icon={Calendar} color="green" />
       </div>
 
-      <div className="mt-3">
-        <label className="field-label" htmlFor={`images-${job.id}`}>
-          Upload images (optional)
-        </label>
-        <input
-          id={`images-${job.id}`}
-          accept="image/*"
-          className="field-input"
-          multiple
-          onChange={handleImageChange}
-          type="file"
-        />
+      <div>
+        <h2 className="text-base font-bold text-slate-800 mb-3">Today's Jobs</h2>
+        {todayJobs.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+            <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
+            <p className="font-semibold text-slate-700">No jobs for today</p>
+            <p className="text-sm text-slate-400 mt-1">Check back later or view all jobs</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {todayJobs.map((job) => (
+              <WorkerJobCard
+                key={job.id}
+                job={job}
+                onComplete={handleComplete}
+                saving={saving}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <button className="secondary-btn" disabled={disabled} onClick={() => onSave(job.id, draft, false)} type="button">
-          Save Progress
-        </button>
-        <button
-          className="primary-btn btn-complete"
-          disabled={saving || disabled}
-          onClick={() => onSave(job.id, draft, true)}
-          type="button"
-        >
-          {saving ? "Saving..." : "Mark Completed"}
-        </button>
+      <div>
+        <h2 className="text-base font-bold text-slate-800 mb-3">All Assigned Jobs</h2>
+        <div className="space-y-3">
+          {sortedJobs.length === 0 ? (
+            <p className="text-sm text-slate-500">No jobs assigned yet.</p>
+          ) : (
+            sortedJobs.map((job) => (
+              <div key={job.id} className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-slate-800 text-sm">{job.customerName}</p>
+                  <p className="text-xs text-slate-500">{job.serviceType} · {formatDateDisplay(job.scheduledDate)}</p>
+                </div>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                  job.status === "completed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                }`}>
+                  {job.status || "pending"}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
       </div>
-      <button className="mt-2 text-xs font-semibold text-slate-500 underline" onClick={refreshDraftFromJob} type="button">
-        Reset Changes
-      </button>
-    </article>
+    </div>
   );
 }
 
 function AdminDashboard({ profile }) {
   const [customers, setCustomers] = useState([]);
-  const [services, setServices] = useState([]);
-  const [quotations, setQuotations] = useState([]);
-  const [invoices, setInvoices] = useState([]);
   const [jobs, setJobs] = useState([]);
-  const [amc, setAmc] = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    ensureDefaultServices().catch(() => {});
-
-    const loadAll = () => {
-      setCustomers(listRecords("customers"));
-      setServices(listRecords("services"));
-      setQuotations(listRecords("quotations"));
-      setInvoices(listRecords("invoices"));
-      setJobs(listRecords("jobs"));
-      setAmc(listRecords("amc"));
-      setMessages(listRecords("messages"));
-    };
-
-    loadAll();
-    const unsubscribe = subscribeDb(loadAll);
-    return unsubscribe;
+    const unsubs = [
+      subscribeCollection("customers", setCustomers),
+      subscribeCollection("jobs", setJobs),
+      subscribeCollection("invoices", setInvoices),
+      subscribeCollection("messages", setMessages),
+    ];
+    return () => unsubs.forEach((u) => u());
   }, []);
 
-  const totals = useMemo(() => {
-    const now = new Date();
-    const todayStart = startOfDay(now);
-    const soon = endOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3));
-    const renewalWindow = endOfDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 30));
+  const stats = useMemo(() => {
+    const today = getTodayISO();
+    const totalRevenue = invoices.reduce((s, i) => s + Number(i.received || 0), 0);
+    const pendingPayments = invoices.filter((i) => Number(i.balance || 0) > 0);
+    const pendingAmount = pendingPayments.reduce((s, i) => s + Number(i.balance || 0), 0);
+    const todayJobs = jobs.filter((j) => String(j.scheduledDate) === today);
+    const completedJobs = jobs.filter((j) => j.status === "completed");
+    return { totalRevenue, pendingAmount, pendingCount: pendingPayments.length, todayJobs: todayJobs.length, completedJobs: completedJobs.length };
+  }, [invoices, jobs]);
 
-    const pendingJobs = jobs.filter((job) => job.status !== "completed").length;
-    const upcomingVisits = jobs.filter((job) => {
-      const date = startOfDay(job.scheduledDate);
-      return date && date >= todayStart && date <= soon && job.status !== "completed";
-    }).length;
-    const pendingPayments = invoices.filter((invoice) => Number(invoice.balance || 0) > 0).length;
-    const renewalCount = amc.filter((item) => {
-      const endDate = toDateObject(item.endDate);
-      return endDate && endDate >= now && endDate <= renewalWindow;
-    }).length;
-    const collected = invoices.reduce((sum, invoice) => sum + Number(invoice.received || 0), 0);
+  const recentJobs = useMemo(() => [...jobs].reverse().slice(0, 5), [jobs]);
+  const recentCustomers = useMemo(() => [...customers].reverse().slice(0, 4), [customers]);
 
-    return {
-      leads: customers.length,
-      services: services.length,
-      customers: customers.length,
-      quotations: quotations.length,
-      invoices: invoices.length,
-      schedules: pendingJobs,
-      reports: formatCurrency(collected),
-      upcomingVisits,
-      pendingPayments,
-      renewalCount,
-    };
-  }, [amc, customers.length, invoices, jobs, quotations.length, services.length]);
-
-  const summaryCards = [
-    {
-      label: "Total Revenue",
-      value: totals.reports,
-      tone: "dashboard-stat-green",
-      icon: <TrendingUp className="h-5 w-5" />,
-    },
-    {
-      label: "Pending Payments",
-      value: formatCurrency(
-        invoices.filter((invoice) => Number(invoice.balance || 0) > 0).reduce((sum, invoice) => sum + Number(invoice.balance || 0), 0),
-      ),
-      tone: "dashboard-stat-amber",
-      icon: <Clock3 className="h-5 w-5" />,
-    },
-    {
-      label: "Today's Jobs",
-      value: jobs.filter((job) => String(job.scheduledDate) === String(getTodayISO())).length,
-      tone: "dashboard-stat-blue",
-      icon: <CalendarDays className="h-5 w-5" />,
-    },
-    {
-      label: "Total Customers",
-      value: totals.customers,
-      tone: "dashboard-stat-violet",
-      icon: <Users className="h-5 w-5" />,
-    },
-  ];
-
-  const hasAnySavedData = customers.length || quotations.length || invoices.length || jobs.length;
-
-  const savedOverview = [
-    {
-      title: "Customers",
-      count: customers.length,
-      subtitle: "Profiles saved in CRM",
-      to: "/admin/customers",
-      action: "Open Customers",
-      icon: <Users className="h-4 w-4" />,
-    },
-    {
-      title: "Quotations",
-      count: quotations.length,
-      subtitle: "Drafts and estimates",
-      to: "/admin/bills",
-      action: "Open Quotations",
-      icon: <FileText className="h-4 w-4" />,
-    },
-    {
-      title: "Bills",
-      count: invoices.length,
-      subtitle: "Invoices and payment records",
-      to: "/admin/bills",
-      action: "Open Bills",
-      icon: <Receipt className="h-4 w-4" />,
-    },
+  const quickLinks = [
+    { label: "New Customer", to: "/admin/customers", icon: Users, color: "bg-blue-500" },
+    { label: "Create Job", to: "/admin/jobs", icon: Briefcase, color: "bg-emerald-500" },
+    { label: "New Invoice", to: "/admin/invoices", icon: Receipt, color: "bg-violet-500" },
+    { label: "New Quotation", to: "/admin/quotations", icon: FileText, color: "bg-amber-500" },
   ];
 
   return (
-    <div className="space-y-4">
-      <section className="app-card dashboard-hero">
-        <div className="dashboard-hero-top">
-          <div>
-            <p className="section-kicker">Dashboard</p>
-            <h2 className="mt-1 text-2xl font-extrabold text-slate-900">{profile?.name || "Team"} Overview</h2>
-            <p className="mt-1 text-sm text-slate-500">Modern daily control panel for bills, quotations, jobs, and customers.</p>
-          </div>
-          <div className="dashboard-icon-wrap">
-            <IndianRupee className="h-5 w-5" />
-          </div>
-        </div>
-      </section>
-
-      <section className="dashboard-stat-grid">
-        {summaryCards.map((card) => (
-          <article key={card.label} className={`dashboard-stat-card ${card.tone}`}>
-            <div className="dashboard-stat-icon">{card.icon}</div>
-            <p className="dashboard-stat-value">{card.value}</p>
-            <p className="dashboard-stat-label">{card.label}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="app-card">
-        <p className="section-title">Today Alerts</p>
-        <div className="space-y-2 text-sm">
-          <div className="surface-card flex items-center justify-between">
-            <span>Upcoming visits (next 3 days)</span>
-            <span className="font-bold">{totals.upcomingVisits}</span>
-          </div>
-          <div className="surface-card flex items-center justify-between">
-            <span>Pending payments</span>
-            <span className="font-bold">{totals.pendingPayments}</span>
-          </div>
-          <div className="surface-card flex items-center justify-between">
-            <span>AMC renewals (30 days)</span>
-            <span className="font-bold">{totals.renewalCount}</span>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid grid-cols-2 gap-3">
-        <Link className="secondary-btn text-center" to="/admin/new-job">
-          Create New Job
-        </Link>
-        <Link className="secondary-btn text-center btn-view" to="/admin/bills">
-          Create Quote / Bill
-        </Link>
-      </section>
-
-      <section className="app-card saved-section">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between">
         <div>
-          <p className="section-kicker">Admin Records</p>
-          <p className="section-title">Customers, Quotations, And Bills</p>
-          <p className="section-subtitle">One separate section where admin can quickly see all stored records.</p>
+          <h1 className="text-2xl font-black text-slate-900">Welcome back, {profile?.name?.split(" ")[0]} 👋</h1>
+          <p className="text-slate-500 mt-1">Here's what's happening at AB Pest Control today.</p>
         </div>
-        {hasAnySavedData ? (
-          <div className="saved-record-grid">
-            {savedOverview.map((item) => (
-              <Link key={item.title} className="saved-record-chip saved-record-link" to={item.to}>
-                <div className="saved-record-badge">{item.icon}</div>
-                <div className="min-w-0 flex-1">
-                  <strong>{item.title}</strong>
-                  <span>{item.subtitle}</span>
+        <Link
+          to="/admin/jobs"
+          className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          New Job
+        </Link>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Total Revenue" value={formatCurrency(stats.totalRevenue)} icon={TrendingUp} color="green" sub="All time collected" />
+        <StatCard label="Pending Amount" value={formatCurrency(stats.pendingAmount)} icon={Clock} color="amber" sub={`${stats.pendingCount} invoices`} />
+        <StatCard label="Today's Jobs" value={stats.todayJobs} icon={Calendar} color="blue" sub="Scheduled today" />
+        <StatCard label="Total Customers" value={customers.length} icon={Users} color="violet" sub="In CRM" />
+      </div>
+
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-base font-bold text-slate-800 mb-3">Quick Actions</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {quickLinks.map((q) => {
+            const Icon = q.icon;
+            return (
+              <Link
+                key={q.to}
+                to={q.to}
+                className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col items-center gap-2.5 hover:border-[var(--brand)] hover:shadow-md transition-all group"
+              >
+                <div className={`w-10 h-10 rounded-xl ${q.color} flex items-center justify-center`}>
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
-                <div className="text-right">
-                  <p className="mini-stat-value">{item.count}</p>
-                  <p className="text-[11px] font-semibold text-emerald-700">{item.action}</p>
-                </div>
+                <span className="text-xs font-bold text-slate-700 text-center group-hover:text-[var(--brand)]">{q.label}</span>
               </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Recent Jobs */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-slate-800">Recent Jobs</h2>
+            <Link to="/admin/jobs" className="text-xs font-semibold text-[var(--brand)] flex items-center gap-1 hover:underline">
+              View all <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {recentJobs.length === 0 ? (
+              <p className="text-sm text-slate-400 py-4 text-center">No jobs yet</p>
+            ) : (
+              recentJobs.map((job) => (
+                <div key={job.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">{job.customerName}</p>
+                    <p className="text-xs text-slate-400">{job.serviceType} · {formatDateDisplay(job.scheduledDate)}</p>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                    job.status === "completed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                  }`}>
+                    {job.status || "pending"}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Recent Customers */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-slate-800">Recent Customers</h2>
+            <Link to="/admin/customers" className="text-xs font-semibold text-[var(--brand)] flex items-center gap-1 hover:underline">
+              View all <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {recentCustomers.length === 0 ? (
+              <p className="text-sm text-slate-400 py-4 text-center">No customers yet</p>
+            ) : (
+              recentCustomers.map((c) => (
+                <div key={c.id} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--brand-soft)] flex items-center justify-center text-[var(--brand)] text-xs font-black flex-shrink-0">
+                    {c.name?.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-800 truncate">{c.name}</p>
+                    <p className="text-xs text-slate-400">{c.phone}</p>
+                  </div>
+                  <span className="text-xs text-slate-400">{c.propertyType}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Site Messages */}
+      {messages.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertCircle className="w-4 h-4 text-amber-500" />
+            <h2 className="font-bold text-slate-800">Site Enquiries</h2>
+            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">{messages.length}</span>
+          </div>
+          <div className="space-y-3">
+            {messages.slice(0, 3).map((msg) => (
+              <div key={msg.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-semibold text-sm text-slate-800">{msg.full_name}</span>
+                  <span className="text-xs text-slate-400">{msg.createdAt ? new Date(msg.createdAt).toLocaleDateString() : ""}</span>
+                </div>
+                <p className="text-xs text-slate-500 mb-1">{msg.email} · {msg.phone_number}</p>
+                <p className="text-sm text-slate-700">{msg.message}</p>
+              </div>
             ))}
           </div>
-        ) : (
-          <div className="dashboard-empty-state">
-            <div className="dashboard-empty-icon">🪲</div>
-            <p className="dashboard-empty-title">No data yet</p>
-            <p className="dashboard-empty-copy">Start by adding customers, quotations, bills, or jobs.</p>
-          </div>
-        )}
-      </section>
-
-      <section className="app-card">
-        <p className="section-title">Site Messages</p>
-        <div className="space-y-3">
-          {messages.length === 0 ? (
-            <p className="text-sm text-slate-500">No messages from the site yet.</p>
-          ) : (
-            messages.map((msg) => (
-              <div key={msg.id} className="surface-card text-sm">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="font-bold text-slate-900">{msg.full_name}</span>
-                  <span className="text-xs text-slate-500">{msg.createdAt ? new Date(msg.createdAt).toLocaleDateString() : ""}</span>
-                </div>
-                <div className="text-slate-600 mb-2">
-                  <p><a href={`mailto:${msg.email}`} className="text-blue-600 hover:underline">{msg.email}</a></p>
-                  {msg.phone_number && <p><a href={`tel:${msg.phone_number}`} className="text-blue-600 hover:underline">{msg.phone_number}</a></p>}
-                </div>
-                <p className="text-slate-800 bg-slate-50 p-2 rounded">{msg.message}</p>
-              </div>
-            ))
-          )}
         </div>
-      </section>
-    </div>
-  );
-}
-
-function WorkerDashboard({ workerTag }) {
-  const [jobs, setJobs] = useState([]);
-  const [savingJobId, setSavingJobId] = useState("");
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    const load = () => {
-      const today = getTodayISO();
-      setJobs(
-        listRecords("jobs").filter((job) => job?.assignedTo === workerTag && String(job?.scheduledDate) === String(today)),
-      );
-    };
-    load();
-    const unsubscribe = subscribeDb(load);
-    return unsubscribe;
-  }, [workerTag]);
-
-  const saveWorkerJob = async (jobId, draft, markCompleted) => {
-    setSavingJobId(jobId);
-    try {
-      await updateRecord("jobs", jobId, {
-        checklist: draft.checklist,
-        notes: draft.notes,
-        images: draft.images,
-        status: markCompleted ? "completed" : "pending",
-        completedAt: markCompleted ? new Date().toISOString() : null,
-      });
-      setMessage(markCompleted ? "Job marked completed." : "Progress saved.");
-    } catch (error) {
-    } finally {
-      setSavingJobId("");
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      {message ? (
-        <section className="app-card border border-emerald-200 bg-emerald-50 text-sm font-medium text-emerald-700">
-          {message}
-        </section>
-      ) : null}
-      <section className="app-card">
-        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Worker Dashboard</p>
-        <h2 className="mt-1 text-xl font-extrabold text-slate-900">Today&apos;s Jobs - {workerTag}</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Update checklist, add notes/images, then mark the visit completed.
-        </p>
-      </section>
-
-      {!jobs.length ? (
-        <section className="app-card text-center">
-          <p className="text-sm text-slate-500">No job assigned for today.</p>
-        </section>
-      ) : (
-        jobs.map((job) => (
-          <WorkerJobCard
-            key={job.id}
-            disabled={false}
-            job={job}
-            onSave={saveWorkerJob}
-            saving={savingJobId === job.id}
-          />
-        ))
       )}
     </div>
   );
@@ -428,10 +432,6 @@ function WorkerDashboard({ workerTag }) {
 
 export default function HomePage() {
   const { profile, isWorker } = useAuth();
-
-  if (isWorker) {
-    return <WorkerDashboard workerTag={profile?.workerTag || "P1"} />;
-  }
-
+  if (isWorker) return <WorkerDashboard profile={profile} />;
   return <AdminDashboard profile={profile} />;
 }

@@ -618,3 +618,24 @@ a {
     transform: translateY(-6px);
   }
 }
+
+/* A4 PRINT PERFECT */
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  article {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm;
+    box-sizing: border-box;
+  }
+}

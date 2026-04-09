@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function myUid() {
+      return request.auth.uid;
+    }
+
+    function myUserDoc() {
+      return get(/databases/$(database)/documents/users/$(myUid())).data;
+    }
+
+    function isAdmin() {
+      return signedIn() && (myUserDoc().role == 'admin');
+    }
+
+    function isPricingAdmin() {
+      return signedIn() && (myUserDoc().name in ['Ankit Bhatt', 'Akanksha Bhatt']);
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (isAdmin() || uid == myUid());
+      allow create: if signedIn() && uid == myUid();
+      allow update: if signedIn() && (
+        isAdmin() ||
+        (uid == myUid() && request.resource.data.role == resource.data.role)
+      );
+      allow delete: if false;
+    }
+
+    match /priceList/{docId} {
+      allow read, write: if isPricingAdmin();
+    }
+
+    match /invoices/{docId} {
+      allow read, write: if isPricingAdmin();
+    }
+
+    match /quotations/{docId} {
+      allow read, write: if isPricingAdmin();
+    }
+
+    match /jobs/{docId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /subJobs/{docId} {
+      allow read: if signedIn();
+      allow create, delete: if isAdmin();
+      allow update: if signedIn();
+    }
+
+    match /reports/{docId} {
+      allow create: if signedIn();
+      allow read: if signedIn() && (isAdmin() || resource.data.uploaderUid == myUid());
+      allow update, delete: if isAdmin();
+    }
+
+    match /mediaUploads/{docId} {
+      allow create: if signedIn();
+      allow read: if signedIn() && (isAdmin() || resource.data.uploaderUid == myUid());
+      allow update, delete: if isAdmin();
+    }
+
+    match /customers/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /amc/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /messages/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /services/{docId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /counters/{docId} {
+      allow read, write: if signedIn();
+    }
+  }
+}
+
