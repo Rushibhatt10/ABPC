@@ -142,7 +142,7 @@ useEffect(() => {
     { label: "Video", url: "/video" },
     { label: "Location", id: "location" },
     { label: "Contact", id: "contact" },
-    { label: "CRM Admin", url: "/admin/login" },
+    { label: "Admin", url: "/admin/login" },
   ];
 
 
