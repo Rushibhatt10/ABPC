@@ -22,9 +22,9 @@ const adminNav = [
 ];
 
 const workerNav = [
-  { label: "Dashboard", to: "/admin", icon: LayoutDashboard, end: true },
-  { label: "My Jobs", to: "/admin/jobs", icon: Briefcase },
-  { label: "Reports", to: "/admin/reports", icon: FileText },
+  { label: "ડેશબોર્ડ", to: "/admin", icon: LayoutDashboard, end: true },
+  { label: "મારા કામ", to: "/admin/jobs", icon: Briefcase },
+  { label: "રિપોર્ટ", to: "/admin/reports", icon: FileText },
 ];
 
 export default function AppShell({ children }) {

@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { formatCurrency, formatDateDisplay } from "../utils/format";
 import Logo from "../components/Logo";
 import { subscribeDoc } from "../utils/firestoreHelpers";
+import { generatePdfFromElement } from "../utils/generatePdf";
 
 export default function QuotationPrintPage() {
   const { id } = useParams();
   const [quotation, setQuotation] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const articleRef = useRef(null);
 
   useEffect(() => {
     if (!id) return undefined;
@@ -17,6 +20,16 @@ export default function QuotationPrintPage() {
     });
     return unsubscribe;
   }, [id]);
+
+  const handleDownloadPdf = async () => {
+    if (!articleRef.current) return;
+    setGeneratingPdf(true);
+    try {
+      await generatePdfFromElement(articleRef.current, `${quotation.estimateNumber}.pdf`);
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
 
   if (loading) {
     return <div className="p-10 text-center">Loading Estimate...</div>;
@@ -33,7 +46,23 @@ export default function QuotationPrintPage() {
 
   return (
     <div className="bg-[#f5f5f5] min-h-screen py-6 px-2 sm:px-4">
-      <article className="bg-white max-w-5xl mx-auto shadow rounded overflow-hidden text-sm">
+      {/* PDF / Print buttons */}
+      <div className="flex justify-end gap-2 max-w-5xl mx-auto mb-3 print:hidden">
+        <button
+          onClick={handleDownloadPdf}
+          disabled={generatingPdf}
+          className="bg-blue-600 text-white px-4 py-2 rounded shadow text-sm disabled:opacity-60"
+        >
+          {generatingPdf ? "Generating..." : "Download PDF"}
+        </button>
+        <button
+          onClick={() => window.print()}
+          className="bg-green-600 text-white px-4 py-2 rounded shadow text-sm"
+        >
+          Print
+        </button>
+      </div>
+      <article ref={articleRef} className="bg-white max-w-5xl mx-auto shadow rounded overflow-hidden text-sm">
 
         {/* HEADER */}
         <div className="bg-green-500 text-white px-4 py-3 flex justify-between items-center">

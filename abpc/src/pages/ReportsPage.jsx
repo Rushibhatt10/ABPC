@@ -306,8 +306,8 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Reports</h1>
-          <p className="text-slate-500 mt-0.5">{visible.length} reports</p>
+          <h1 className="text-2xl font-black text-slate-900">{isWorker ? "રિપોર્ટ" : "Reports"}</h1>
+          <p className="text-slate-500 mt-0.5">{visible.length} {isWorker ? "રિપોર્ટ" : "reports"}</p>
         </div>
         <div className="flex gap-2">
           {isAdmin && (
@@ -334,7 +334,7 @@ export default function ReportsPage() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm"
             >
               <Plus className="w-4 h-4" />
-              Submit Report
+              રિપોર્ટ સબમિટ કરો
             </button>
           )}
         </div>
@@ -382,8 +382,8 @@ export default function ReportsPage() {
       {visible.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="font-semibold text-slate-500">No reports yet</p>
-          {isWorker && <p className="text-sm text-slate-400 mt-1">Submit your first report above</p>}
+          <p className="font-semibold text-slate-500">{isWorker ? "હજુ કોઈ રિપોર્ટ નથી" : "No reports yet"}</p>
+          {isWorker && <p className="text-sm text-slate-400 mt-1">ઉપર તમારો પ્રથમ રિપોર્ટ સબમિટ કરો</p>}
         </div>
       ) : (
         <div className="space-y-4">
@@ -462,10 +462,10 @@ export default function ReportsPage() {
                 {r.checklist && (
                   <div className="grid grid-cols-2 gap-2 mb-3">
                     {[
-                      { key: "inspectionDone", label: "Inspection" },
-                      { key: "chemicalApplied", label: "Chemical" },
-                      { key: "areaCovered", label: "Area Covered" },
-                      { key: "customerSatisfied", label: "Satisfied" },
+                      { key: "inspectionDone", label: "તપાસ" },
+                      { key: "chemicalApplied", label: "કેમિકલ" },
+                      { key: "areaCovered", label: "વિસ્તાર" },
+                      { key: "customerSatisfied", label: "સંતુષ્ટ" },
                     ].map((s) => (
                       <div key={s.key} className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-semibold ${
                         r.checklist[s.key] ? "bg-emerald-50 text-emerald-700" : "bg-slate-50 text-slate-400"
@@ -530,21 +530,21 @@ export default function ReportsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
-              <h2 className="font-bold text-slate-900">Submit Report</h2>
+              <h2 className="font-bold text-slate-900">રિપોર્ટ સબમિટ કરો</h2>
               <button onClick={() => { setShowForm(false); voiceRec.reset(); }} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <form onSubmit={submitReport} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Job *</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">કામ *</label>
                 <select
                   value={form.jobId}
                   onChange={(e) => setForm((p) => ({ ...p, jobId: e.target.value }))}
                   required
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
                 >
-                  <option value="">Select job</option>
+                  <option value="">કામ પસંદ કરો</option>
                   {jobs.map((j) => (
                     <option key={j.id} value={j.id}>{j.customerName} — {j.serviceType}</option>
                   ))}
@@ -552,11 +552,11 @@ export default function ReportsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Notes</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">નોંધ</label>
                 <textarea
                   value={form.notes}
                   onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
-                  placeholder="Describe the work done..."
+                  placeholder="કરેલ કામ વિશે લખો..."
                   rows={3}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none"
                 />
@@ -565,7 +565,7 @@ export default function ReportsPage() {
               {/* Image upload */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                  <span className="flex items-center gap-1.5"><Camera className="w-3.5 h-3.5" /> Photos (max {MAX_IMAGE_MB}MB each)</span>
+                  <span className="flex items-center gap-1.5"><Camera className="w-3.5 h-3.5" /> ફોટો (દરેક મહત્તમ {MAX_IMAGE_MB}MB)</span>
                 </label>
                 <input
                   type="file"
@@ -595,7 +595,7 @@ export default function ReportsPage() {
               {/* Voice recorder */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                  <span className="flex items-center gap-1.5"><Mic className="w-3.5 h-3.5" /> Voice Note (max {MAX_AUDIO_MB}MB)</span>
+                  <span className="flex items-center gap-1.5"><Mic className="w-3.5 h-3.5" /> વૉઇસ નોટ (મહત્તમ {MAX_AUDIO_MB}MB)</span>
                 </label>
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
                   {voiceRec.state === "idle" && (
@@ -605,11 +605,11 @@ export default function ReportsPage() {
                       className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-violet-500 text-white text-sm font-bold hover:bg-violet-600 transition-colors"
                     >
                       <Mic className="w-4 h-4" />
-                      Start Recording
+                      રેકોર્ડિંગ શરૂ કરો
                     </button>
                   )}
                   {voiceRec.state === "requesting" && (
-                    <div className="text-center text-sm text-slate-500">Requesting microphone...</div>
+                    <div className="text-center text-sm text-slate-500">માઇક્રોફોન માટે પરવાનગી...</div>
                   )}
                   {voiceRec.state === "recording" && (
                     <div className="space-y-3">
@@ -623,7 +623,7 @@ export default function ReportsPage() {
                         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-700 text-white text-sm font-bold hover:bg-slate-800 transition-colors"
                       >
                         <Square className="w-4 h-4" />
-                        Stop Recording
+                        રેકોર્ડિંગ બંધ કરો
                       </button>
                     </div>
                   )}
@@ -636,7 +636,7 @@ export default function ReportsPage() {
                           onClick={voiceRec.reset}
                           className="flex-1 py-2 rounded-xl border border-slate-300 text-sm font-semibold text-slate-600 hover:bg-slate-100"
                         >
-                          Re-record
+                          ફરી રેકોર્ડ કરો
                         </button>
                       </div>
                     </div>
@@ -670,7 +670,7 @@ export default function ReportsPage() {
                   disabled={busy}
                   className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Cancel
+                  રદ કરો
                 </button>
                 <button 
                   type="submit" 
@@ -680,10 +680,10 @@ export default function ReportsPage() {
                   {busy ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Uploading...
+                      અપલોડ થઈ રહ્યું છે...
                     </>
                   ) : (
-                    "Submit Report"
+                    "રિપોર્ટ સબમિટ કરો"
                   )}
                 </button>
               </div>

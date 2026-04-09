@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { formatCurrency, formatDateDisplay } from "../utils/format";
 import Logo from "../components/Logo";
 import { subscribeDoc } from "../utils/firestoreHelpers";
+import { generatePdfFromElement } from "../utils/generatePdf";
 
 export default function InvoicePrintPage() {
   const { id } = useParams();
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const articleRef = useRef(null);
 
   useEffect(() => {
     if (!id) return;
@@ -17,6 +20,16 @@ export default function InvoicePrintPage() {
     });
     return unsub;
   }, [id]);
+
+  const handleDownloadPdf = async () => {
+    if (!articleRef.current) return;
+    setGeneratingPdf(true);
+    try {
+      await generatePdfFromElement(articleRef.current, `${invoice.invoiceNumber}.pdf`);
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
 
   if (loading) {
     return <div className="p-10 text-center">Loading Invoice...</div>;
@@ -29,16 +42,25 @@ export default function InvoicePrintPage() {
   return (
     <div className="bg-gray-200 flex justify-center py-6 print:bg-white print:py-0">
 
-      {/* PRINT BUTTON */}
-      <button
-        onClick={() => window.print()}
-        className="fixed bottom-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow print:hidden"
-      >
-        Print
-      </button>
+      {/* PRINT / PDF BUTTONS */}
+      <div className="fixed bottom-5 right-5 flex gap-2 print:hidden">
+        <button
+          onClick={handleDownloadPdf}
+          disabled={generatingPdf}
+          className="bg-blue-600 text-white px-4 py-2 rounded shadow disabled:opacity-60"
+        >
+          {generatingPdf ? "Generating..." : "Download PDF"}
+        </button>
+        <button
+          onClick={() => window.print()}
+          className="bg-green-600 text-white px-4 py-2 rounded shadow"
+        >
+          Print
+        </button>
+      </div>
 
       {/* A4 CONTAINER */}
-      <article className="bg-white w-[210mm] min-h-[297mm] shadow print:shadow-none text-[12px] leading-tight">
+      <article ref={articleRef} className="bg-white w-[210mm] min-h-[297mm] shadow print:shadow-none text-[12px] leading-tight">
 
         {/* HEADER */}
         <div className="bg-green-500 text-white px-4 py-3 flex justify-between items-center">

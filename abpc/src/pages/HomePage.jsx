@@ -50,10 +50,10 @@ function WorkerJobCard({ job, onComplete, saving }) {
   });
 
   const checks = [
-    { key: "inspectionDone", label: "Inspection done" },
-    { key: "chemicalApplied", label: "Chemical applied" },
-    { key: "areaCovered", label: "Area covered" },
-    { key: "customerSatisfied", label: "Customer satisfied" },
+    { key: "inspectionDone", label: "તપાસ થઈ" },
+    { key: "chemicalApplied", label: "કેમિકલ લગાવ્યું" },
+    { key: "areaCovered", label: "વિસ્તાર આવરી લીધો" },
+    { key: "customerSatisfied", label: "ગ્રાહક સંતુષ્ટ" },
   ];
 
   const isCompleted = job.status === "completed";
@@ -71,7 +71,7 @@ function WorkerJobCard({ job, onComplete, saving }) {
         <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex-shrink-0 ${
           isCompleted ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
         }`}>
-          {isCompleted ? "Completed" : "Pending"}
+          {isCompleted ? "પૂર્ણ" : "બાકી"}
         </span>
       </div>
 
@@ -80,7 +80,7 @@ function WorkerJobCard({ job, onComplete, saving }) {
           {/* Progress bar */}
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-slate-500">Progress</span>
+              <span className="text-xs font-bold text-slate-500">પ્રગતિ</span>
               <span className="text-xs font-bold text-slate-700">{progress}/4</span>
             </div>
             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -109,7 +109,7 @@ function WorkerJobCard({ job, onComplete, saving }) {
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Add notes about the work done..."
+            placeholder="કામ વિશે નોંધ લખો..."
             className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:border-[var(--brand)] mb-3"
             rows={2}
           />
@@ -120,11 +120,11 @@ function WorkerJobCard({ job, onComplete, saving }) {
               disabled={saving}
               className="w-full py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors disabled:opacity-60 shadow-sm"
             >
-              {saving ? "Saving..." : "✓ Mark Completed"}
+              {saving ? "સાચવી રહ્યા છીએ..." : "✓ પૂર્ણ કરો"}
             </button>
           ) : (
             <div className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-400 text-sm font-bold text-center">
-              Complete all steps to finish
+              બધા પગલાં પૂર્ણ કરો
             </div>
           )}
         </>
@@ -134,11 +134,11 @@ function WorkerJobCard({ job, onComplete, saving }) {
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-emerald-600 text-sm font-semibold">
             <CheckCircle2 className="w-4 h-4" />
-            Job completed
+            કામ પૂર્ણ થયું
           </div>
           {job.notes && (
             <div className="px-3 py-2 bg-slate-50 rounded-xl">
-              <p className="text-xs font-bold text-slate-500 mb-1">Notes:</p>
+              <p className="text-xs font-bold text-slate-500 mb-1">નોંધ:</p>
               <p className="text-sm text-slate-700">{job.notes}</p>
             </div>
           )}
@@ -187,9 +187,9 @@ function WorkerDashboard({ profile }) {
         completedAt: new Date().toISOString(),
         completedBy: workerName,
       });
-      showMsg("success", "Job marked as completed!");
+      showMsg("success", "કામ પૂર્ણ થયું!");
     } catch (err) {
-      showMsg("error", err.message || "Failed to update job");
+      showMsg("error", err.message || "કામ અપડેટ કરવામાં નિષ્ફળ");
     } finally {
       setSaving(false);
     }
@@ -198,8 +198,8 @@ function WorkerDashboard({ profile }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-black text-slate-900">Good day, {profile?.name} 👋</h1>
-        <p className="text-slate-500 mt-1">Here are your assigned jobs for today.</p>
+        <h1 className="text-2xl font-black text-slate-900">નમસ્તે, {profile?.name} 👋</h1>
+        <p className="text-slate-500 mt-1">આજના તમારા સોંપાયેલ કામ અહીં છે.</p>
       </div>
 
       {msg.text && (
@@ -211,17 +211,17 @@ function WorkerDashboard({ profile }) {
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        <StatCard label="Total Jobs" value={jobs.length} icon={Briefcase} color="blue" />
-        <StatCard label="Today's Jobs" value={todayJobs.length} icon={Calendar} color="green" />
+        <StatCard label="કુલ કામ" value={jobs.length} icon={Briefcase} color="blue" />
+        <StatCard label="આજના કામ" value={todayJobs.length} icon={Calendar} color="green" />
       </div>
 
       <div>
-        <h2 className="text-base font-bold text-slate-800 mb-3">Today's Jobs</h2>
+        <h2 className="text-base font-bold text-slate-800 mb-3">આજના કામ</h2>
         {todayJobs.length === 0 ? (
           <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
             <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
-            <p className="font-semibold text-slate-700">No jobs for today</p>
-            <p className="text-sm text-slate-400 mt-1">Check back later or view all jobs</p>
+            <p className="font-semibold text-slate-700">આજ માટે કોઈ કામ નથી</p>
+            <p className="text-sm text-slate-400 mt-1">પછી તપાસો અથવા બધા કામ જુઓ</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -238,10 +238,10 @@ function WorkerDashboard({ profile }) {
       </div>
 
       <div>
-        <h2 className="text-base font-bold text-slate-800 mb-3">All Assigned Jobs</h2>
+        <h2 className="text-base font-bold text-slate-800 mb-3">બધા સોંપાયેલ કામ</h2>
         <div className="space-y-3">
           {sortedJobs.length === 0 ? (
-            <p className="text-sm text-slate-500">No jobs assigned yet.</p>
+            <p className="text-sm text-slate-500">હજુ કોઈ કામ સોંપાયું નથી.</p>
           ) : (
             sortedJobs.map((job) => (
               <div key={job.id} className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center justify-between">
@@ -252,7 +252,7 @@ function WorkerDashboard({ profile }) {
                 <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                   job.status === "completed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
                 }`}>
-                  {job.status || "pending"}
+                  {job.status === "completed" ? "પૂર્ણ" : "બાકી"}
                 </span>
               </div>
             ))

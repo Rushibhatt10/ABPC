@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, deleteRecord, nextDocumentNumber, subscribeCollection } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getTodayISO, getWhatsAppNumber, toNumber } from "../utils/format";
-import { FileText, Plus, X, Trash2, ExternalLink, MessageSquare, Search, ArrowRight } from "lucide-react";
+import { FileText, Plus, X, Trash2, ExternalLink, MessageSquare, Search, ArrowRight, FileDown } from "lucide-react";
 
 const createItem = () => ({ itemName: "", quantity: "", unit: "job", unitPrice: "" });
 
@@ -145,8 +145,7 @@ export default function QuotationsPage() {
   const sendWhatsApp = (q) => {
     const num = getWhatsAppNumber(q.customerPhone);
     if (!num) { showMsg("error", "No phone number."); return; }
-    const link = `${window.location.origin}/admin/quotations/${q.id}`;
-    const text = `Hello ${q.customerName}, your estimate ${q.estimateNumber} from AB Pest Control is ${formatCurrency(q.totalAmount)}. View: ${link}`;
+    const text = `Hello ${q.customerName}, your estimate ${q.estimateNumber} from AB Pest Control is ready. Total: ${formatCurrency(q.totalAmount)}. Please find the attached PDF for details. Thank you!`;
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -246,6 +245,15 @@ export default function QuotationsPage() {
                 >
                   <ExternalLink className="w-3 h-3" />
                   View
+                </Link>
+                <Link
+                  to={`/admin/quotations/${q.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+                >
+                  <FileDown className="w-3 h-3" />
+                  PDF
                 </Link>
                 <button
                   onClick={() => sendWhatsApp(q)}

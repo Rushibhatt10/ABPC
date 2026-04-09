@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, deleteRecord, nextDocumentNumber, subscribeCollection, updateRecord } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getTodayISO, getWhatsAppNumber, toNumber } from "../utils/format";
-import { Receipt, Plus, X, Trash2, CheckCircle2, ExternalLink, MessageSquare, Search } from "lucide-react";
+import { Receipt, Plus, X, Trash2, CheckCircle2, ExternalLink, MessageSquare, Search, FileDown } from "lucide-react";
 
 const createItem = () => ({ itemName: "", quantity: "", price: "", discount: "" });
 
@@ -157,8 +157,7 @@ export default function InvoicesPage() {
   const sendWhatsApp = (inv) => {
     const num = getWhatsAppNumber(inv.customerPhone);
     if (!num) { showMsg("error", "No phone number."); return; }
-    const link = `${window.location.origin}/admin/invoices/${inv.id}`;
-    const text = `Hello ${inv.customerName}, your invoice ${inv.invoiceNumber} from AB Pest Control is ${formatCurrency(inv.total)}. Balance due: ${formatCurrency(inv.balance)}. View: ${link}`;
+    const text = `Hello ${inv.customerName}, your invoice ${inv.invoiceNumber} from AB Pest Control is ${formatCurrency(inv.total)}. Balance due: ${formatCurrency(inv.balance)}. Please find the attached PDF for details. Thank you!`;
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -262,6 +261,15 @@ export default function InvoicesPage() {
                 >
                   <ExternalLink className="w-3 h-3" />
                   View
+                </Link>
+                <Link
+                  to={`/admin/invoices/${inv.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+                >
+                  <FileDown className="w-3 h-3" />
+                  PDF
                 </Link>
                 <button
                   onClick={() => sendWhatsApp(inv)}
