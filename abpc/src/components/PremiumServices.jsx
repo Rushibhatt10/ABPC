@@ -34,7 +34,20 @@ const premiumServicesData = [
  video: 'Video2.mp4'
  },
  {
- id: '03',
+   id: '04',
+ title: 'Daily Pest Problems Solved',
+ category: 'Home & Office Pest Control',
+ points: [
+ 'Cockroach spray & gel treatment',
+ 'Ant nest removal service',
+ 'Bedbug complete elimination',
+ 'Wooden furniture protection',
+ 'Safe for family and pets'
+ ],
+ video: 'coc.mp4'
+ },
+ {
+ id: '04',
  title: 'Protection Without Chemicals',
  category: 'Nets & Safety Installations',
  points: [
@@ -44,19 +57,6 @@ const premiumServicesData = [
  'Anti-bird spike installation'
  ],
  video: 'wc.mp4'
- },
- {
- id: '04',
- title: 'Daily Pest Problems Solved',
- category: 'Home & Office Pest Control',
- points: [
- 'Cockroach spray & gel treatment',
- 'Ant nest removal service',
- 'Bedbug complete elimination',
- 'Wooden furniture protection',
- 'Safe for family and pets'
- ],
- video: 'coc.mp4'
  },
  {
  id: '05',
