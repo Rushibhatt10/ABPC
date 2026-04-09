@@ -64,9 +64,12 @@ export const subscribeDoc = (collectionName, id, onData) =>
     onData(snap.exists() ? { id: snap.id, ...snap.data() } : null);
   });
 
-export const subscribeQuery = (queryRef, onData) =>
+export const subscribeQuery = (queryRef, onData, onError) =>
   onSnapshot(queryRef, (snap) => {
     onData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  }, (err) => {
+    console.error("Firestore subscribeQuery error:", err.code, err.message);
+    if (onError) onError(err);
   });
 
 export const deleteRecordsByField = async (collectionName, fieldName, operator, value) => {
@@ -87,7 +90,8 @@ export const deleteAllCollectionRecords = async (collectionName) => {
 };
 
 export const deleteAllBusinessData = async () => {
-  const collections = ["amc", "customers", "invoices", "jobs", "quotations", "services", "counters", "users", "messages", "subJobs", "reports", "priceList", "mediaUploads"];
+  // NOTE: "reports" and "mediaUploads" are intentionally excluded — they must be deleted individually
+  const collections = ["amc", "customers", "invoices", "jobs", "quotations", "services", "counters", "users", "messages", "subJobs", "priceList"];
   const results = {};
   for (const name of collections) {
     results[name] = await deleteAllCollectionRecords(name);

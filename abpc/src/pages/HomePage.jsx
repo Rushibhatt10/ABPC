@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import {
   Users, Briefcase, TrendingUp, Clock, CheckCircle2,
   AlertCircle, Calendar, ArrowRight, Plus, FileText, Receipt,
+  MessageSquare, Trash2, Phone, Mail,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { subscribeCollection, subscribeQuery, updateRecord } from "../utils/firestoreHelpers";
+import { subscribeCollection, subscribeQuery, updateRecord, deleteRecord } from "../utils/firestoreHelpers";
 import { formatCurrency, getTodayISO, formatDateDisplay } from "../utils/format";
 import { collection, query, where } from "firebase/firestore";
 import { firestoreDb } from "../firebase/firestore";
@@ -405,27 +406,80 @@ function AdminDashboard({ profile }) {
       </div>
 
       {/* Site Messages */}
-      {messages.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertCircle className="w-4 h-4 text-amber-500" />
-            <h2 className="font-bold text-slate-800">Site Enquiries</h2>
-            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">{messages.length}</span>
+      <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <MessageSquare className="w-4 h-4 text-[var(--brand)]" />
+          <h2 className="font-bold text-slate-800">Website Enquiries</h2>
+          {messages.filter(m => !m.read).length > 0 && (
+            <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-600 text-xs font-bold">
+              {messages.filter(m => !m.read).length} new
+            </span>
+          )}
+        </div>
+        {messages.length === 0 ? (
+          <div className="py-8 text-center">
+            <MessageSquare className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+            <p className="text-sm text-slate-400">No enquiries yet</p>
           </div>
+        ) : (
           <div className="space-y-3">
-            {messages.slice(0, 3).map((msg) => (
-              <div key={msg.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-semibold text-sm text-slate-800">{msg.full_name}</span>
-                  <span className="text-xs text-slate-400">{msg.createdAt ? new Date(msg.createdAt).toLocaleDateString() : ""}</span>
+            {[...messages].reverse().map((msg) => (
+              <div
+                key={msg.id}
+                className={`p-4 rounded-xl border transition-colors ${
+                  msg.read
+                    ? "bg-slate-50 border-slate-100"
+                    : "bg-amber-50 border-amber-200"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="font-bold text-sm text-slate-900">{msg.full_name}</span>
+                      {!msg.read && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-amber-400 text-white text-[10px] font-bold uppercase">New</span>
+                      )}
+                      <span className="text-xs text-slate-400 ml-auto">
+                        {msg.createdAt ? new Date(msg.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : ""}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                      {msg.phone_number && (
+                        <a href={`tel:${msg.phone_number}`} className="flex items-center gap-1 text-xs text-[var(--brand)] hover:underline">
+                          <Phone className="w-3 h-3" /> {msg.phone_number}
+                        </a>
+                      )}
+                      {msg.email && (
+                        <a href={`mailto:${msg.email}`} className="flex items-center gap-1 text-xs text-slate-500 hover:underline">
+                          <Mail className="w-3 h-3" /> {msg.email}
+                        </a>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-700 leading-relaxed">{msg.message}</p>
+                  </div>
+                  <div className="flex flex-col gap-1.5 shrink-0">
+                    {!msg.read && (
+                      <button
+                        onClick={() => updateRecord("messages", msg.id, { read: true })}
+                        className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold hover:bg-emerald-200 transition-colors whitespace-nowrap"
+                      >
+                        Mark read
+                      </button>
+                    )}
+                    <button
+                      onClick={() => deleteRecord("messages", msg.id)}
+                      className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors self-end"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-500 mb-1">{msg.email} · {msg.phone_number}</p>
-                <p className="text-sm text-slate-700">{msg.message}</p>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

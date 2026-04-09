@@ -2,24 +2,34 @@
 
 ## ✅ Completed Features
 
-### 🔐 NAME-BASED LOGIN SYSTEM (NEW!)
+### 🔐 PASSWORD-ONLY LOGIN SYSTEM (UPDATED!)
 - **Location**: `src/pages/LoginPage.jsx`
 - **Features**:
-  - Simple name input field: "Enter Your Name"
-  - No password required
-  - Predefined user list validation
-  - Quick select buttons for all users
-  - Clean, modern UI
+  - Single password input field
+  - No username or name required
+  - Each password maps to a specific user and dashboard
+  - Clean, minimal UI
 
-- **Authorized Users**:
-  - **Admins**: Ankit Bhatt, Akanksha Bhatt
-  - **Workers**: Nakul, Divyesh, Sagar
+- **Password Mapping** (stored locally):
+  ```javascript
+  "ankit123" → Ankit Bhatt (Admin)
+  "akanksha123" → Akanksha Bhatt (Admin)
+  "nakul123" → Nakul (Worker)
+  "divyesh123" → Divyesh (Worker)
+  "sagar123" → Sagar (Worker)
+  ```
 
 - **Login Flow**:
-  1. User enters their full name
-  2. System validates against predefined list
-  3. Auto-detects role (admin/worker)
+  1. User enters password
+  2. System validates against local password map
+  3. Auto-identifies user and role
   4. Redirects to appropriate dashboard
+
+- **Security**:
+  - Passwords stored locally in code
+  - Easy to change in `PASSWORD_MAP` object
+  - Invalid password shows error message
+  - No external authentication needed
 
 ### 📤 CORRECT UPLOAD FLOW (FIXED!)
 - **Location**: `src/pages/ReportsPage.jsx` - `submitReport` function
@@ -285,7 +295,7 @@ await updateRecord("reports", reportId, { imageUrls: [url] });
 ## 📝 Usage Instructions
 
 ### For Workers:
-1. Login with your name (e.g., "Nakul")
+1. Login with your password (e.g., "nakul123")
 2. View "Today's Jobs" section
 3. Check off each step as completed
 4. Add notes about work done
@@ -294,7 +304,7 @@ await updateRecord("reports", reportId, { imageUrls: [url] });
 7. Wait for "Report submitted successfully!" message
 
 ### For Admins:
-1. Login with your name (e.g., "Ankit Bhatt")
+1. Login with your password (e.g., "ankit123")
 2. View all reports in Reports page (updates in real-time)
 3. Use filters to find specific reports
 4. Click "Export Excel" to download data
@@ -302,7 +312,8 @@ await updateRecord("reports", reportId, { imageUrls: [url] });
 6. View images and play voice notes inline
 
 ## 🎯 System Goals Achieved
-✅ Name-based login (no password)
+✅ Password-only login (no username)
+✅ Each password maps to specific dashboard
 ✅ Correct upload flow (async/await)
 ✅ Real-time admin visibility
 ✅ Workers can update job steps

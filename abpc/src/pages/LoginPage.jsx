@@ -1,20 +1,21 @@
 import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
-import { Zap, User } from "lucide-react";
+import { Zap, Lock } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-// Predefined users
-const USERS = {
-  admins: ["Ankit Bhatt", "Akanksha Bhatt"],
-  workers: ["Nakul", "Divyesh", "Sagar"],
+// Password mapping to users (stored locally)
+const PASSWORD_MAP = {
+  "ankit123": { key: "ankit", name: "Ankit Bhatt", role: "admin" },
+  "akanksha123": { key: "akanksha", name: "Akanksha Bhatt", role: "admin" },
+  "nakul123": { key: "nakul", name: "Nakul", role: "worker" },
+  "divyesh123": { key: "divyesh", name: "Divyesh", role: "worker" },
+  "sagar123": { key: "sagar", name: "Sagar", role: "worker" },
 };
-
-const ALL_USERS = [...USERS.admins, ...USERS.workers];
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,38 +28,20 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     
-    const trimmedName = name.trim();
+    const trimmedPassword = password.trim();
     
-    // Check if name exists in predefined list
-    const matchedUser = ALL_USERS.find(
-      (u) => u.toLowerCase() === trimmedName.toLowerCase()
-    );
+    // Check if password exists in map
+    const user = PASSWORD_MAP[trimmedPassword];
     
-    if (!matchedUser) {
-      setError("Name not found. Please enter a valid name.");
+    if (!user) {
+      setError("Invalid password. Please try again.");
       return;
     }
     
     setLoading(true);
     try {
-      // Determine role based on user list
-      const isAdmin = USERS.admins.some(
-        (u) => u.toLowerCase() === trimmedName.toLowerCase()
-      );
-      
-      // Find the key from AUTH_PROFILES for backward compatibility
-      const keyMap = {
-        "ankit bhatt": "ankit",
-        "akanksha bhatt": "akanksha",
-        "nakul": "nakul",
-        "divyesh": "divyesh",
-        "sagar": "sagar",
-      };
-      
-      const key = keyMap[trimmedName.toLowerCase()];
-      
-      // Login with matched name
-      await login(key, "dummy"); // Password not needed anymore
+      // Login with the mapped user key
+      await login(user.key, trimmedPassword);
       navigate("/admin", { replace: true });
     } catch (err) {
       setError(err.message || "Login failed");
@@ -89,27 +72,27 @@ export default function LoginPage() {
           {/* Form */}
           <div className="px-8 py-8">
             <div className="flex items-center gap-2 mb-6">
-              <User className="w-4 h-4 text-[var(--brand)]" />
-              <p className="text-sm font-bold text-slate-700">Enter your name to continue</p>
+              <Lock className="w-4 h-4 text-[var(--brand)]" />
+              <p className="text-sm font-bold text-slate-700">Enter your password to continue</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Name Input */}
+              {/* Password Input */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Your Name
+                  Password
                 </label>
                 <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your full name"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
                   required
                   autoFocus
                   className="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm font-medium text-slate-800 transition-colors"
                 />
                 <p className="text-xs text-slate-400 mt-2">
-                  Authorized users: Ankit Bhatt, Akanksha Bhatt, Nakul, Divyesh, Sagar
+                  Each user has a unique password
                 </p>
               </div>
 
@@ -121,41 +104,12 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={loading || !name.trim()}
+                disabled={loading || !password.trim()}
                 className="w-full py-3.5 rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-dark)] text-white font-bold text-sm transition-colors disabled:opacity-60 shadow-lg shadow-emerald-900/20"
               >
-                {loading ? "Signing in..." : "Continue"}
+                {loading ? "Signing in..." : "Sign In"}
               </button>
             </form>
-
-            {/* Quick Select Buttons */}
-            <div className="mt-6 pt-6 border-t border-slate-100">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Select</p>
-              <div className="grid grid-cols-2 gap-2">
-                {USERS.admins.map((user) => (
-                  <button
-                    key={user}
-                    type="button"
-                    onClick={() => setName(user)}
-                    className="px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:border-[var(--brand)] hover:text-[var(--brand)] hover:bg-[var(--brand-soft)] transition-all"
-                  >
-                    {user}
-                  </button>
-                ))}
-              </div>
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                {USERS.workers.map((user) => (
-                  <button
-                    key={user}
-                    type="button"
-                    onClick={() => setName(user)}
-                    className="px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:border-[var(--brand)] hover:text-[var(--brand)] hover:bg-[var(--brand-soft)] transition-all"
-                  >
-                    {user}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 

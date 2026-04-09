@@ -1,18 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { collection, orderBy, query, where } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { firestoreDb } from "../firebase/firestore";
-import { firebaseStorage } from "../firebase/storage";
 import { useAuth } from "../context/AuthContext";
-import { createRecord, subscribeQuery, updateRecord, subscribeCollection } from "../utils/firestoreHelpers";
+import { createRecord, subscribeQuery, updateRecord, subscribeCollection, deleteRecord } from "../utils/firestoreHelpers";
 import { compressImage, validateFileSize, uid } from "../utils/mediaHelpers";
+import { uploadToCloudinary } from "../utils/cloudinaryUpload";
 import { useVoiceRecorder } from "../hooks/useVoiceRecorder";
-import { FileText, Image, Mic, Filter, X, Plus, Camera, Trash2, Square, AlertCircle, Download, Printer, CheckCircle2 } from "lucide-react";
+import { FileText, Image, Mic, Filter, X, Plus, Camera, Trash2, Square, AlertCircle, Download, Printer, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
 const WORKERS = ["Nakul", "Divyesh", "Sagar"];
-const MAX_IMAGE_MB = 2;
+const MAX_IMAGE_MB = 1;
 const MAX_AUDIO_MB = 1;
 
 export default function ReportsPage() {
@@ -29,6 +28,7 @@ export default function ReportsPage() {
   const [filterWorker, setFilterWorker] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ jobId: "", notes: "", images: [], imageFiles: [] });
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // reportId to confirm delete
 
   const voiceRec = useVoiceRecorder();
 
@@ -42,8 +42,8 @@ export default function ReportsPage() {
     const reportsQ = query(collection(firestoreDb, "reports"), orderBy("timestamp", "desc"));
 
     const unsubs = [
-      subscribeQuery(jobsQ, setJobs),
-      subscribeQuery(reportsQ, setReports), // Real-time updates
+      subscribeQuery(jobsQ, setJobs, (err) => showMsg("error", `Jobs load failed: ${err.code}`)),
+      subscribeQuery(reportsQ, setReports, (err) => showMsg("error", `Reports load failed: ${err.code} — check Firestore rules`)),
       subscribeCollection("customers", setCustomers),
     ];
     return () => unsubs.forEach((u) => u());
@@ -124,57 +124,32 @@ export default function ReportsPage() {
         checklist: null,
       });
 
-      // Step 2: Upload images and WAIT for completion
+      // Step 2: Upload images to Cloudinary and WAIT for completion
       const uploadedImages = [];
       for (let i = 0; i < form.imageFiles.length; i++) {
         setUploadProgress(`Uploading image ${i + 1}/${form.imageFiles.length}...`);
-        const file = form.imageFiles[i];
-        const timestamp = Date.now();
-        const filename = `${timestamp}_${uid()}.jpg`;
-        const path = `reports/images/${filename}`;
-        const storageRef = ref(firebaseStorage, path);
-        
-        // WAIT for upload to complete
-        await uploadBytes(storageRef, file);
-        
-        // THEN get download URL
-        const url = await getDownloadURL(storageRef);
+        const url = await uploadToCloudinary(form.imageFiles[i]);
         uploadedImages.push(url);
-
-        // Save media upload record
         await createRecord("mediaUploads", {
           jobId: form.jobId,
           reportId,
           uploaderUid: profile?.uid || "",
           type: "image",
-          storagePath: path,
           downloadUrl: url,
           createdAt: new Date().toISOString(),
         });
       }
 
-      // Step 3: Upload voice and WAIT for completion
+      // Step 3: Upload voice to Cloudinary and WAIT for completion
       let voiceUrl = null;
       if (voiceRec.blob) {
         setUploadProgress("Uploading voice note...");
-        const timestamp = Date.now();
-        const filename = `${timestamp}_${uid()}.webm`;
-        const path = `reports/audio/${filename}`;
-        const storageRef = ref(firebaseStorage, path);
-        
-        // WAIT for upload to complete
-        await uploadBytes(storageRef, voiceRec.blob);
-        
-        // THEN get download URL
-        voiceUrl = await getDownloadURL(storageRef);
-
-        // Save media upload record
+        voiceUrl = await uploadToCloudinary(voiceRec.blob);
         await createRecord("mediaUploads", {
           jobId: form.jobId,
           reportId,
           uploaderUid: profile?.uid || "",
           type: "audio",
-          storagePath: path,
           downloadUrl: voiceUrl,
           createdAt: new Date().toISOString(),
         });
@@ -212,6 +187,18 @@ export default function ReportsPage() {
     if (!j) return null;
     const c = customers.find((c) => c.id === j.customerId);
     return { job: j, customer: c };
+  };
+
+  const handleDeleteReport = async (reportId) => {
+    try {
+      await deleteRecord("reports", reportId);
+      setDeleteConfirm(null);
+      showMsg("success", "Report deleted.");
+    } catch (err) {
+      console.error("Delete error:", err);
+      showMsg("error", "Failed to delete report.");
+      setDeleteConfirm(null);
+    }
   };
 
   // Excel export
@@ -402,6 +389,8 @@ export default function ReportsPage() {
         <div className="space-y-4">
           {visible.map((r) => {
             const allDone = r.checklist && Object.values(r.checklist).every(Boolean);
+            const images = r.imageUrls || r.images || [];
+            const audioSrc = r.audioUrl || r.voiceNote || null;
             return (
               <div key={r.id} className="bg-white rounded-2xl border border-slate-200 p-5">
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -423,17 +412,45 @@ export default function ReportsPage() {
                         Complete
                       </span>
                     )}
-                    {(r.imageUrls || r.images || []).length > 0 && (
+                    {images.length > 0 && (
                       <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold">
                         <Image className="w-3 h-3" />
-                        {(r.imageUrls || r.images || []).length}
+                        {images.length}
                       </span>
                     )}
-                    {(r.audioUrl || r.voiceNote) && (
+                    {audioSrc && (
                       <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-violet-50 text-violet-600 text-xs font-bold">
                         <Mic className="w-3 h-3" />
                         Voice
                       </span>
+                    )}
+                    {/* Admin-only delete button */}
+                    {isAdmin && (
+                      deleteConfirm === r.id ? (
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-rose-600 font-semibold">Delete?</span>
+                          <button
+                            onClick={() => handleDeleteReport(r.id)}
+                            className="px-2 py-1 rounded-lg bg-rose-500 text-white text-xs font-bold hover:bg-rose-600"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(null)}
+                            className="px-2 py-1 rounded-lg bg-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-300"
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setDeleteConfirm(r.id)}
+                          className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                          title="Delete report"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )
                     )}
                   </div>
                 </div>
@@ -464,28 +481,42 @@ export default function ReportsPage() {
                   <p className="text-sm text-slate-700 mb-3 whitespace-pre-wrap">{r.notes}</p>
                 )}
 
-                {(r.imageUrls || r.images || []).length > 0 && (
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    {(r.imageUrls || r.images).map((url, i) => (
-                      <a key={i} href={url} target="_blank" rel="noreferrer" className="block group relative">
-                        <img src={url} alt={`Report image ${i + 1}`} className="w-full h-20 object-cover rounded-xl border border-slate-200 group-hover:opacity-90 transition-opacity" />
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center">
-                            <Camera className="w-4 h-4 text-slate-700" />
+                {/* Images — always visible to admins */}
+                {images.length > 0 && (
+                  <div className="mb-3">
+                    {isAdmin && (
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Camera className="w-3.5 h-3.5 text-blue-500" />
+                        <span className="text-xs font-bold text-blue-600">Photos ({images.length})</span>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-3 gap-2">
+                      {images.map((url, i) => (
+                        <a key={i} href={url} target="_blank" rel="noreferrer" className="block group relative">
+                          <img
+                            src={url}
+                            alt={`Report image ${i + 1}`}
+                            className="w-full h-20 object-cover rounded-xl border border-slate-200 group-hover:opacity-90 transition-opacity"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center">
+                              <Eye className="w-4 h-4 text-slate-700" />
+                            </div>
                           </div>
-                        </div>
-                      </a>
-                    ))}
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                {(r.audioUrl || r.voiceNote) && (
+                {/* Voice note — always visible to admins */}
+                {audioSrc && (
                   <div className="bg-violet-50 rounded-xl p-3 border border-violet-100">
                     <div className="flex items-center gap-2 mb-2">
                       <Mic className="w-3.5 h-3.5 text-violet-600" />
                       <span className="text-xs font-bold text-violet-700">Voice Note</span>
                     </div>
-                    <audio controls src={r.audioUrl || r.voiceNote} className="w-full" />
+                    <audio controls src={audioSrc} className="w-full" />
                   </div>
                 )}
               </div>

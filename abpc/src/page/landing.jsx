@@ -341,34 +341,87 @@ useEffect(() => {
  </nav>
 
  <main className={`transition-all duration-500 ease-in-out ${menuOpen ? "blur-xl scale-[0.98] brightness-75 pointer-events-none" : "blur-0 scale-100 brightness-100"}`}>
-  
-    <InsectEdgePopups />
   {/* ===== HERO ===== */}
   <section ref={heroRef} className="relative w-full min-h-dvh flex flex-col justify-center items-center px-4 sm:px-6 md:px-12 pt-[calc(env(safe-area-inset-top)+1rem)] pb-12 overflow-hidden">
   {/* Decorative background */}
   <div className={`absolute inset-0 opacity-[0.03] pointer-events-none`}
   style={{ backgroundImage:"radial-gradient(circle at 20% 50%, #e85535 0%, transparent 60%), radial-gradient(circle at 80% 30%, #8db34b 0%, transparent 60%)" }} />
 
-  <div className="relative z-10 max-w-5xl mx-auto text-center flex flex-col items-center gap-4 sm:gap-6 md:gap-10">
-  <span className="text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.35em] opacity-40 font-medium">Est. 1980 · Surat, Gujarat</span>
-  <h1
-  ref={el => el && !titleRefs.current.includes(el) && titleRefs.current.push(el)}
-  className="uppercase leading-[1.05] text-[clamp(1.85rem,10vw,6rem)] max-w-4xl"
-  >
-  COMPLETE PROTECTION SOLUTIONS
-  </h1>
-  <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.35em] opacity-50 font-semibold px-2">For Home / Business / Industry</span>
+  {/* Floating Insects - Only in Hero Section */}
+  <InsectEdgePopups />
+
+  <div className="relative z-10 max-w-5xl mx-auto text-center flex flex-col items-center gap-4 sm:gap-6 md:gap-8">
+  <span className="text-xs sm:text-sm uppercase tracking-[0.25em] sm:tracking-[0.35em] font-semibold" style={{ color: "#F04925" }}>Est. 1980 · Surat, Gujarat</span>
+
+  {/* Circular logo with curved text top + bottom */}
+  <div className="relative flex items-center justify-center" style={{ width: "clamp(260px, 50vw, 420px)", height: "clamp(260px, 50vw, 420px)" }}>
+    <svg
+      viewBox="0 0 320 320"
+      className="absolute inset-0 w-full h-full"
+      style={{ overflow: "visible" }}
+    >
+      <defs>
+        {/* Top arc: starts bottom-left, sweeps over the top, ends bottom-right */}
+        <path id="topArc" d="M 50,230 A 130,130 0 1,1 270,230" />
+        {/* Bottom arc: starts bottom-left, sweeps under, ends bottom-right */}
+        <path id="bottomArc" d="M 50,230 A 130,130 0 0,0 270,230" />
+      </defs>
+
+      {/* Top curved text — orange */}
+      <text
+        style={{
+          fontFamily: 'Montserrat, "Segoe UI", Arial, sans-serif',
+          fontWeight: 700,
+          letterSpacing: "0.15em",
+        }}
+        fill="#F04925"
+      >
+        <textPath href="#topArc" startOffset="50%" textAnchor="middle" fontSize="16">
+          COMPLETE PROTECTION SOLUTIONS
+        </textPath>
+      </text>
+
+      {/* Bottom curved text — green */}
+      <text
+        style={{
+          fontFamily: 'Montserrat, "Segoe UI", Arial, sans-serif',
+          fontWeight: 700,
+          letterSpacing: "0.15em",
+        }}
+        fill="#8AA844"
+      >
+        <textPath href="#bottomArc" startOffset="50%" textAnchor="middle" fontSize="10">
+          FOR HOME · BUSINESS · INDUSTRY
+        </textPath>
+      </text>
+    </svg>
+
+    {/* Logo image — circle */}
+    <img
+      src="/cropped_circle_image.png"
+      alt="AB Pest Control"
+      className="rounded-full object-cover shadow-2xl"
+      style={{
+        width: "clamp(170px, 33vw, 270px)",
+        height: "clamp(170px, 33vw, 270px)",
+      }}
+    />
+  </div>
   <p
   ref={el => el && !textRefs.current.includes(el) && textRefs.current.push(el)}
-  className="text-sm sm:text-base md:text-xl opacity-70 leading-relaxed max-w-2xl px-4 sm:px-0"
+  className="text-sm sm:text-base md:text-lg opacity-70 leading-relaxed max-w-2xl px-4 sm:px-0"
   >
   Protecting your space with professional, eco-friendly pest control services tailored for every environment — from kitchens to warehouses.
   </p>
+  <p className="flex items-center gap-2 text-xs sm:text-sm opacity-60 italic">
+    <span>🐜</span>
+    Click on the insects to know about them
+    <span>🪳</span>
+  </p>
   </div>
 
-
-
   </section>
+
 
  {/* ===== SERVICES ===== */}
  <PremiumServices />
@@ -494,13 +547,16 @@ useEffect(() => {
             phone_number: formState.phone,
             message: formState.message,
             createdAt: new Date().toISOString(),
+            read: false,
           });
 
-          alert("Message saved locally (offline mode).");
           setFormState({ name: "", phone: "", message: "" });
+          setIsSubmitting("done");
+          setTimeout(() => setIsSubmitting(false), 4000);
         } catch (error) {
           console.error("Error: ", error);
-          alert("Failed to save message locally.");
+          setIsSubmitting("error");
+          setTimeout(() => setIsSubmitting(false), 4000);
         } finally {
           setIsSubmitting(false);
         }
@@ -542,10 +598,10 @@ useEffect(() => {
         />
       </div>
 
-      <div className="flex justify-center pt-4">
+      <div className="flex flex-col items-center gap-3 pt-4">
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={!!isSubmitting}
           onMouseMove={handleMagneticMove}
           onMouseLeave={handleMagneticLeave}
           className={`group flex items-center gap-3 px-10 py-4 rounded-full font-semibold text-sm uppercase tracking-widest transition-all duration-300 will-change-transform ${
@@ -554,9 +610,19 @@ useEffect(() => {
               : "bg-[#0c0c0c] text-white hover:bg-[#333]"
           } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          {isSubmitting ? "Sending..." : "Send"}
+          {isSubmitting === true ? "Sending..." : "Send"}
           {!isSubmitting && <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />}
         </button>
+        {isSubmitting === "done" && (
+          <p className="text-sm font-medium" style={{ color: "#8AA844" }}>
+            ✓ Message sent! We'll get back to you soon.
+          </p>
+        )}
+        {isSubmitting === "error" && (
+          <p className="text-sm font-medium text-rose-500">
+            Something went wrong. Please try again.
+          </p>
+        )}
       </div>
     </form>
 
