@@ -108,7 +108,7 @@ export default function PaymentsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by customer or invoice..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm bg-white"
           />
         </div>
         <div className="flex gap-2">
@@ -122,7 +122,7 @@ export default function PaymentsPage() {
               onClick={() => setFilter(tab.key)}
               className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 filter === tab.key
-                  ? "bg-[var(--brand)] text-white shadow-sm"
+                  ? "bg-var(--brand) text-white shadow-sm"
                   : "bg-white border border-slate-200 text-slate-600 hover:border-slate-300"
               }`}
             >

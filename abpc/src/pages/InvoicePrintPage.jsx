@@ -111,8 +111,6 @@ export default function InvoicePrintPage() {
                 <th className="border p-2">#</th>
                 <th className="border p-2 text-left">Item</th>
                 <th className="border p-2">Qty</th>
-                <th className="border p-2">Price</th>
-                <th className="border p-2">Discount</th>
                 <th className="border p-2">Amount</th>
               </tr>
             </thead>
@@ -123,20 +121,14 @@ export default function InvoicePrintPage() {
                   <td className="border p-2 text-center">{i + 1}</td>
                   <td className="border p-2">{item.itemName}</td>
                   <td className="border p-2 text-center">{item.quantity}</td>
-                  <td className="border p-2 text-center">
-                    {formatCurrency(item.price)}
-                  </td>
-                  <td className="border p-2 text-center">
-                    {formatCurrency(item.discount)}
-                  </td>
                   <td className="border p-2 text-center font-bold">
-                    {formatCurrency(item.finalAmount)}
+                    {formatCurrency(item.finalAmount || item.total || item.price)}
                   </td>
                 </tr>
               ))}
 
               <tr className="bg-green-100 font-bold">
-                <td colSpan="5" className="border p-2 text-right">
+                <td colSpan="3" className="border p-2 text-right">
                   Total
                 </td>
                 <td className="border p-2 text-center">
@@ -165,14 +157,6 @@ export default function InvoicePrintPage() {
 
           {/* TOTAL BOX */}
           <div className="border">
-            <div className="flex justify-between p-2 border-b">
-              <span>Sub Total</span>
-              <span>{formatCurrency(invoice.subtotal)}</span>
-            </div>
-            <div className="flex justify-between p-2 border-b">
-              <span>Discount</span>
-              <span>{formatCurrency(invoice.discountTotal)}</span>
-            </div>
             <div className="flex justify-between p-2 bg-green-500 text-white font-bold">
               <span>Total</span>
               <span>{formatCurrency(invoice.total)}</span>

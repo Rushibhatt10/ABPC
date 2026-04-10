@@ -11,6 +11,7 @@ const defaultForm = {
   areaSqft: "",
   unitPrice: "",
   fixedPrice: "",
+  jobAddress: "",
   assignedTo: "P1",
   scheduledDate: getTodayISO(),
   notes: "",
@@ -97,8 +98,10 @@ export default function NewJobPage() {
         customerName: selectedCustomer.name,
         customerPhone: selectedCustomer.phone,
         customerAddress: selectedCustomer.address,
+        address: form.jobAddress.trim() || selectedCustomer.address || "",
         serviceId: selectedService.id,
         serviceName: selectedService.name,
+        serviceType: selectedService.name,
         pricingMode: form.pricingMode,
         areaSqft: toNumber(form.areaSqft),
         unitPrice: toNumber(form.unitPrice),
@@ -208,7 +211,15 @@ export default function NewJobPage() {
           <p className="text-sm font-bold text-slate-900">Step 1: Customer</p>
           <select
             className="field-input"
-            onChange={(event) => setForm((prev) => ({ ...prev, customerId: event.target.value }))}
+            onChange={(event) => {
+              const customerId = event.target.value;
+              const customer = customers.find((item) => item.id === customerId);
+              setForm((prev) => ({
+                ...prev,
+                customerId,
+                jobAddress: customer?.address || "",
+              }));
+            }}
             required
             value={form.customerId}
           >
@@ -219,6 +230,18 @@ export default function NewJobPage() {
               </option>
             ))}
           </select>
+
+          <div>
+            <label className="field-label" htmlFor="job-address">Job Address</label>
+            <textarea
+              className="field-input min-h-20"
+              id="job-address"
+              onChange={(event) => setForm((prev) => ({ ...prev, jobAddress: event.target.value }))}
+              placeholder="123 Main Street, Surat, Gujarat"
+              value={form.jobAddress}
+            />
+            <p className="mt-1 text-xs text-slate-500">Saved per job and used to open Google Maps for the worker.</p>
+          </div>
         </section>
 
         <section className="app-card space-y-3">
@@ -341,6 +364,7 @@ export default function NewJobPage() {
                 <p className="text-xs text-slate-500">
                   {job.serviceName} | {formatDateDisplay(job.scheduledDate)} | {job.assignedTo}
                 </p>
+                <p className="text-xs text-slate-500">{job.address || job.customerAddress || "No address saved"}</p>
                 <p className="text-xs text-slate-500">Total {formatCurrency(job.totalAmount)}</p>
                 <button
                   className="danger-btn mt-2 text-xs"

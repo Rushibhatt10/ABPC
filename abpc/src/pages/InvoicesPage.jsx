@@ -184,7 +184,7 @@ export default function InvoicesPage() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-var(--brand-dark) transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
           New Invoice
@@ -220,7 +220,7 @@ export default function InvoicesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search invoices..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white"
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm bg-white"
         />
       </div>
 
@@ -257,7 +257,7 @@ export default function InvoicesPage() {
               <div className="flex flex-wrap gap-2">
                 <Link
                   to={`/admin/invoices/${inv.id}`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:border-var(--brand) hover:text-var(--brand) transition-colors"
                 >
                   <ExternalLink className="w-3 h-3" />
                   View
@@ -319,7 +319,7 @@ export default function InvoicesPage() {
                     value={form.customerId}
                     onChange={(e) => setForm((p) => ({ ...p, customerId: e.target.value }))}
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm"
                   >
                     <option value="">Select customer</option>
                     {customers.map((c) => <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>)}
@@ -331,7 +331,7 @@ export default function InvoicesPage() {
                     type="date"
                     value={form.date}
                     onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm"
                   />
                 </div>
               </div>
@@ -344,7 +344,7 @@ export default function InvoicesPage() {
                     <select
                       value={pricePicker.category}
                       onChange={(e) => setPricePicker((p) => ({ ...p, category: e.target.value }))}
-                      className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
+                      className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none"
                     >
                       <option value="">Select category</option>
                       {priceList.map((r) => <option key={r.id} value={r.category}>{r.category}</option>)}
@@ -352,7 +352,7 @@ export default function InvoicesPage() {
                     <select
                       value={pricePicker.bhk}
                       onChange={(e) => setPricePicker((p) => ({ ...p, bhk: e.target.value }))}
-                      className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
+                      className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none"
                     >
                       {["1", "2", "3", "4", "bunglow"].map((k) => (
                         <option key={k} value={k}>{k === "bunglow" ? "Bunglow" : `${k} BHK`}</option>
@@ -361,7 +361,7 @@ export default function InvoicesPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-600">Price: <strong>{selectedPrice !== null ? formatCurrency(selectedPrice) : "—"}</strong></span>
-                    <button type="button" onClick={addFromPriceList} className="px-3 py-1.5 rounded-xl bg-[var(--brand)] text-white text-xs font-bold hover:bg-[var(--brand-dark)]">
+                    <button type="button" onClick={addFromPriceList} className="px-3 py-1.5 rounded-xl bg-var(--brand) text-white text-xs font-bold hover:bg-var(--brand-dark)">
                       Add Item
                     </button>
                   </div>
@@ -378,12 +378,12 @@ export default function InvoicesPage() {
                         value={item.itemName}
                         onChange={(e) => updateItem(idx, "itemName", e.target.value)}
                         placeholder="Item name"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none"
                       />
                       <div className="grid grid-cols-3 gap-2">
-                        <input type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} placeholder="Qty" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-                        <input type="number" value={item.price} onChange={(e) => updateItem(idx, "price", e.target.value)} placeholder="Price" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-                        <input type="number" value={item.discount} onChange={(e) => updateItem(idx, "discount", e.target.value)} placeholder="Discount" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+                        <input type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} placeholder="Qty" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none" />
+                        <input type="number" value={item.price} onChange={(e) => updateItem(idx, "price", e.target.value)} placeholder="Price" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none" />
+                        <input type="number" value={item.discount} onChange={(e) => updateItem(idx, "discount", e.target.value)} placeholder="Discount" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none" />
                       </div>
                       {form.items.length > 1 && (
                         <button type="button" onClick={() => setForm((p) => ({ ...p, items: p.items.filter((_, i) => i !== idx) }))} className="text-xs text-rose-500 hover:text-rose-700 font-semibold">
@@ -393,13 +393,13 @@ export default function InvoicesPage() {
                     </div>
                   ))}
                 </div>
-                <button type="button" onClick={() => setForm((p) => ({ ...p, items: [...p.items, createItem()] }))} className="mt-2 text-sm font-semibold text-[var(--brand)] hover:underline">
+                <button type="button" onClick={() => setForm((p) => ({ ...p, items: [...p.items, createItem()] }))} className="mt-2 text-sm font-semibold text-var(--brand) hover:underline">
                   + Add Item
                 </button>
               </div>
 
               {/* Totals */}
-              <div className="bg-[var(--brand-soft)] rounded-xl p-4 space-y-1.5 text-sm">
+              <div className="bg-var(--brand-soft) rounded-xl p-4 space-y-1.5 text-sm">
                 <div className="flex justify-between"><span className="text-slate-600">Subtotal</span><span className="font-semibold">{formatCurrency(totals.subtotal)}</span></div>
                 <div className="flex justify-between"><span className="text-slate-600">Discount</span><span className="font-semibold text-rose-600">-{formatCurrency(totals.discountTotal)}</span></div>
                 <div className="flex justify-between border-t border-emerald-200 pt-1.5"><span className="font-bold text-slate-800">Total</span><span className="font-black text-slate-900">{formatCurrency(totals.total)}</span></div>
@@ -408,11 +408,11 @@ export default function InvoicesPage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Amount Received</label>
-                  <input type="number" value={form.received} onChange={(e) => setForm((p) => ({ ...p, received: e.target.value }))} placeholder="0" min="0" className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm" />
+                  <input type="number" value={form.received} onChange={(e) => setForm((p) => ({ ...p, received: e.target.value }))} placeholder="0" min="0" className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Payment Mode</label>
-                  <select value={form.paymentMode} onChange={(e) => setForm((p) => ({ ...p, paymentMode: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm">
+                  <select value={form.paymentMode} onChange={(e) => setForm((p) => ({ ...p, paymentMode: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm">
                     {["UPI", "Cash", "Bank Transfer", "Cheque", "Card"].map((m) => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
@@ -420,7 +420,7 @@ export default function InvoicesPage() {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
-                <button type="submit" disabled={busy} className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] disabled:opacity-60">
+                <button type="submit" disabled={busy} className="flex-1 py-2.5 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-var(--brand-dark) disabled:opacity-60">
                   {busy ? "Creating..." : "Create Invoice"}
                 </button>
               </div>

@@ -112,7 +112,6 @@ export default function QuotationPrintPage() {
                 <th className="border p-2 text-left">Item name</th>
                 <th className="border p-2">Quantity</th>
                 <th className="border p-2">Unit</th>
-                <th className="border p-2">Price / unit</th>
                 <th className="border p-2">Amount</th>
               </tr>
             </thead>
@@ -130,18 +129,15 @@ export default function QuotationPrintPage() {
                   <td className="border p-2 text-center">
                     {item.unit || "Sqf"}
                   </td>
-                  <td className="border p-2 text-center">
-                    {formatCurrency(item.unitPrice)}
-                  </td>
                   <td className="border p-2 text-center font-bold">
-                    {formatCurrency(item.total)}
+                    {formatCurrency(item.total || item.finalPrice)}
                   </td>
                 </tr>
               ))}
 
               {/* TOTAL ROW */}
               <tr className="bg-green-100 font-bold">
-                <td colSpan="5" className="border p-2 text-right">
+                <td colSpan="4" className="border p-2 text-right">
                   Total
                 </td>
                 <td className="border p-2 text-center">

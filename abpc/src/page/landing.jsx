@@ -414,9 +414,9 @@ useEffect(() => {
   Protecting your space with professional, eco-friendly pest control services tailored for every environment — from kitchens to warehouses.
   </p>
   <p className="flex items-center gap-2 text-xs sm:text-sm opacity-60 italic">
-    <span>🐜</span>
+    <Star size={14} />
     Click on the insects to know about them
-    <span>🪳</span>
+   
   </p>
   </div>
 

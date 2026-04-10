@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Users, Briefcase, TrendingUp, Clock, CheckCircle2,
-  AlertCircle, Calendar, ArrowRight, Plus, FileText, Receipt,
+  Calendar, ArrowRight, Plus, FileText, Receipt,
   MessageSquare, Trash2, Phone, Mail,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -10,8 +10,10 @@ import { subscribeCollection, subscribeQuery, updateRecord, deleteRecord } from 
 import { formatCurrency, getTodayISO, formatDateDisplay } from "../utils/format";
 import { collection, query, where } from "firebase/firestore";
 import { firestoreDb } from "../firebase/firestore";
+import MapLink from "../components/MapLink";
 
-function StatCard({ label, value, icon: Icon, color, sub }) {
+function StatCard({ label, value, icon, color, sub }) {
+  const IconComponent = icon;
   const colors = {
     green: "bg-emerald-50 text-emerald-700 border-emerald-100",
     amber: "bg-amber-50 text-amber-700 border-amber-100",
@@ -30,7 +32,7 @@ function StatCard({ label, value, icon: Icon, color, sub }) {
     <div className={`rounded-2xl border p-5 ${colors[color]}`}>
       <div className="flex items-start justify-between mb-3">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconColors[color]}`}>
-          <Icon className="w-5 h-5" />
+          <IconComponent className="w-5 h-5" />
         </div>
       </div>
       <p className="text-2xl font-black text-slate-900">{value}</p>
@@ -59,6 +61,7 @@ function WorkerJobCard({ job, onComplete, saving }) {
   const isCompleted = job.status === "completed";
   const allChecked = Object.values(checklist).every(Boolean);
   const progress = Object.values(checklist).filter(Boolean).length;
+  const jobAddress = job.address || job.customerAddress || "";
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
@@ -66,7 +69,7 @@ function WorkerJobCard({ job, onComplete, saving }) {
         <div>
           <h3 className="font-bold text-slate-900">{job.customerName || "Customer"}</h3>
           <p className="text-sm text-slate-500 mt-0.5">{job.serviceType || job.serviceName || "Service"}</p>
-          <p className="text-xs text-slate-400 mt-0.5">{job.address}</p>
+          {jobAddress ? <p className="text-xs text-slate-400 mt-0.5">{jobAddress}</p> : null}
         </div>
         <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex-shrink-0 ${
           isCompleted ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
@@ -74,6 +77,22 @@ function WorkerJobCard({ job, onComplete, saving }) {
           {isCompleted ? "પૂર્ણ" : "બાકી"}
         </span>
       </div>
+
+      {jobAddress ? (
+        <MapLink
+          address={jobAddress}
+          className="mb-4"
+          label="Open in Maps"
+          showDirections
+        />
+      ) : null}
+
+      {job.unit || job.finalPrice || job.totalAmount ? (
+        <div className="mb-4 rounded-xl bg-slate-950 px-4 py-4 text-white">
+          {job.unit ? <p className="text-xs uppercase tracking-wide text-slate-400">Unit: {job.unit}</p> : null}
+          <p className="mt-2 text-lg font-black">{formatCurrency(job.finalPrice || job.totalAmount || 0)}</p>
+        </div>
+      ) : null}
 
       {!isCompleted && (
         <>

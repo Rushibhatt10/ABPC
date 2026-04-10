@@ -3,18 +3,14 @@ import { collection, orderBy, query, where } from "firebase/firestore";
 import { firestoreDb } from "../firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, subscribeCollection, subscribeQuery, updateRecord } from "../utils/firestoreHelpers";
-import { formatDateDisplay, getTodayISO } from "../utils/format";
+import { formatCurrency, formatDateDisplay, getTodayISO } from "../utils/format";
 import { WORKERS } from "../constants/authProfiles";
+import MapLink from "../components/MapLink";
+import { getServiceAutoFill, getServicePriceForUnit, getUnitLabel } from "../utils/pricing";
 import {
-  Briefcase, Plus, X, CheckCircle2, Clock, Filter,
+  Briefcase, Plus, X, CheckCircle2, Clock,
   User, Calendar, MapPin, ChevronDown, ChevronUp,
 } from "lucide-react";
-
-const SERVICE_TYPES = [
-  "Anti-Termite Treatment", "Bed Bugs Treatment", "Mosquito & Fly Control",
-  "Rodent Control", "Cockroach AMC", "General Pest Control AMC",
-  "Wood Borer Treatment", "Ant Control", "Other",
-];
 
 const STATUS_COLORS = {
   pending: "bg-amber-100 text-amber-700",
@@ -22,10 +18,11 @@ const STATUS_COLORS = {
   completed: "bg-emerald-100 text-emerald-700",
 };
 
-function JobCard({ job, subJobs, isWorker, workerName, onMarkSubDone, busy }) {
+function JobCard({ job, subJobs, isWorker, onMarkSubDone, busy }) {
   const [expanded, setExpanded] = useState(false);
   const jobSubJobs = subJobs.filter((s) => s.jobId === job.id);
   const completedCount = jobSubJobs.filter((s) => s.status === "done").length;
+  const jobAddress = job.address || job.customerAddress || "";
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
@@ -41,10 +38,10 @@ function JobCard({ job, subJobs, isWorker, workerName, onMarkSubDone, busy }) {
         </div>
 
         <div className="space-y-1.5 text-xs text-slate-500">
-          {job.address && (
+          {jobAddress && (
             <div className="flex items-start gap-1.5">
               <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-              <span>{job.address}</span>
+              <span>{jobAddress}</span>
             </div>
           )}
           {job.scheduledDate && (
@@ -58,6 +55,15 @@ function JobCard({ job, subJobs, isWorker, workerName, onMarkSubDone, busy }) {
             <span>{Array.isArray(job.assignedTo) ? job.assignedTo.join(", ") : job.assignedTo}</span>
           </div>
         </div>
+
+        {jobAddress ? (
+          <MapLink
+            address={jobAddress}
+            className="mt-3"
+            label={isWorker ? "Open in Maps" : "View on Maps"}
+            showDirections={isWorker}
+          />
+        ) : null}
 
         {jobSubJobs.length > 0 && (
           <div className="mt-3">
@@ -111,12 +117,15 @@ function JobCard({ job, subJobs, isWorker, workerName, onMarkSubDone, busy }) {
   );
 }
 
-function CreateJobModal({ customers, onClose, onSave, saving }) {
+function CreateJobModal({ customers, services, onClose, onSave, saving }) {
   const [form, setForm] = useState({
     customerName: "",
     customerId: "",
     address: "",
+    serviceId: "",
     serviceType: "",
+    unit: "",
+    price: "",
     scheduledDate: getTodayISO(),
     status: "pending",
     notes: "",
@@ -132,9 +141,48 @@ function CreateJobModal({ customers, onClose, onSave, saving }) {
     }));
   };
 
+  const handleServiceChange = (id) => {
+    const service = services.find((item) => item.id === id);
+    const autoFill = getServiceAutoFill(service || {});
+    setForm((prev) => ({
+      ...prev,
+      serviceId: id,
+      serviceType: autoFill.serviceName,
+      unit: autoFill.unitType,
+      price: autoFill.price ? String(autoFill.price) : "",
+    }));
+  };
+
+  const handleUnitChange = (unitType) => {
+    const service = services.find((item) => item.id === form.serviceId);
+    const autoFill = getServicePriceForUnit(service || {}, unitType);
+    setForm((prev) => ({
+      ...prev,
+      unit: autoFill.unitType,
+      price: autoFill.price ? String(autoFill.price) : "",
+    }));
+  };
+
+  const selectedService = useMemo(
+    () => services.find((item) => item.id === form.serviceId) || null,
+    [form.serviceId, services],
+  );
+  const selectedServiceConfig = useMemo(
+    () => (selectedService ? getServiceAutoFill(selectedService) : null),
+    [selectedService],
+  );
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(form);
+    if (!form.serviceId || Number(form.price) <= 0) return;
+
+    onSave({
+      ...form,
+      serviceName: form.serviceType,
+      unit: form.unit,
+      finalPrice: Number(form.price),
+      totalAmount: Number(form.price),
+    });
   };
 
   return (
@@ -177,22 +225,52 @@ function CreateJobModal({ customers, onClose, onSave, saving }) {
             <textarea
               value={form.address}
               onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
-              placeholder="Job site address"
+              placeholder="123 Main Street, Surat, Gujarat"
               rows={2}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none"
             />
+            <p className="mt-1 text-xs text-slate-400">This job-specific address will be saved and used for Google Maps.</p>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Service Type *</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Service *</label>
             <select
-              value={form.serviceType}
-              onChange={(e) => setForm((p) => ({ ...p, serviceType: e.target.value }))}
+              value={form.serviceId}
+              onChange={(e) => handleServiceChange(e.target.value)}
               required
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
             >
               <option value="">Select service</option>
-              {SERVICE_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
+              {services.map((service) => (
+                <option key={service.id} value={service.id}>{service.name || service.serviceName}</option>
+              ))}
             </select>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Unit</label>
+              <select
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-600"
+                disabled={!selectedServiceConfig}
+                onChange={(e) => handleUnitChange(e.target.value)}
+                value={form.unit}
+              >
+                <option value="">Select unit</option>
+                {(selectedServiceConfig?.unitOptions || []).map((unit) => (
+                  <option key={unit} value={unit}>{getUnitLabel(unit)}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Price</label>
+              <input
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
+                min="0"
+                onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
+                placeholder="Auto-filled price"
+                type="number"
+                value={form.price}
+              />
+            </div>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Scheduled Date</label>
@@ -216,6 +294,7 @@ function CreateJobModal({ customers, onClose, onSave, saving }) {
           <div className="bg-[var(--brand-soft)] rounded-xl p-3">
             <p className="text-xs font-bold text-[var(--brand-dark)] mb-1">Assigned to all workers</p>
             <p className="text-sm text-[var(--brand)]">{WORKERS.join(", ")}</p>
+            {form.price ? <p className="mt-2 text-sm font-bold text-slate-800">Final price: {formatCurrency(form.price)}</p> : null}
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">
@@ -238,6 +317,7 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState([]);
   const [subJobs, setSubJobs] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [services, setServices] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -254,6 +334,7 @@ export default function JobsPage() {
       subscribeQuery(jobsQ, setJobs),
       subscribeQuery(query(collection(firestoreDb, "subJobs"), orderBy("createdAt", "desc")), setSubJobs),
       subscribeCollection("customers", setCustomers),
+      subscribeCollection("services", setServices),
     ];
     return () => unsubs.forEach((u) => u());
   }, [isWorker, workerName]);
@@ -301,6 +382,18 @@ export default function JobsPage() {
         completedBy: workerName,
         completedAt: new Date().toISOString(),
       });
+
+      const relatedSubJobs = subJobs
+        .filter((item) => item.jobId === sj.jobId)
+        .map((item) => (item.id === sj.id ? { ...item, status: "done" } : item));
+      const allDone = relatedSubJobs.length > 0 && relatedSubJobs.every((item) => item.status === "done");
+
+      await updateRecord("jobs", sj.jobId, {
+        status: allDone ? "completed" : "in_progress",
+        completedAt: allDone ? new Date().toISOString() : null,
+        completedBy: allDone ? workerName : "",
+      });
+
       showMsg("success", `"${sj.title}" marked done.`);
     } catch (e) {
       showMsg("error", e.message);
@@ -391,7 +484,6 @@ export default function JobsPage() {
               job={job}
               subJobs={subJobs}
               isWorker={isWorker}
-              workerName={workerName}
               onMarkSubDone={handleMarkSubDone}
               busy={busy}
             />
@@ -400,12 +492,13 @@ export default function JobsPage() {
       )}
 
       {showModal && (
-        <CreateJobModal
-          customers={customers}
-          onClose={() => setShowModal(false)}
-          onSave={handleCreate}
-          saving={saving}
-        />
+      <CreateJobModal
+        customers={customers}
+        onClose={() => setShowModal(false)}
+        onSave={handleCreate}
+        saving={saving}
+        services={services}
+      />
       )}
     </div>
   );

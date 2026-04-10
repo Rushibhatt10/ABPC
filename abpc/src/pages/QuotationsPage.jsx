@@ -173,7 +173,7 @@ export default function QuotationsPage() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-var(--brand-dark) transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
           New Quotation
@@ -209,7 +209,7 @@ export default function QuotationsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search quotations..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white"
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm bg-white"
         />
       </div>
 
@@ -241,7 +241,7 @@ export default function QuotationsPage() {
               <div className="flex flex-wrap gap-2">
                 <Link
                   to={`/admin/quotations/${q.id}`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:border-var(--brand) hover:text-var(--brand) transition-colors"
                 >
                   <ExternalLink className="w-3 h-3" />
                   View
@@ -299,14 +299,14 @@ export default function QuotationsPage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Customer *</label>
-                  <select value={form.customerId} onChange={(e) => setForm((p) => ({ ...p, customerId: e.target.value }))} required className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm">
+                  <select value={form.customerId} onChange={(e) => setForm((p) => ({ ...p, customerId: e.target.value }))} required className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm">
                     <option value="">Select customer</option>
                     {customers.map((c) => <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Date</label>
-                  <input type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm" />
+                  <input type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm" />
                 </div>
               </div>
 
@@ -314,17 +314,17 @@ export default function QuotationsPage() {
                 <div className="bg-slate-50 rounded-xl p-4 space-y-3">
                   <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Add from Price List</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <select value={pricePicker.category} onChange={(e) => setPricePicker((p) => ({ ...p, category: e.target.value }))} className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none">
+                    <select value={pricePicker.category} onChange={(e) => setPricePicker((p) => ({ ...p, category: e.target.value }))} className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none">
                       <option value="">Select category</option>
                       {priceList.map((r) => <option key={r.id} value={r.category}>{r.category}</option>)}
                     </select>
-                    <select value={pricePicker.bhk} onChange={(e) => setPricePicker((p) => ({ ...p, bhk: e.target.value }))} className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none">
+                    <select value={pricePicker.bhk} onChange={(e) => setPricePicker((p) => ({ ...p, bhk: e.target.value }))} className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none">
                       {["1", "2", "3", "4", "bunglow"].map((k) => <option key={k} value={k}>{k === "bunglow" ? "Bunglow" : `${k} BHK`}</option>)}
                     </select>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-600">Price: <strong>{selectedPrice !== null ? formatCurrency(selectedPrice) : "—"}</strong></span>
-                    <button type="button" onClick={addFromPriceList} className="px-3 py-1.5 rounded-xl bg-[var(--brand)] text-white text-xs font-bold hover:bg-[var(--brand-dark)]">Add Item</button>
+                    <button type="button" onClick={addFromPriceList} className="px-3 py-1.5 rounded-xl bg-var(--brand) text-white text-xs font-bold hover:bg-var(--brand-dark)">Add Item</button>
                   </div>
                 </div>
               )}
@@ -334,11 +334,11 @@ export default function QuotationsPage() {
                 <div className="space-y-3">
                   {form.items.map((item, idx) => (
                     <div key={idx} className="bg-slate-50 rounded-xl p-3 space-y-2">
-                      <input value={item.itemName} onChange={(e) => updateItem(idx, "itemName", e.target.value)} placeholder="Item name" className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+                      <input value={item.itemName} onChange={(e) => updateItem(idx, "itemName", e.target.value)} placeholder="Item name" className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none" />
                       <div className="grid grid-cols-3 gap-2">
-                        <input type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} placeholder="Qty" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-                        <input value={item.unit} onChange={(e) => updateItem(idx, "unit", e.target.value)} placeholder="Unit" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-                        <input type="number" value={item.unitPrice} onChange={(e) => updateItem(idx, "unitPrice", e.target.value)} placeholder="Price" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+                        <input type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} placeholder="Qty" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none" />
+                        <input value={item.unit} onChange={(e) => updateItem(idx, "unit", e.target.value)} placeholder="Unit" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none" />
+                        <input type="number" value={item.unitPrice} onChange={(e) => updateItem(idx, "unitPrice", e.target.value)} placeholder="Price" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none" />
                       </div>
                       {form.items.length > 1 && (
                         <button type="button" onClick={() => setForm((p) => ({ ...p, items: p.items.filter((_, i) => i !== idx) }))} className="text-xs text-rose-500 hover:text-rose-700 font-semibold">Remove</button>
@@ -346,10 +346,10 @@ export default function QuotationsPage() {
                     </div>
                   ))}
                 </div>
-                <button type="button" onClick={() => setForm((p) => ({ ...p, items: [...p.items, createItem()] }))} className="mt-2 text-sm font-semibold text-[var(--brand)] hover:underline">+ Add Item</button>
+                <button type="button" onClick={() => setForm((p) => ({ ...p, items: [...p.items, createItem()] }))} className="mt-2 text-sm font-semibold text-var(--brand) hover:underline">+ Add Item</button>
               </div>
 
-              <div className="bg-[var(--brand-soft)] rounded-xl p-4 flex items-center justify-between">
+              <div className="bg-var(--brand-soft) rounded-xl p-4 flex items-center justify-between">
                 <span className="font-bold text-slate-800">Total</span>
                 <span className="font-black text-xl text-slate-900">{formatCurrency(total)}</span>
               </div>
@@ -363,14 +363,14 @@ export default function QuotationsPage() {
                 ].map((f) => (
                   <div key={f.key}>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{f.label}</label>
-                    <textarea value={form[f.key]} onChange={(e) => setForm((p) => ({ ...p, [f.key]: e.target.value }))} rows={2} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none" />
+                    <textarea value={form[f.key]} onChange={(e) => setForm((p) => ({ ...p, [f.key]: e.target.value }))} rows={2} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm resize-none" />
                   </div>
                 ))}
               </div>
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
-                <button type="submit" disabled={busy} className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] disabled:opacity-60">
+                <button type="submit" disabled={busy} className="flex-1 py-2.5 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-var(--brand-dark) disabled:opacity-60">
                   {busy ? "Creating..." : "Create Quotation"}
                 </button>
               </div>

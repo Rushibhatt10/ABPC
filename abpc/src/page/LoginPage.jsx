@@ -89,7 +89,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-slate-900 text-white p-6 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs hover:bg-slate-800 hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-slate-200 mt-2 disabled:opacity-50"
+              className="w-full bg-slate-900 text-white p-6 rounded-2rem font-black uppercase tracking-[0.2em] text-xs hover:bg-slate-800 hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-slate-200 mt-2 disabled:opacity-50"
             >
               {loading ? "Verifying..." : "Enter Workspace"}
             </button>
