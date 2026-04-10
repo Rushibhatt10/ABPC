@@ -111,7 +111,7 @@ const PremiumServices = () => {
     <section
       id="services"
       className={`w-full py-14 sm:py-16 md:py-32 overflow-hidden relative transition-colors duration-700 ${
-        isDark ? 'bg-[#0a0a0a] text-[#f0ede8]' : 'bg-[#f7f5f0] text-[#111110]'
+        isDark ? 'bg-black text-white' : 'bg-[#f7f5f0] text-[#111110]'
       }`}
     >
       {/* ambient glow */}
@@ -153,7 +153,7 @@ const PremiumServices = () => {
               key={service.id}
               className={`snap-center shrink-0 w-[94vw] sm:w-[90vw] md:w-[820px] lg:w-[980px] md:min-h-[520px] md:max-h-[72vh] relative group rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col md:flex-row transition-all duration-700 ${
                 isDark
-                  ? 'bg-[#141414] shadow-[0_20px_60px_rgba(0,0,0,0.5)]'
+                  ? 'bg-[#0a0a0a] shadow-[0_20px_60px_rgba(0,0,0,0.6)]'
                   : 'bg-[#ffffff] shadow-[0_20px_60px_rgba(0,0,0,0.08)]'
               } ${isActive ? 'ring-1 ring-[#95B15F]/30' : ''}`}
             >

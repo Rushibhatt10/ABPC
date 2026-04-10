@@ -33,7 +33,7 @@ function JobCard({ job, subJobs, isWorker, onMarkSubDone, busy }) {
             <p className="text-sm text-slate-500 mt-0.5">{job.serviceType}</p>
           </div>
           <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex-shrink-0 ${STATUS_COLORS[job.status] || STATUS_COLORS.pending}`}>
-            {job.status === "completed" ? "પૂર્ણ" : job.status === "in_progress" ? "ચાલુ" : "બાકી"}
+            {job.status === "completed" ? "કમ્પ્લીટ" : job.status === "in_progress" ? "ઇન પ્રોગ્રેસ" : "પેન્ડિંગ"}
           </span>
         </div>
 
@@ -68,7 +68,7 @@ function JobCard({ job, subJobs, isWorker, onMarkSubDone, busy }) {
         {jobSubJobs.length > 0 && (
           <div className="mt-3">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-semibold text-slate-500">પેટા-કામ ({completedCount}/{jobSubJobs.length})</span>
+              <span className="text-xs font-semibold text-slate-500">સબ-ટાસ્ક ({completedCount}/{jobSubJobs.length})</span>
               <button onClick={() => setExpanded(!expanded)} className="text-slate-400 hover:text-slate-600">
                 {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
@@ -106,7 +106,7 @@ function JobCard({ job, subJobs, isWorker, onMarkSubDone, busy }) {
                   disabled={busy}
                   className="px-3 py-1 rounded-lg bg-[var(--brand)] text-white text-xs font-bold hover:bg-[var(--brand-dark)] disabled:opacity-60"
                 >
-                  થઈ ગયું
+                  થઈ ગ્યું ✓
                 </button>
               )}
             </div>
@@ -413,8 +413,8 @@ export default function JobsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">{isWorker ? "મારા કામ" : "Jobs"}</h1>
-          <p className="text-slate-500 mt-0.5">{jobs.length} {isWorker ? "કુલ કામ" : "total jobs"}</p>
+          <h1 className="text-2xl font-black text-slate-900">{isWorker ? "મારા જોબ્સ" : "Jobs"}</h1>
+          <p className="text-slate-500 mt-0.5">{jobs.length} {isWorker ? "ટોટલ જોબ્સ" : "total jobs"}</p>
         </div>
         {!isWorker && (
           <button
@@ -439,9 +439,9 @@ export default function JobsPage() {
       <div className="flex gap-2 overflow-x-auto pb-1">
         {[
           { key: "all", label: isWorker ? "બધા" : "All" },
-          { key: "pending", label: isWorker ? "બાકી" : "Pending" },
-          { key: "in_progress", label: isWorker ? "ચાલુ" : "In Progress" },
-          { key: "completed", label: isWorker ? "પૂર્ણ" : "Completed" },
+          { key: "pending", label: isWorker ? "પેન્ડિંગ" : "Pending" },
+          { key: "in_progress", label: isWorker ? "ઇન પ્રોગ્રેસ" : "In Progress" },
+          { key: "completed", label: isWorker ? "કમ્પ્લીટ" : "Completed" },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -466,7 +466,7 @@ export default function JobsPage() {
       {filtered.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <Briefcase className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="font-semibold text-slate-500">{isWorker ? "કોઈ કામ મળ્યું નહીં" : "No jobs found"}</p>
+          <p className="font-semibold text-slate-500">{isWorker ? "કોઈ જોબ મળ્યો નહીં" : "No jobs found"}</p>
           {!isWorker && (
             <button
               onClick={() => setShowModal(true)}
