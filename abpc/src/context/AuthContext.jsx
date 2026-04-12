@@ -17,7 +17,7 @@ const ADMIN_PROFILES = AUTH_PROFILES.filter((p) => !isWorkerRole(p.key)).map((p)
 }));
 
 const WORKER_PROFILES = AUTH_PROFILES.filter((p) => isWorkerRole(p.key)).map((p) => ({
-  ...p, role: "worker", workerName: p.workerTag || p.name,
+  ...p, role: "Employee", workerName: p.workerTag || p.name,
 }));
 
 export function AuthProvider({ children }) {
