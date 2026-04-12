@@ -814,12 +814,15 @@ useEffect(() => {
  </div>
  <div className="text-sm text-white/60 flex flex-col gap-1">
 
+  <a href="tel:+919825188413" className="hover:text-white transition-colors">
+    BAKUL BHATT: +91 98251 88413
+    </a>
+  
   <a href="tel:+919374488004" className="hover:text-white transition-colors">
     ANKIT BHATT: +91 93744 88004
   </a>
-  <a href="tel:+919825188413" className="hover:text-white transition-colors">
-    BAKUL BHATT: +91 98251 88413
-  </a>
+  
+  
   <a href="mailto:abpestcontrol@gmail.com" className="hover:text-white transition-colors">
     abpestcontrol@gmail.com
   </a>

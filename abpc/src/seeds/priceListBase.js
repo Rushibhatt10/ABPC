@@ -11,17 +11,8 @@ export const PRICE_CATEGORIES = [
   "Wood Borer Treatment",
 ];
 
-// Base prices must be populated from your uploaded image.
-// Once initialized in Firestore, base prices become locked.
 export const PRICE_LIST_BASE = PRICE_CATEGORIES.map((category) => ({
   category,
   serviceName: category,
-  bhkPrices: {
-    "1": { base: null },
-    "2": { base: null },
-    "3": { base: null },
-    "4": { base: null },
-    bunglow: { base: null },
-  },
+  unitPrices: { unit: null, sqft: null, sqmt: null },
 }));
-

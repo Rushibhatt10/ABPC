@@ -126,7 +126,7 @@ export default function WhatsAppPage() {
               <select
                 value={selectedCustomer}
                 onChange={(e) => { setSelectedCustomer(e.target.value); setSelectedDoc(""); }}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
               >
                 <option value="">Select customer</option>
                 {customers.map((c) => (
@@ -148,7 +148,7 @@ export default function WhatsAppPage() {
                       onClick={() => { setSelectedTemplate(t.id); setUseCustom(false); }}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-sm font-semibold text-left transition-all ${
                         selectedTemplate === t.id && !useCustom
-                          ? "border-var(--brand) bg-var(--brand-soft) text-var(--brand)"
+                          ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]"
                           : "border-slate-200 text-slate-600 hover:border-slate-300"
                       }`}
                     >
@@ -162,7 +162,7 @@ export default function WhatsAppPage() {
                   onClick={() => { setUseCustom(true); setCustomMessage(generatedMessage); }}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-sm font-semibold text-left transition-all ${
                     useCustom
-                      ? "border-var(--brand) bg-var(--brand-soft) text-var(--brand)"
+                      ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]"
                       : "border-slate-200 text-slate-600 hover:border-slate-300"
                   }`}
                 >
@@ -202,7 +202,7 @@ export default function WhatsAppPage() {
                 rows={5}
                 className={`w-full px-3.5 py-2.5 rounded-xl border text-sm resize-none ${
                   useCustom
-                    ? "border-var(--brand) focus:outline-none"
+                    ? "border-[var(--brand)] focus:outline-none"
                     : "border-slate-200 bg-slate-50 text-slate-600"
                 }`}
               />
@@ -258,7 +258,7 @@ export default function WhatsAppPage() {
           {/* Quick send to all customers */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5">
             <div className="flex items-center gap-2 mb-4">
-              <Users className="w-4 h-4 text-var(--brand)" />
+              <Users className="w-4 h-4 text-[var(--brand)]" />
               <h2 className="font-bold text-slate-800">All Customers</h2>
             </div>
             <div className="space-y-2 max-h-64 overflow-y-auto">
