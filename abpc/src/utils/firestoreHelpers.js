@@ -54,9 +54,16 @@ export const listRecords = async (collectionName, { orderByField = "createdAt", 
 export const subscribeCollection = (collectionName, onData, { orderByField = "createdAt", direction = "asc", pageSize = 500 } = {}) => {
   const base = collection(firestoreDb, collectionName);
   const q = query(base, orderBy(orderByField, direction), limit(pageSize));
-  return onSnapshot(q, (snap) => {
-    onData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      onData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    },
+    (error) => {
+      console.warn(`[Firestore] Subscription error on ${collectionName}:`, error.message);
+      onData([]); // Fallback to empty array safely if permissions denied
+    }
+  );
 };
 
 export const subscribeDoc = (collectionName, id, onData) =>

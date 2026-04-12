@@ -6,9 +6,10 @@ import { createRecord, subscribeQuery, updateRecord, subscribeCollection, delete
 import { compressImage, validateFileSize, uid } from "../utils/mediaHelpers";
 import { uploadToCloudinary } from "../utils/cloudinaryUpload";
 import { useVoiceRecorder } from "../hooks/useVoiceRecorder";
-import { FileText, Image, Mic, Filter, X, Plus, Camera, Trash2, Square, AlertCircle, Download, Printer, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { FileText, Image, Mic, Filter, X, Plus, Camera, Trash2, Square, AlertCircle, Download, Printer, CheckCircle2, Eye, EyeOff, UploadCloud, RefreshCw, Link2 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { isDriveUploadConfigured, uploadFileToDrive } from "../utils/driveUpload";
 
 const WORKERS = ["Nakul", "Divyesh", "Sagar"];
 const MAX_IMAGE_MB = 1;
@@ -189,6 +190,17 @@ export default function ReportsPage() {
     return { job: j, customer: c };
   };
 
+  // Returns rework info for a report's job
+  const getReworkInfo = (jobId) => {
+    const j = jobs.find((jb) => jb.id === jobId);
+    if (!j) return null;
+    if (j.jobType === "Rework" && j.parentJobId) {
+      return { isRework: true, parentJobId: j.parentJobId };
+    }
+    const reworks = jobs.filter((rj) => rj.parentJobId === jobId && rj.jobType === "Rework");
+    return reworks.length > 0 ? { hasReworks: true, reworks } : null;
+  };
+
   const handleDeleteReport = async (reportId) => {
     try {
       await deleteRecord("reports", reportId);
@@ -202,7 +214,7 @@ export default function ReportsPage() {
   };
 
   // Excel export
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     const data = visible.map((r) => {
       const { job, customer } = getCustomerData(r.jobId) || {};
       return {
@@ -227,9 +239,40 @@ export default function ReportsPage() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Reports");
     const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-    saveAs(blob, `CRM_Report_${new Date().toISOString().split("T")[0]}.xlsx`);
-    showMsg("success", "Excel report downloaded.");
+    const fileName = `CRM_Report_${new Date().toISOString().split("T")[0]}.xlsx`;
+    const file = new File(
+      [excelBuffer],
+      fileName,
+      { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+    );
+
+    try {
+      if (isDriveUploadConfigured()) {
+        showMsg("success", "Uploading reports Excel directly to Google Drive...");
+        const result = await uploadFileToDrive({
+          file,
+          fileName,
+          mimeType: file.type,
+          target: "reports",
+          metadata: {
+            module: "reports",
+            exportedAt: new Date().toISOString(),
+            count: visible.length,
+          },
+        });
+
+        showMsg("success", "Reports Excel uploaded to Google Drive.");
+        if (result.url) {
+          window.open(result.url, "_blank", "noopener,noreferrer");
+        }
+        return;
+      }
+
+      saveAs(file, fileName);
+      showMsg("success", "Drive is not configured yet, so the Excel file was downloaded locally.");
+    } catch (err) {
+      showMsg("error", err.message || "Failed to export reports.");
+    }
   };
 
   // Print view
@@ -314,10 +357,10 @@ export default function ReportsPage() {
             <>
               <button
                 onClick={exportToExcel}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--brand)] text-[var(--brand)] text-sm font-bold hover:bg-[var(--brand-soft)] transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors shadow-sm"
               >
-                <Download className="w-4 h-4" />
-                Export Excel
+                <UploadCloud className="w-4 h-4" />
+                Cloud Export
               </button>
               <button
                 onClick={printReports}
@@ -458,6 +501,34 @@ export default function ReportsPage() {
                 <div className="text-xs text-slate-500 mb-3 px-3 py-2 bg-slate-50 rounded-xl">
                   Job: {getJobLabel(r.jobId)}
                 </div>
+
+                {/* Rework Job section */}
+                {(() => {
+                  const rw = getReworkInfo(r.jobId);
+                  if (!rw) return null;
+                  if (rw.isRework) return (
+                    <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-violet-50 border border-violet-200 rounded-xl">
+                      <RefreshCw className="w-3.5 h-3.5 text-violet-600 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <span className="text-xs font-bold text-violet-700">Rework Job</span>
+                        <span className="text-xs text-violet-500 ml-1.5">· Original Job ID:</span>
+                        <span className="text-xs font-mono text-violet-700 ml-1 break-all">{rw.parentJobId}</span>
+                      </div>
+                    </div>
+                  );
+                  if (rw.hasReworks) return (
+                    <div className="mb-3 px-3 py-2 bg-violet-50 border border-violet-200 rounded-xl">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Link2 className="w-3.5 h-3.5 text-violet-600" />
+                        <span className="text-xs font-bold text-violet-700">Has {rw.reworks.length} Rework Job{rw.reworks.length > 1 ? "s" : ""}</span>
+                      </div>
+                      {rw.reworks.map((rwj) => (
+                        <div key={rwj.id} className="text-xs text-violet-600 font-mono mt-0.5">↳ {rwj.id}</div>
+                      ))}
+                    </div>
+                  );
+                  return null;
+                })()}
 
                 {r.checklist && (
                   <div className="grid grid-cols-2 gap-2 mb-3">

@@ -1,53 +1,53 @@
 export const SERVICE_PRICING_MENU = [
   {
     serviceName: "Anti-Termite Treatment",
-    unitOptions: ["sqft"],
-    unitPrices: { sqft: 7 },
+    unitOptions: ["sqft", "sqmt", "bhk"],
+    unitPrices: { sqft: 7, sqmt: 75, bhk: 3000 },
   },
   {
     serviceName: "Drill Treatment",
-    unitOptions: ["bhk", "sqft"],
-    unitPrices: { bhk: 3000, sqft: 12 },
+    unitOptions: ["bhk", "sqft", "sqmt"],
+    unitPrices: { bhk: 3000, sqft: 12, sqmt: 130 },
   },
   {
     serviceName: "Garden / Ply / Tube Treatment",
-    unitOptions: ["sqft", "unit"],
-    unitPrices: { sqft: 15, unit: 450 },
+    unitOptions: ["sqft", "sqmt", "unit"],
+    unitPrices: { sqft: 15, sqmt: 160, unit: 450 },
   },
   {
     serviceName: "Cockroach AMC",
-    unitOptions: ["bhk"],
-    unitPrices: { bhk: 1800 },
+    unitOptions: ["bhk", "unit"],
+    unitPrices: { bhk: 1800, unit: 1800 },
   },
   {
     serviceName: "Ant Control AMC",
-    unitOptions: ["bhk"],
-    unitPrices: { bhk: 1500 },
+    unitOptions: ["bhk", "unit"],
+    unitPrices: { bhk: 1500, unit: 1500 },
   },
   {
     serviceName: "Bed Bugs",
-    unitOptions: ["bhk"],
-    unitPrices: { bhk: 3000 },
+    unitOptions: ["bhk", "unit"],
+    unitPrices: { bhk: 3000, unit: 3000 },
   },
   {
     serviceName: "Mosquito & Fly",
-    unitOptions: ["bhk"],
-    unitPrices: { bhk: 2200 },
+    unitOptions: ["bhk", "unit"],
+    unitPrices: { bhk: 2200, unit: 2200 },
   },
   {
     serviceName: "Rodent Control",
-    unitOptions: ["bhk"],
-    unitPrices: { bhk: 2500 },
+    unitOptions: ["bhk", "unit"],
+    unitPrices: { bhk: 2500, unit: 2500 },
   },
   {
     serviceName: "General Pest Control AMC",
-    unitOptions: ["bhk"],
-    unitPrices: { bhk: 2000 },
+    unitOptions: ["bhk", "unit"],
+    unitPrices: { bhk: 2000, unit: 2000 },
   },
   {
     serviceName: "Wood Borer Treatment",
-    unitOptions: ["unit"],
-    unitPrices: { unit: 600 },
+    unitOptions: ["unit", "sqft"],
+    unitPrices: { unit: 600, sqft: 25 },
   },
 ];
 

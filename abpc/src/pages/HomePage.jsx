@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import {
   Users, Briefcase, TrendingUp, Clock, CheckCircle2,
   Calendar, ArrowRight, Plus, FileText, Receipt,
-  MessageSquare, Trash2, Phone, Mail,
+  MessageSquare, Trash2, Phone, Mail, Search, RefreshCw,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { subscribeCollection, subscribeQuery, updateRecord, deleteRecord } from "../utils/firestoreHelpers";
@@ -44,23 +44,8 @@ function StatCard({ label, value, icon, color, sub }) {
 
 function WorkerJobCard({ job, onComplete, saving }) {
   const [notes, setNotes] = useState(job.notes || "");
-  const [checklist, setChecklist] = useState({
-    inspectionDone: job.checklist?.inspectionDone || false,
-    chemicalApplied: job.checklist?.chemicalApplied || false,
-    areaCovered: job.checklist?.areaCovered || false,
-    customerSatisfied: job.checklist?.customerSatisfied || false,
-  });
-
-  const checks = [
-    { key: "inspectionDone", label: "ઇન્સ્પેક્શન થયું" },
-    { key: "chemicalApplied", label: "કેમિકલ એપ્લાય કર્યું" },
-    { key: "areaCovered", label: "એરિયા કવર કર્યો" },
-    { key: "customerSatisfied", label: "કસ્ટમર સેટિસ્ફાઈડ" },
-  ];
 
   const isCompleted = job.status === "completed";
-  const allChecked = Object.values(checklist).every(Boolean);
-  const progress = Object.values(checklist).filter(Boolean).length;
   const jobAddress = job.address || job.customerAddress || "";
 
   return (
@@ -87,66 +72,11 @@ function WorkerJobCard({ job, onComplete, saving }) {
         />
       ) : null}
 
-      {job.unit || job.finalPrice || job.totalAmount ? (
-        <div className="mb-4 rounded-xl bg-slate-950 px-4 py-4 text-white">
-          {job.unit ? <p className="text-xs uppercase tracking-wide text-slate-400">Unit: {job.unit}</p> : null}
-          <p className="mt-2 text-lg font-black">{formatCurrency(job.finalPrice || job.totalAmount || 0)}</p>
-        </div>
-      ) : null}
 
       {!isCompleted && (
-        <>
-          {/* Progress bar */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-slate-500">પ્રોગ્રેસ</span>
-              <span className="text-xs font-bold text-slate-700">{progress}/4</span>
-            </div>
-            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-[var(--brand)] transition-all duration-300"
-                style={{ width: `${(progress / 4) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2 mb-4">
-            {checks.map((c) => (
-              <label key={c.key} className="flex items-center gap-2.5 text-sm text-slate-700 cursor-pointer hover:bg-slate-50 px-2 py-1.5 rounded-lg transition-colors">
-                <input
-                  type="checkbox"
-                  checked={checklist[c.key]}
-                  onChange={(e) => setChecklist((p) => ({ ...p, [c.key]: e.target.checked }))}
-                  className="w-4 h-4 accent-emerald-600 rounded"
-                />
-                <span className={checklist[c.key] ? "text-slate-900 font-medium" : ""}>{c.label}</span>
-                {checklist[c.key] && <CheckCircle2 className="w-4 h-4 text-emerald-600 ml-auto" />}
-              </label>
-            ))}
-          </div>
-
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="કામ વિશે નોટ્સ લખો..."
-            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm resize-none focus:outline-none focus:border-[var(--brand)] mb-3"
-            rows={2}
-          />
-
-          {allChecked ? (
-            <button
-              onClick={() => onComplete(job.id, { checklist, notes })}
-              disabled={saving}
-              className="w-full py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors disabled:opacity-60 shadow-sm"
-            >
-              {saving ? "સેવ થઈ રહ્યું છે..." : "✓ કમ્પ્લીટ કરો"}
-            </button>
-          ) : (
-            <div className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-400 text-sm font-bold text-center">
-            બધા સ્ટેપ્સ કમ્પ્લીટ કરો
-            </div>
-          )}
-        </>
+        <div className="text-sm font-semibold text-slate-500 py-2">
+          જોબ ચાલુ છે...
+        </div>
       )}
 
       {isCompleted && (
@@ -170,6 +100,7 @@ function WorkerJobCard({ job, onComplete, saving }) {
 function WorkerDashboard({ profile }) {
   const workerName = profile?.workerTag || profile?.name || "";
   const [jobs, setJobs] = useState([]);
+  const [search, setSearch] = useState("");
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [saving, setSaving] = useState(false);
 
@@ -186,10 +117,20 @@ function WorkerDashboard({ profile }) {
     [jobs]
   );
 
+  const filteredJobs = useMemo(() => {
+    if (!search.trim()) return sortedJobs;
+    const q = search.toLowerCase();
+    return sortedJobs.filter((j) =>
+      j.customerName?.toLowerCase().includes(q) ||
+      j.serviceType?.toLowerCase().includes(q) ||
+      j.id?.toLowerCase().includes(q)
+    );
+  }, [sortedJobs, search]);
+
   const todayJobs = useMemo(() => {
     const today = getTodayISO();
-    return sortedJobs.filter((j) => String(j.scheduledDate) === today || !j.scheduledDate);
-  }, [sortedJobs]);
+    return filteredJobs.filter((j) => String(j.scheduledDate) === today || !j.scheduledDate);
+  }, [filteredJobs]);
 
   const showMsg = (type, text) => {
     setMsg({ type, text });
@@ -234,6 +175,14 @@ function WorkerDashboard({ profile }) {
         <StatCard label="આજના જોબ્સ" value={todayJobs.length} icon={Calendar} color="green" />
       </div>
 
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <input value={search} onChange={(e) => setSearch(e.target.value)}
+          placeholder="જોબ ID અથવા કસ્ટમર નામ સર્ચ કરો..."
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white" />
+      </div>
+
       <div>
         <h2 className="text-base font-bold text-slate-800 mb-3">આજના જોબ્સ</h2>
         {todayJobs.length === 0 ? (
@@ -259,13 +208,20 @@ function WorkerDashboard({ profile }) {
       <div>
         <h2 className="text-base font-bold text-slate-800 mb-3">બધા અસાઇન્ડ જોબ્સ</h2>
         <div className="space-y-3">
-          {sortedJobs.length === 0 ? (
+          {filteredJobs.length === 0 ? (
             <p className="text-sm text-slate-500">હજુ કોઈ જોબ અસાઇન નથી.</p>
           ) : (
-            sortedJobs.map((job) => (
+            filteredJobs.map((job) => (
               <div key={job.id} className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-slate-800 text-sm">{job.customerName}</p>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <p className="font-semibold text-slate-800 text-sm">{job.customerName}</p>
+                    {job.jobType === "Rework" && (
+                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-700">
+                        <RefreshCw className="w-2.5 h-2.5" /> Rework
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500">{job.serviceType} · {formatDateDisplay(job.scheduledDate)}</p>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
