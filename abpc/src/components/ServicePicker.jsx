@@ -1,14 +1,24 @@
 /**
- * ServicePicker — Category → Subcategory → Unit → Qty → Price
+ * ServicePicker — Category → Subcategory → Unit → Qty → Price → Warranty
  * Used in: InvoicesPage, QuotationsPage, JobsPage (CreateJobModal)
  *
  * Props:
- *   onAdd(item) — called with { itemName, category, unit, quantity, price, total }
+ *   onAdd(item) — called with { itemName, category, unit, quantity, price, total, warranty }
  */
 import { useState } from "react";
-import { Plus, ChevronDown } from "lucide-react";
+import { Plus } from "lucide-react";
 import { SERVICE_CATEGORIES, UNITS } from "../constants/services";
 import { formatCurrency } from "../utils/format";
+
+const WARRANTY_OPTIONS = [
+  { value: "", label: "No Warranty" },
+  { value: "1 Month", label: "1 Month" },
+  { value: "3 Months", label: "3 Months" },
+  { value: "6 Months", label: "6 Months" },
+  { value: "1 Year", label: "1 Year" },
+  { value: "2 Years", label: "2 Years" },
+  { value: "5 Years", label: "5 Years" },
+];
 
 export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
   const [category, setCategory] = useState("");
@@ -16,8 +26,7 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
   const [unit, setUnit] = useState("unit");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
-
-  // Multi-select state for General Pest Service
+  const [warranty, setWarranty] = useState("");
   const [multiSelected, setMultiSelected] = useState([]);
 
   const selectedCat = SERVICE_CATEGORIES.find((c) => c.category === category);
@@ -30,6 +39,7 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
     setUnit("unit");
     setQuantity("");
     setPrice("");
+    setWarranty("");
   };
 
   const handleSubcategoryChange = (val) => {
@@ -61,11 +71,13 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
           quantity: parseFloat(quantity) || 1,
           price: parseFloat(price) || 0,
           total: (parseFloat(price) || 0) * (parseFloat(quantity) || 1),
+          warranty: warranty || "",
         });
       });
       setMultiSelected([]);
       setQuantity("");
       setPrice("");
+      setWarranty("");
       return;
     }
 
@@ -77,19 +89,21 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
       quantity: parseFloat(quantity) || 1,
       price: parseFloat(price) || 0,
       total,
+      warranty: warranty || "",
     });
     setSubcategory("");
     setQuantity("");
     setPrice("");
+    setWarranty("");
   };
 
-  const unitLabel = UNITS.find((u) => u.value === unit)?.label || unit;
+  const showFields = subcategory || (isMulti && multiSelected.length > 0);
 
   return (
     <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-3">
       <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Add Service</p>
 
-      {/* Row 1: Category + Subcategory */}
+      {/* Category + Subcategory */}
       <div className="grid grid-cols-2 gap-2">
         <select
           value={category}
@@ -117,7 +131,7 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
         )}
       </div>
 
-      {/* Multi-select checkboxes for General Pest Service */}
+      {/* Multi-select checkboxes */}
       {isMulti && category && (
         <div className="grid grid-cols-2 gap-1.5">
           {selectedCat.subcategories.map((s) => (
@@ -134,8 +148,8 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
         </div>
       )}
 
-      {/* Row 2: Unit + Qty + Price */}
-      {(subcategory || (isMulti && multiSelected.length > 0)) && (
+      {/* Unit + Qty + Price */}
+      {showFields && (
         <div className="grid grid-cols-3 gap-2">
           <select
             value={unit}
@@ -147,19 +161,13 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
             ))}
           </select>
           <input
-            type="number"
-            min="0"
-            step="1"
-            value={quantity}
+            type="number" min="0" step="1" value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
             placeholder="Qty"
             className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
           />
           <input
-            type="number"
-            min="0"
-            step="1"
-            value={price}
+            type="number" min="0" step="1" value={price}
             onChange={(e) => setPrice(e.target.value)}
             placeholder="Price ₹"
             className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
@@ -167,11 +175,34 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
         </div>
       )}
 
-      {/* Total preview + Add button */}
-      <div className="flex items-center justify-between">
+      {/* Warranty selector */}
+      {showFields && (
+        <div>
+          <label className="block text-xs font-semibold text-slate-500 mb-1">Warranty</label>
+          <div className="flex flex-wrap gap-1.5">
+            {WARRANTY_OPTIONS.map((w) => (
+              <button
+                key={w.value}
+                type="button"
+                onClick={() => setWarranty(w.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                  warranty === w.value
+                    ? "bg-[var(--brand)] text-white border-[var(--brand)]"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-[var(--brand)]"
+                }`}
+              >
+                {w.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Total + Add */}
+      <div className="flex items-center justify-between pt-1">
         <span className="text-sm text-slate-600">
           {quantity && price
-            ? <>Total: <strong>{formatCurrency(total)}</strong></>
+            ? <>Total: <strong>{formatCurrency(total)}</strong>{warranty && <span className="text-xs text-emerald-600 ml-2">· {warranty} warranty</span>}</>
             : <span className="text-slate-400">Enter qty &amp; price</span>
           }
         </span>

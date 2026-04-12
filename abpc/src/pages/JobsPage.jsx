@@ -5,7 +5,7 @@ import { firestoreDb } from "../firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, subscribeCollection, subscribeQuery, updateRecord } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getTodayISO } from "../utils/format";
-import { WORKERS } from "../constants/authProfiles";
+import { EmployeeS } from "../constants/authProfiles";
 import MapLink from "../components/MapLink";
 import { getUnitLabel } from "../utils/pricing";
 import ServicePicker from "../components/ServicePicker";
@@ -27,7 +27,7 @@ const STATUS_COLORS = {
   completed: "bg-emerald-100 text-emerald-700",
 };
 
-function JobCard({ job, subJobs, isWorker, onMarkSubDone, onRaiseRework, busy, onJobUpdated }) {
+function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy, onJobUpdated }) {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showReport, setShowReport] = useState(false);
@@ -59,7 +59,7 @@ function JobCard({ job, subJobs, isWorker, onMarkSubDone, onRaiseRework, busy, o
               Under Warranty
             </span>
           )}
-          {job.parentJobId && !isWorker && (
+          {job.parentJobId && !isEmployee && (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">
               <Link2 className="w-2.5 h-2.5" /> Linked Job
             </span>
@@ -70,7 +70,12 @@ function JobCard({ job, subJobs, isWorker, onMarkSubDone, onRaiseRework, busy, o
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-slate-900 truncate">{job.customerName}</h3>
             <p className="text-sm text-slate-500 mt-0.5">{job.serviceType || job.serviceName}</p>
-            {!isWorker && job.customerPhone && (
+            {job.warranty && (
+              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                🛡 {job.warranty} Warranty
+              </span>
+            )}
+            {!isEmployee && job.customerPhone && (
               <p className="text-xs text-slate-400 mt-0.5">{job.customerPhone}</p>
             )}
           </div>
@@ -92,14 +97,14 @@ function JobCard({ job, subJobs, isWorker, onMarkSubDone, onRaiseRework, busy, o
               <span>{formatDateDisplay(job.scheduledDate)}</span>
             </div>
           )}
-          {!isWorker && (
+          {!isEmployee && (
             <div className="flex items-center gap-1.5">
               <User className="w-3.5 h-3.5 flex-shrink-0" />
               <span>{Array.isArray(job.assignedTo) ? job.assignedTo.join(", ") : job.assignedTo}</span>
             </div>
           )}
           {/* Pricing — Admin only */}
-          {!isWorker && (job.finalPrice || job.totalAmount) && (
+          {!isEmployee && (job.finalPrice || job.totalAmount) && (
             <div className="mt-2 pt-2 border-t border-slate-100 space-y-0.5">
               {job.basePrice > 0 && <p className="text-slate-400">Base: {formatCurrency(job.basePrice)}</p>}
               {Number(job.adjustedPrice) !== 0 && (
@@ -115,7 +120,7 @@ function JobCard({ job, subJobs, isWorker, onMarkSubDone, onRaiseRework, busy, o
 
         {jobAddress && (
           <MapLink address={jobAddress} className="mt-3"
-            label={isWorker ? "Open in Maps" : "View on Maps"} showDirections={isWorker} />
+            label={isEmployee ? "Open in Maps" : "View on Maps"} showDirections={isEmployee} />
         )}
 
         {jobSubJobs.length > 0 && (
@@ -134,7 +139,7 @@ function JobCard({ job, subJobs, isWorker, onMarkSubDone, onRaiseRework, busy, o
         )}
 
         {/* Admin actions */}
-        {!isWorker && (
+        {!isEmployee && (
           <div className="flex flex-wrap gap-2 mt-3">
             {job.status === "completed" && (
               <button onClick={() => onRaiseRework(job)} disabled={busy}
@@ -162,8 +167,8 @@ function JobCard({ job, subJobs, isWorker, onMarkSubDone, onRaiseRework, busy, o
             )}
           </div>
         )}
-        {/* Worker: Add Report button when job completed */}
-        {isWorker && job.status === "completed" && (
+        {/* Employee: Add Report button when job completed */}
+        {isEmployee && job.status === "completed" && (
           <div className="flex gap-2 mt-3">
             {!job.reportImage && !job.reportAudio && !job.reportNote ? (
               <button onClick={() => setShowReport(true)}
@@ -236,7 +241,7 @@ function JobCard({ job, subJobs, isWorker, onMarkSubDone, onRaiseRework, busy, o
   );
 }
 
-function CreateJobModal({ customers, onClose, onSave, saving, reworkSource, isWorker: modalIsWorker }) {
+function CreateJobModal({ customers, onClose, onSave, saving, reworkSource, isEmployee: modalIsEmployee }) {
   const [selectedCustomer, setSelectedCustomer] = useState(
     reworkSource ? { id: reworkSource.customerId, name: reworkSource.customerName, address: reworkSource.address || reworkSource.customerAddress || "" } : null
   );
@@ -268,6 +273,7 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource, isWo
       adjustedPrice: Number(pickedService.price) || 0,
       finalPrice: Number(pickedService.total) || 0,
       totalAmount: Number(pickedService.total) || 0,
+      warranty: pickedService.warranty || "",
       createdAt: new Date().toISOString(),
     });
   };
@@ -348,8 +354,8 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource, isWo
           </div>
 
           <div className="bg-[var(--brand-soft)] rounded-xl p-3">
-            <p className="text-xs font-bold text-[var(--brand-dark)] mb-1">Assigned to all workers</p>
-            <p className="text-sm text-[var(--brand)]">{WORKERS.join(", ")}</p>
+            <p className="text-xs font-bold text-[var(--brand-dark)] mb-1">Assigned to all Employees</p>
+            <p className="text-sm text-[var(--brand)]">{EmployeeS.join(", ")}</p>
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -367,8 +373,8 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource, isWo
 }
 
 export default function JobsPage() {
-  const { profile, isWorker } = useAuth();
-  const workerName = profile?.workerTag || profile?.name || "";
+  const { profile, isEmployee } = useAuth();
+  const EmployeeName = profile?.EmployeeTag || profile?.name || "";
   const location = useLocation();
 
   const [jobs, setJobs] = useState([]);
@@ -397,8 +403,8 @@ export default function JobsPage() {
   }, [location.state, jobs]);
 
   useEffect(() => {
-    const jobsQ = isWorker
-      ? query(collection(firestoreDb, "jobs"), where("assignedTo", "array-contains", workerName))
+    const jobsQ = isEmployee
+      ? query(collection(firestoreDb, "jobs"), where("assignedTo", "array-contains", EmployeeName))
       : query(collection(firestoreDb, "jobs"), orderBy("createdAt", "desc"));
     const unsubs = [
       subscribeQuery(jobsQ, setJobs),
@@ -407,10 +413,10 @@ export default function JobsPage() {
       subscribeCollection("services", setServices),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [isWorker, workerName]);
+  }, [isEmployee, EmployeeName]);
 
   const filtered = useMemo(() => {
-    let list = isWorker
+    let list = isEmployee
       ? [...jobs].sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
       : jobs;
     if (statusFilter !== "all") list = list.filter((j) => j.status === statusFilter);
@@ -420,11 +426,11 @@ export default function JobsPage() {
         j.customerName?.toLowerCase().includes(q) ||
         j.serviceType?.toLowerCase().includes(q) ||
         j.id?.toLowerCase().includes(q) ||
-        (!isWorker && j.customerPhone?.includes(q))
+        (!isEmployee && j.customerPhone?.includes(q))
       );
     }
     return list;
-  }, [jobs, statusFilter, search, isWorker]);
+  }, [jobs, statusFilter, search, isEmployee]);
 
   const showMsg = (type, text) => {
     setMsg({ type, text });
@@ -436,7 +442,7 @@ export default function JobsPage() {
     try {
       const payload = {
         ...form,
-        assignedTo: WORKERS,
+        assignedTo: EmployeeS,
         jobType: reworkSource ? "Rework" : "Original",
         parentJobId: reworkSource ? reworkSource.id : null,
         history: [{ event: reworkSource ? "Rework job created" : "Job created", at: new Date().toISOString() }],
@@ -449,7 +455,7 @@ export default function JobsPage() {
       ]);
       setShowModal(false);
       setReworkSource(null);
-      showMsg("success", reworkSource ? "Rework job created and linked to original." : "Job created and assigned to all workers.");
+      showMsg("success", reworkSource ? "Rework job created and linked to original." : "Job created and assigned to all Employees.");
     } catch (e) {
       showMsg("error", e.message);
     } finally {
@@ -466,7 +472,7 @@ export default function JobsPage() {
     setBusy(true);
     try {
       await updateRecord("subJobs", sj.id, {
-        status: "done", completedBy: workerName, completedAt: new Date().toISOString(),
+        status: "done", completedBy: EmployeeName, completedAt: new Date().toISOString(),
       });
       const relatedSubJobs = subJobs
         .filter((item) => item.jobId === sj.jobId)
@@ -475,7 +481,7 @@ export default function JobsPage() {
       await updateRecord("jobs", sj.jobId, {
         status: allDone ? "completed" : "in_progress",
         completedAt: allDone ? new Date().toISOString() : null,
-        completedBy: allDone ? workerName : "",
+        completedBy: allDone ? EmployeeName : "",
       });
       showMsg("success", `"${sj.title}" marked done.`);
     } catch (e) {
@@ -504,6 +510,7 @@ export default function JobsPage() {
         "Base Price": job.basePrice || 0,
         "Adjusted Price": job.adjustedPrice || 0,
         "Final Price / Total Amount": job.finalPrice || job.totalAmount || 0,
+        "Warranty": job.warranty || "No Warranty",
         "Status": job.status || "pending",
         "Assigned To": Array.isArray(job.assignedTo) ? job.assignedTo.join(", ") : (job.assignedTo || "-"),
         "Scheduled Date": job.scheduledDate ? new Date(job.scheduledDate).toLocaleDateString() : "-",
@@ -561,22 +568,22 @@ export default function JobsPage() {
   }), [jobs]);
 
   const jobChains = useMemo(() => {
-    if (isWorker) return null;
+    if (isEmployee) return null;
     const originals = filtered.filter((j) => !j.parentJobId);
     return originals.map((orig) => ({
       original: orig,
       reworks: jobs.filter((j) => j.parentJobId === orig.id),
     }));
-  }, [filtered, jobs, isWorker]);
+  }, [filtered, jobs, isEmployee]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">{isWorker ? "મારા જોબ્સ" : "Jobs"}</h1>
-          <p className="text-slate-500 mt-0.5">{jobs.length} {isWorker ? "ટોટલ જોબ્સ" : "total jobs"} · {jobs.filter(j => j.jobType === "Rework").length} rework</p>
+          <h1 className="text-2xl font-black text-slate-900">{isEmployee ? "મારા જોબ્સ" : "Jobs"}</h1>
+          <p className="text-slate-500 mt-0.5">{jobs.length} {isEmployee ? "ટોટલ જોબ્સ" : "total jobs"} · {jobs.filter(j => j.jobType === "Rework").length} rework</p>
         </div>
-        {!isWorker && (
+        {!isEmployee && (
           <div className="flex items-center gap-3">
             <button onClick={handleCloudUpload} disabled={busy}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors shadow-sm disabled:opacity-60">
@@ -598,16 +605,16 @@ export default function JobsPage() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder={isWorker ? "જોબ ID અથવા કસ્ટમર નામ સર્ચ કરો..." : "Search by customer, phone, job ID, service..."}
+          placeholder={isEmployee ? "જોબ ID અથવા કસ્ટમર નામ સર્ચ કરો..." : "Search by customer, phone, job ID, service..."}
           className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white" />
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
         {[
-          { key: "all", label: isWorker ? "બધા" : "All" },
-          { key: "pending", label: isWorker ? "પેન્ડિંગ" : "Pending" },
-          { key: "in_progress", label: isWorker ? "ઇન પ્રોગ્રેસ" : "In Progress" },
-          { key: "completed", label: isWorker ? "કમ્પ્લીટ" : "Completed" },
+          { key: "all", label: isEmployee ? "બધા" : "All" },
+          { key: "pending", label: isEmployee ? "પેન્ડિંગ" : "Pending" },
+          { key: "in_progress", label: isEmployee ? "ઇન પ્રોગ્રેસ" : "In Progress" },
+          { key: "completed", label: isEmployee ? "કમ્પ્લીટ" : "Completed" },
         ].map((tab) => (
           <button key={tab.key} onClick={() => setStatusFilter(tab.key)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${statusFilter === tab.key ? "bg-[var(--brand)] text-white shadow-sm" : "bg-white border border-slate-200 text-slate-600 hover:border-slate-300"
@@ -623,18 +630,18 @@ export default function JobsPage() {
       {filtered.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <Briefcase className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="font-semibold text-slate-500">{isWorker ? "કોઈ જોબ મળ્યો નહીં" : "No jobs found"}</p>
-          {!isWorker && (
+          <p className="font-semibold text-slate-500">{isEmployee ? "કોઈ જોબ મળ્યો નહીં" : "No jobs found"}</p>
+          {!isEmployee && (
             <button onClick={() => { setReworkSource(null); setShowModal(true); }}
               className="mt-4 px-4 py-2 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)]">
               Create First Job
             </button>
           )}
         </div>
-      ) : isWorker ? (
+      ) : isEmployee ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((job) => (
-            <JobCard key={job.id} job={job} subJobs={subJobs} isWorker={isWorker}
+            <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={isEmployee}
               onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} />
           ))}
         </div>
@@ -642,13 +649,13 @@ export default function JobsPage() {
         <div className="space-y-6">
           {jobChains.map(({ original, reworks }) => (
             <div key={original.id}>
-              <JobCard job={original} subJobs={subJobs} isWorker={false}
+              <JobCard job={original} subJobs={subJobs} isEmployee={false}
                 onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} />
               {reworks.length > 0 && (
                 <div className="ml-6 mt-2 space-y-2 border-l-2 border-violet-200 pl-4">
                   <p className="text-xs font-bold text-violet-500 uppercase tracking-wider mb-2">Rework Jobs ({reworks.length})</p>
                   {reworks.map((rw) => (
-                    <JobCard key={rw.id} job={rw} subJobs={subJobs} isWorker={false}
+                    <JobCard key={rw.id} job={rw} subJobs={subJobs} isEmployee={false}
                       onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} />
                   ))}
                 </div>
@@ -656,7 +663,7 @@ export default function JobsPage() {
             </div>
           ))}
           {filtered.filter(j => j.parentJobId && !jobChains.find(c => c.original.id === j.parentJobId)).map((job) => (
-            <JobCard key={job.id} job={job} subJobs={subJobs} isWorker={false}
+            <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={false}
               onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} />
           ))}
         </div>
@@ -664,7 +671,7 @@ export default function JobsPage() {
 
       {showModal && (
         <CreateJobModal customers={customers} onClose={() => { setShowModal(false); setReworkSource(null); }}
-          onSave={handleCreate} saving={saving} reworkSource={reworkSource} isWorker={isWorker} />
+          onSave={handleCreate} saving={saving} reworkSource={reworkSource} isEmployee={isEmployee} />
       )}
     </div>
   );

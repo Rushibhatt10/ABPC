@@ -19,7 +19,7 @@ const defaultForm = {
 };
 
 export default function NewJobPage() {
-  const { isWorker } = useAuth();
+  const { isEmployee } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [services, setServices] = useState([]);
   const [jobs, setJobs] = useState([]);
@@ -186,10 +186,10 @@ export default function NewJobPage() {
     }
   };
 
-  if (isWorker) {
+  if (isEmployee) {
     return (
       <section className="app-card text-center">
-        <p className="text-sm text-slate-500">Workers can only access today&apos;s jobs.</p>
+        <p className="text-sm text-slate-500">Employees can only access today&apos;s jobs.</p>
       </section>
     );
   }
@@ -240,7 +240,7 @@ export default function NewJobPage() {
               placeholder="123 Main Street, Surat, Gujarat"
               value={form.jobAddress}
             />
-            <p className="mt-1 text-xs text-slate-500">Saved per job and used to open Google Maps for the worker.</p>
+            <p className="mt-1 text-xs text-slate-500">Saved per job and used to open Google Maps for the Employee.</p>
           </div>
         </section>
 

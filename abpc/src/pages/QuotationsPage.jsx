@@ -15,7 +15,7 @@ const defaultPaymentTerms = "Payment terms: 50% advance and remaining on complet
 const defaultTerms = "Terms: 1) Quotation valid for 15 days. 2) Taxes extra if applicable.";
 
 export default function QuotationsPage() {
-  const { isWorker } = useAuth();
+  const { isEmployee } = useAuth();
   const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [quotations, setQuotations] = useState([]);
@@ -72,6 +72,7 @@ export default function QuotationsPage() {
         quantity: String(item.quantity),
         unit: item.unit || "unit",
         unitPrice: String(item.price),
+        warranty: item.warranty || "",
       }],
     }));
   };
@@ -185,7 +186,7 @@ export default function QuotationsPage() {
     }
   };
 
-  if (isWorker) {
+  if (isEmployee) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">

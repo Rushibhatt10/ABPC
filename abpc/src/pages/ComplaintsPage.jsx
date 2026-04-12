@@ -51,7 +51,7 @@ function isPendingIssue(complaint) {
 }
 
 export default function ComplaintsPage() {
-  const { isWorker } = useAuth();
+  const { isEmployee } = useAuth();
   const navigate = useNavigate();
   const [complaints, setComplaints] = useState([]);
   const [jobs, setJobs] = useState([]);
@@ -70,13 +70,13 @@ export default function ComplaintsPage() {
   });
 
   useEffect(() => {
-    if (isWorker) return;
+    if (isEmployee) return;
     const unsubs = [
       subscribeCollection("complaints", setComplaints),
       subscribeCollection("jobs", setJobs),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [isWorker]);
+  }, [isEmployee]);
 
   const showMsg = (type, text) => {
     setMsg({ type, text });
@@ -166,7 +166,7 @@ export default function ComplaintsPage() {
     updateRecord("complaints", complaint.id, { status: "In Progress" }).catch(() => {});
   };
 
-  if (isWorker) {
+  if (isEmployee) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">

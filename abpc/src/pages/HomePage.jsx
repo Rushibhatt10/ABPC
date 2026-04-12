@@ -42,7 +42,7 @@ function StatCard({ label, value, icon, color, sub }) {
   );
 }
 
-function WorkerJobCard({ job, onComplete, saving }) {
+function EmployeeJobCard({ job, onComplete, saving }) {
   const [notes, setNotes] = useState(job.notes || "");
 
   const isCompleted = job.status === "completed";
@@ -97,8 +97,8 @@ function WorkerJobCard({ job, onComplete, saving }) {
   );
 }
 
-function WorkerDashboard({ profile }) {
-  const workerName = profile?.workerTag || profile?.name || "";
+function EmployeeDashboard({ profile }) {
+  const EmployeeName = profile?.EmployeeTag || profile?.name || "";
   const [jobs, setJobs] = useState([]);
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState({ type: "", text: "" });
@@ -107,10 +107,10 @@ function WorkerDashboard({ profile }) {
   useEffect(() => {
     const q = query(
       collection(firestoreDb, "jobs"),
-      where("assignedTo", "array-contains", workerName)
+      where("assignedTo", "array-contains", EmployeeName)
     );
     return subscribeQuery(q, setJobs);
-  }, [workerName]);
+  }, [EmployeeName]);
 
   const sortedJobs = useMemo(() =>
     [...jobs].sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0)),
@@ -145,7 +145,7 @@ function WorkerDashboard({ profile }) {
         checklist: data.checklist,
         notes: data.notes,
         completedAt: new Date().toISOString(),
-        completedBy: workerName,
+        completedBy: EmployeeName,
       });
       showMsg("success", "જોબ કમ્પ્લીટ થઈ!");
     } catch (err) {
@@ -194,7 +194,7 @@ function WorkerDashboard({ profile }) {
         ) : (
           <div className="space-y-4">
             {todayJobs.map((job) => (
-              <WorkerJobCard
+              <EmployeeJobCard
                 key={job.id}
                 job={job}
                 onComplete={handleComplete}
@@ -460,7 +460,7 @@ function AdminDashboard({ profile }) {
 }
 
 export default function HomePage() {
-  const { profile, isWorker } = useAuth();
-  if (isWorker) return <WorkerDashboard profile={profile} />;
+  const { profile, isEmployee } = useAuth();
+  if (isEmployee) return <EmployeeDashboard profile={profile} />;
   return <AdminDashboard profile={profile} />;
 }

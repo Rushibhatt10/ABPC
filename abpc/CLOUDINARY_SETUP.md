@@ -73,7 +73,7 @@ abpc/src/
 
 ## Upload Flow
 
-1. **Worker selects file** → Validates size (max 1MB)
+1. **Employee selects file** → Validates size (max 1MB)
 2. **Image compression** → Reduces file size if needed
 3. **Upload to Cloudinary** → Uses unsigned upload API
 4. **Get secure URL** → Cloudinary returns `secure_url`

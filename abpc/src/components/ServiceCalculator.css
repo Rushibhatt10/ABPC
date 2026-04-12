@@ -198,7 +198,7 @@
   white-space: nowrap;
 }
 
-/* Read-only price (worker view) */
+/* Read-only price (Employee view) */
 .calc-readonly-price {
   display: flex;
   align-items: center;

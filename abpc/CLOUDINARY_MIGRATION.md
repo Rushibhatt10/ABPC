@@ -92,7 +92,7 @@ Successfully migrated image and voice note uploads from Firebase Storage to Clou
    - Restart dev server
 
 3. **Test uploads**:
-   - Login as worker
+   - Login as Employee
    - Submit report with image
    - Submit report with voice note
    - Verify admin sees media instantly

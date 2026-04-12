@@ -28,7 +28,7 @@ const createInvoiceItem = () => ({
 });
 
 export default function BillsPage() {
-  const { isWorker } = useAuth();
+  const { isEmployee } = useAuth();
   const [tab, setTab] = useState("quotations");
   const [customers, setCustomers] = useState([]);
   const [quotations, setQuotations] = useState([]);
@@ -375,10 +375,10 @@ export default function BillsPage() {
     }
   };
 
-  if (isWorker) {
+  if (isEmployee) {
     return (
       <section className="app-card text-center">
-        <p className="text-sm text-slate-500">Workers can only access today&apos;s jobs.</p>
+        <p className="text-sm text-slate-500">Employees can only access today&apos;s jobs.</p>
       </section>
     );
   }

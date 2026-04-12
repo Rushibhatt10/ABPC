@@ -9,11 +9,11 @@ const adminItems = [
   { label: "Alerts", to: "/admin/reminders", icon: Bell },
 ];
 
-const workerItems = [{ label: "Home", to: "/admin/homepage", icon: Home }];
+const EmployeeItems = [{ label: "Home", to: "/admin/homepage", icon: Home }];
 
-export default function BottomNav({ isWorker }) {
-  const navItems = isWorker ? workerItems : adminItems;
-  const gridClass = isWorker ? "grid-cols-1" : "grid-cols-5";
+export default function BottomNav({ isEmployee }) {
+  const navItems = isEmployee ? EmployeeItems : adminItems;
+  const gridClass = isEmployee ? "grid-cols-1" : "grid-cols-5";
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-100 bg-white/90 backdrop-blur-xl px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-4">

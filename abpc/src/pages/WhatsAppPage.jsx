@@ -48,7 +48,7 @@ const TEMPLATES = [
 ];
 
 export default function WhatsAppPage() {
-  const { isWorker } = useAuth();
+  const { isEmployee } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [quotations, setQuotations] = useState([]);
@@ -96,7 +96,7 @@ export default function WhatsAppPage() {
 
   const pendingInvoices = useMemo(() => invoices.filter((i) => Number(i.balance || 0) > 0), [invoices]);
 
-  if (isWorker) {
+  if (isEmployee) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">

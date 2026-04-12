@@ -3,17 +3,17 @@ import { useNavigate, Navigate } from "react-router-dom";
 import { Zap, Shield, HardHat } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-const WORKER_PASSWORD_MAP = {
+const Employee_PASSWORD_MAP = {
   "nakul123":   "nakul",
   "divyesh123": "divyesh",
   "sagar123":   "sagar",
 };
 
 export default function LoginPage() {
-  const { loginAdmin, loginWorker, isAuthenticated } = useAuth();
+  const { loginAdmin, loginEmployee, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState("admin");
-  const [workerPass, setWorkerPass] = useState("");
+  const [EmployeePass, setEmployeePass] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -42,15 +42,15 @@ export default function LoginPage() {
     }
   };
 
-  // Worker: password only
-  const handleWorkerSubmit = async (e) => {
+  // Employee: password only
+  const handleEmployeeSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    const key = WORKER_PASSWORD_MAP[workerPass.trim()];
+    const key = Employee_PASSWORD_MAP[EmployeePass.trim()];
     if (!key) { setError("Incorrect password."); return; }
     setLoading(true);
     try {
-      loginWorker(key);
+      loginEmployee(key);
       navigate("/admin", { replace: true });
     } catch (err) {
       setError(err.message || "Login failed.");
@@ -80,7 +80,7 @@ export default function LoginPage() {
           <div className="flex border-b border-slate-200">
             {[
               { key: "admin",  label: "Admin",  Icon: Shield },
-              { key: "worker", label: "Worker", Icon: HardHat },
+              { key: "Employee", label: "Employee", Icon: HardHat },
             ].map(({ key, label, Icon }) => (
               <button key={key} onClick={() => switchTab(key)}
                 className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-bold transition-colors ${
@@ -126,28 +126,28 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Worker — password only */}
-            {tab === "worker" && (
-              <form onSubmit={handleWorkerSubmit} className="space-y-4">
+            {/* Employee — password only */}
+            {tab === "Employee" && (
+              <form onSubmit={handleEmployeeSubmit} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Password</label>
                   <input
                     type="password"
-                    value={workerPass}
-                    onChange={(e) => setWorkerPass(e.target.value)}
+                    value={EmployeePass}
+                    onChange={(e) => setEmployeePass(e.target.value)}
                     placeholder="Enter your password"
                     required
                     autoFocus
                     className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm text-slate-800 transition-colors"
                   />
-                  <p className="text-xs text-slate-400 mt-1.5">Each worker has a unique password</p>
+                  <p className="text-xs text-slate-400 mt-1.5">Each Employee has a unique password</p>
                 </div>
                 {error && (
                   <p className="px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700 font-medium">
                     {error}
                   </p>
                 )}
-                <button type="submit" disabled={loading || !workerPass.trim()}
+                <button type="submit" disabled={loading || !EmployeePass.trim()}
                   className="w-full py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors disabled:opacity-60">
                   {loading ? "Signing in…" : "Sign In"}
                 </button>

@@ -25,7 +25,7 @@ function daysUntil(dateStr) {
 }
 
 export default function AMCPage() {
-  const { isWorker } = useAuth();
+  const { isEmployee } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [amcs, setAmcs] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -124,7 +124,7 @@ export default function AMCPage() {
     [amcs]
   );
 
-  if (isWorker) {
+  if (isEmployee) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">

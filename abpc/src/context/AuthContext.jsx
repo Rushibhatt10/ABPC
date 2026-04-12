@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { signInWithPopup, signOut, onAuthStateChanged, signInAnonymously } from "firebase/auth";
 import { firebaseAuth, googleProvider } from "../firebase/auth";
-import { AUTH_PROFILES, isWorkerRole, PRICING_ADMIN_NAMES } from "../constants/authProfiles";
+import { AUTH_PROFILES, isEmployeeRole, PRICING_ADMIN_NAMES } from "../constants/authProfiles";
 
 const AuthContext = createContext(null);
-const SESSION_KEY = "abpc_worker_session";
+const SESSION_KEY = "abpc_Employee_session";
 
 // Only these Google accounts are allowed as admins
 const ALLOWED_ADMIN_EMAILS = new Set([
@@ -12,26 +12,26 @@ const ALLOWED_ADMIN_EMAILS = new Set([
   "abpestcontrol8@gmail.com",
 ]);
 
-const ADMIN_PROFILES = AUTH_PROFILES.filter((p) => !isWorkerRole(p.key)).map((p) => ({
-  ...p, role: "admin", workerName: p.name,
+const ADMIN_PROFILES = AUTH_PROFILES.filter((p) => !isEmployeeRole(p.key)).map((p) => ({
+  ...p, role: "admin", EmployeeName: p.name,
 }));
 
-const WORKER_PROFILES = AUTH_PROFILES.filter((p) => isWorkerRole(p.key)).map((p) => ({
-  ...p, role: "Employee", workerName: p.workerTag || p.name,
+const Employee_PROFILES = AUTH_PROFILES.filter((p) => isEmployeeRole(p.key)).map((p) => ({
+  ...p, role: "Employee", EmployeeName: p.EmployeeTag || p.name,
 }));
 
 export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore worker session from localStorage on mount
+  // Restore Employee session from localStorage on mount
   useEffect(() => {
-    const restoreWorker = async () => {
+    const restoreEmployee = async () => {
       try {
         const saved = localStorage.getItem(SESSION_KEY);
         if (saved) {
           const { key } = JSON.parse(saved);
-          const match = WORKER_PROFILES.find((p) => p.key === key);
+          const match = Employee_PROFILES.find((p) => p.key === key);
           if (match) {
             // Ensure anonymous Firebase session exists for Firestore access
             if (!firebaseAuth.currentUser) {
@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
         }
       } catch { /* ignore */ }
     };
-    restoreWorker();
+    restoreEmployee();
   }, []);
 
   // Firebase auth state — handles admin Google sessions
@@ -85,22 +85,22 @@ export function AuthProvider({ children }) {
     // profile set by onAuthStateChanged
   };
 
-  // Worker login — local only, signs in anonymously to Firebase so Firestore rules pass
-  const loginWorker = async (key) => {
-    const worker = WORKER_PROFILES.find((p) => p.key === key);
-    if (!worker) throw new Error("Worker not found.");
+  // Employee login — local only, signs in anonymously to Firebase so Firestore rules pass
+  const loginEmployee = async (key) => {
+    const Employee = Employee_PROFILES.find((p) => p.key === key);
+    if (!Employee) throw new Error("Employee not found.");
     // Anonymous Firebase session satisfies `request.auth != null` in Firestore rules
     if (!firebaseAuth.currentUser) {
       await signInAnonymously(firebaseAuth);
     }
-    setProfile(worker);
+    setProfile(Employee);
     localStorage.setItem(SESSION_KEY, JSON.stringify({ key }));
   };
 
   // Legacy login() kept so any existing callers don't break
   const login = async (keyOrEmail, password) => {
-    const worker = WORKER_PROFILES.find((p) => p.key === keyOrEmail && p.password === password);
-    if (worker) { loginWorker(worker.key); return; }
+    const Employee = Employee_PROFILES.find((p) => p.key === keyOrEmail && p.password === password);
+    if (Employee) { loginEmployee(Employee.key); return; }
     await loginAdmin();
   };
 
@@ -117,12 +117,12 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!profile,
     profile,
     loading,
-    isWorker: profile?.role === "worker",
+    isEmployee: profile?.role === "Employee",
     isAdmin: profile?.role === "admin",
     isPricingAdmin: PRICING_ADMIN_NAMES.has(String(profile?.name || "")),
     login,
     loginAdmin,
-    loginWorker,
+    loginEmployee,
     logout,
   }), [profile, loading]);
 

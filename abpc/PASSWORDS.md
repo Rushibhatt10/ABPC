@@ -23,15 +23,15 @@ Each user has a unique password. No username or name required.
 
 ---
 
-## 👷 Worker Passwords
+## 👷 Employee Passwords
 
 | User | Password | Dashboard |
 |------|----------|-----------|
-| Nakul | `nakul123` | Worker Dashboard |
-| Divyesh | `divyesh123` | Worker Dashboard |
-| Sagar | `sagar123` | Worker Dashboard |
+| Nakul | `nakul123` | Employee Dashboard |
+| Divyesh | `divyesh123` | Employee Dashboard |
+| Sagar | `sagar123` | Employee Dashboard |
 
-**Worker Access:**
+**Employee Access:**
 - View assigned jobs only
 - Update job checklists
 - Submit reports with media
@@ -97,7 +97,7 @@ To add a new user:
    "newuser123": { 
      key: "newuser", 
      name: "New User Name", 
-     role: "worker" // or "admin"
+     role: "Employee" // or "admin"
    },
    ```
 3. Update `src/constants/authProfiles.js` with the new user profile
@@ -120,7 +120,7 @@ To add a new user:
 - Password: `ankit123` or `akanksha123`
 - Access: Full system
 
-**Worker Login:**
+**Employee Login:**
 - Password: `nakul123`, `divyesh123`, or `sagar123`
 - Access: Limited to assigned jobs
 

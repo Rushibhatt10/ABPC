@@ -26,8 +26,8 @@ Also used by existing CRM screens:
 In Firestore, create a `users/{uid}` document for each Firebase Auth user with:
 
 - `name`: e.g. `Ankit Bhatt`
-- `role`: `admin` or `worker`
-- `workerName`: for workers, set exactly `Nakul`, `Divyesh`, `Sagar` (used in job/report views)
+- `role`: `admin` or `Employee`
+- `EmployeeName`: for Employees, set exactly `Nakul`, `Divyesh`, `Sagar` (used in job/report views)
 
 Pricing admins are recognized by `name` being **Ankit Bhatt** or **Akanksha Bhatt**.
 

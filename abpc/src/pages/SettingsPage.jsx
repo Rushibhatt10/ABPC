@@ -15,7 +15,7 @@ export default function SettingsPage() {
   };
 
   const admins = AUTH_PROFILES.filter((p) => !["nakul", "divyesh", "sagar"].includes(p.key));
-  const workers = AUTH_PROFILES.filter((p) => ["nakul", "divyesh", "sagar"].includes(p.key));
+  const Employees = AUTH_PROFILES.filter((p) => ["nakul", "divyesh", "sagar"].includes(p.key));
 
   const tabs = [
     { key: "profile", label: "Profile", icon: User },
@@ -76,7 +76,7 @@ export default function SettingsPage() {
               {[
                 { label: "Name", value: profile?.name },
                 { label: "Role", value: profile?.roleName },
-                { label: "Worker Tag", value: profile?.workerTag || "N/A" },
+                { label: "Employee Tag", value: profile?.EmployeeTag || "N/A" },
               ].map((f) => (
                 <div key={f.label} className="flex items-center justify-between py-2.5 border-b border-slate-100 last:border-0">
                   <span className="text-sm text-slate-500 font-medium">{f.label}</span>
@@ -123,9 +123,9 @@ export default function SettingsPage() {
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 p-5">
-            <h2 className="font-bold text-slate-800 mb-4">Workers</h2>
+            <h2 className="font-bold text-slate-800 mb-4">Employees</h2>
             <div className="space-y-3">
-              {workers.map((p) => (
+              {Employees.map((p) => (
                 <div key={p.key} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
                   <div className="w-9 h-9 rounded-xl bg-slate-200 flex items-center justify-center text-slate-600 text-xs font-black flex-shrink-0">
                     {p.avatar}
@@ -134,7 +134,7 @@ export default function SettingsPage() {
                     <p className="font-semibold text-slate-800">{p.name}</p>
                     <p className="text-xs text-slate-400">{p.roleName}</p>
                   </div>
-                  <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Worker</span>
+                  <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Employee</span>
                 </div>
               ))}
             </div>

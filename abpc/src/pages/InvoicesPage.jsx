@@ -13,7 +13,7 @@ const defaultWarranty = "Warranty: As per treatment type, subject to site condit
 const defaultTerms = "Terms: 1) Payment due on completion. 2) Taxes extra if applicable.";
 
 export default function InvoicesPage() {
-  const { isWorker } = useAuth();
+  const { isEmployee } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -73,6 +73,7 @@ export default function InvoicesPage() {
         quantity: String(item.quantity),
         price: String(item.price),
         discount: "0",
+        warranty: item.warranty || "",
       }],
     }));
   };
@@ -156,7 +157,7 @@ export default function InvoicesPage() {
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  if (isWorker) {
+  if (isEmployee) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">

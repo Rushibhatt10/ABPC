@@ -14,9 +14,9 @@
   ```javascript
   "ankit123" → Ankit Bhatt (Admin)
   "akanksha123" → Akanksha Bhatt (Admin)
-  "nakul123" → Nakul (Worker)
-  "divyesh123" → Divyesh (Worker)
-  "sagar123" → Sagar (Worker)
+  "nakul123" → Nakul (Employee)
+  "divyesh123" → Divyesh (Employee)
+  "sagar123" → Sagar (Employee)
   ```
 
 - **Login Flow**:
@@ -63,7 +63,7 @@ reports/
 ```javascript
 {
   jobId: string,
-  workerName: string,
+  EmployeeName: string,
   uploaderUid: string,
   notes: string,
   imageUrls: array,      // Array of download URLs
@@ -90,20 +90,20 @@ reports/
 ### ⚡ REAL-TIME ADMIN VISIBILITY
 - **Implementation**: Using Firestore `onSnapshot` via `subscribeQuery`
 - **Features**:
-  - Instant updates when workers submit reports
+  - Instant updates when Employees submit reports
   - No page refresh needed
   - Real-time image preview
   - Real-time audio playback
-  - Live worker name and timestamp display
+  - Live Employee name and timestamp display
 
 - **Admin Dashboard Shows**:
   - ✅ All uploaded images (thumbnail grid with preview)
   - ✅ Audio player for voice notes
-  - ✅ Worker name with avatar
+  - ✅ Employee name with avatar
   - ✅ Timestamp (Indian locale)
   - ✅ Job details
   - ✅ Checklist completion status
-  - ✅ Notes from workers
+  - ✅ Notes from Employees
 
 ### 🎨 LOADING + UX
 - **While Uploading**:
@@ -134,8 +134,8 @@ reports/
   - "File too large. Max 1MB for audio."
   - "Select a job first."
 
-### 1. Worker Job Interface (Today's Jobs)
-- **Location**: `src/pages/HomePage.jsx` - `WorkerJobCard` component
+### 1. Employee Job Interface (Today's Jobs)
+- **Location**: `src/pages/HomePage.jsx` - `EmployeeJobCard` component
 - **Features**:
   - Clean card-based UI showing today's assigned jobs
   - 4-step checklist system:
@@ -156,7 +156,7 @@ reports/
   - Active state shows: "✓ Mark Completed"
   - Updates job status to "completed" in Firestore
   - Saves checklist state and notes
-  - Records completion timestamp and worker name
+  - Records completion timestamp and Employee name
 
 ### 3. Media Upload System (FREE Firebase Storage)
 - **Location**: `src/pages/ReportsPage.jsx`
@@ -172,9 +172,9 @@ reports/
 ### 4. Admin View (Full Reports Dashboard)
 - **Location**: `src/pages/ReportsPage.jsx`
 - **Admin Features**:
-  - View all worker reports
+  - View all Employee reports
   - Filter by job
-  - Filter by worker (Nakul, Divyesh, Sagar)
+  - Filter by Employee (Nakul, Divyesh, Sagar)
   - See uploaded images (thumbnail grid with preview)
   - Play voice notes (HTML5 audio player)
   - View checklist completion status
@@ -188,7 +188,7 @@ reports/
   - Can export Excel
   - Can print reports
   
-- **Workers**: Nakul, Divyesh, Sagar
+- **Employees**: Nakul, Divyesh, Sagar
   - Can only see their assigned jobs
   - Can submit reports with media
   - Can update job checklists
@@ -203,7 +203,7 @@ reports/
     - Phone Number
     - Address
     - Service Type
-    - Worker Name
+    - Employee Name
     - Date & Time
     - Notes
     - Checklist status (Yes/No for each step)
@@ -221,7 +221,7 @@ reports/
   - Includes:
     - Customer name
     - Service type
-    - Worker name
+    - Employee name
     - Date/time
     - Notes
     - Completion status (✓ Complete / Pending)
@@ -294,7 +294,7 @@ await updateRecord("reports", reportId, { imageUrls: [url] });
 
 ## 📝 Usage Instructions
 
-### For Workers:
+### For Employees:
 1. Login with your password (e.g., "nakul123")
 2. View "Today's Jobs" section
 3. Check off each step as completed
@@ -316,8 +316,8 @@ await updateRecord("reports", reportId, { imageUrls: [url] });
 ✅ Each password maps to specific dashboard
 ✅ Correct upload flow (async/await)
 ✅ Real-time admin visibility
-✅ Workers can update job steps
-✅ Workers can upload image + voice proof
+✅ Employees can update job steps
+✅ Employees can upload image + voice proof
 ✅ Admin sees everything instantly
 ✅ Jobs complete only when fully done
 ✅ Admin can export Excel reports

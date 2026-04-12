@@ -207,7 +207,7 @@ function CustomerDetail({ customer, jobs, quotations, invoices, onEdit, onDelete
 }
 
 export default function CustomersPage() {
-  const { isWorker } = useAuth();
+  const { isEmployee } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [quotations, setQuotations] = useState([]);
@@ -288,13 +288,13 @@ export default function CustomersPage() {
     }
   };
 
-  if (isWorker) {
+  if (isEmployee) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
           <p className="font-semibold text-slate-500">Access restricted</p>
-          <p className="text-sm text-slate-400">Workers cannot access customer data.</p>
+          <p className="text-sm text-slate-400">Employees cannot access customer data.</p>
         </div>
       </div>
     );

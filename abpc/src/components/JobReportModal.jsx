@@ -121,7 +121,9 @@ export default function JobReportModal({ job, onClose, onSaved }) {
             <h2 className="font-bold text-slate-900 text-sm">
               {mode === "view" ? "View Report" : "Add Report"}
             </h2>
-            <p className="text-xs text-slate-400 truncate max-w-[220px]">{job.customerName} · {job.serviceType}</p>
+            <p className="text-xs text-slate-400 truncate max-w-[220px]">{job.customerName} · {job.serviceType}
+            {job.warranty && <span className="ml-1 text-emerald-600 font-semibold">· {job.warranty} warranty</span>}
+          </p>
           </div>
           <div className="flex items-center gap-2">
             {mode === "view" && (

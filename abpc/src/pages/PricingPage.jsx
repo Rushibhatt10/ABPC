@@ -93,7 +93,7 @@ function ServiceRow({ service, isPricingAdmin, onSave }) {
 }
 
 export default function PricingPage() {
-  const { isPricingAdmin, isWorker } = useAuth();
+  const { isPricingAdmin, isEmployee } = useAuth();
   const [services, setServices] = useState([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState({ type: "", text: "" });
@@ -128,7 +128,7 @@ export default function PricingPage() {
     [services]
   );
 
-  if (isWorker) {
+  if (isEmployee) {
     return (
       <div className="pricing-page">
         <div className="pricing-header">

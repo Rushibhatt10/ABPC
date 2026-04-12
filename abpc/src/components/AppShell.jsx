@@ -20,18 +20,18 @@ const adminNav = [
   { label: "Settings", to: "/admin/settings", icon: Settings },
 ];
 
-const workerNav = [
+const EmployeeNav = [
   { label: "ડેશબોર્ડ", to: "/admin", icon: LayoutDashboard, end: true },
   { label: "મારા જોબ્સ", to: "/admin/jobs", icon: Briefcase },
   { label: "રિપોર્ટ્સ", to: "/admin/reports", icon: FileText },
 ];
 
 export default function AppShell({ children }) {
-  const { profile, logout, isWorker, isAdmin } = useAuth();
+  const { profile, logout, isEmployee, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const navItems = isWorker ? workerNav : adminNav;
+  const navItems = isEmployee ? EmployeeNav : adminNav;
 
   const handleLogout = () => {
     logout();

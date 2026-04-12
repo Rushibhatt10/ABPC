@@ -6,7 +6,7 @@ export const AUTH_PROFILES = [
     roleName: "Admin",
     email: "ankbhatt8004@gmail.com",
     password: "merabacchahaitu",
-    workerTag: null,
+    EmployeeTag: null,
     avatar: "AB",
   },
   {
@@ -16,7 +16,7 @@ export const AUTH_PROFILES = [
     roleName: "Admin",
     email: "abpestcontrol8@gmail.com",
     password: "merabacchahaitu",
-    workerTag: null,
+    EmployeeTag: null,
     avatar: "AK",
   },
   {
@@ -26,7 +26,7 @@ export const AUTH_PROFILES = [
     roleName: "Pest Controller",
     email: "nakul@abpc.local",
     password: "nakul123",
-    workerTag: "Nakul",
+    EmployeeTag: "Nakul",
     avatar: "NK",
   },
   {
@@ -36,7 +36,7 @@ export const AUTH_PROFILES = [
     roleName: "Pest Controller",
     email: "divyesh@abpc.local",
     password: "divyesh123",
-    workerTag: "Divyesh",
+    EmployeeTag: "Divyesh",
     avatar: "DV",
   },
   {
@@ -46,16 +46,16 @@ export const AUTH_PROFILES = [
     roleName: "Pest Controller",
     email: "sagar@abpc.local",
     password: "sagar123",
-    workerTag: "Sagar",
+    EmployeeTag: "Sagar",
     avatar: "SG",
   },
 ];
 
 export const getProfileByKey = (key) => AUTH_PROFILES.find((p) => p.key === key);
 
-export const isWorkerRole = (roleKey) =>
+export const isEmployeeRole = (roleKey) =>
   ["nakul", "divyesh", "sagar"].includes(roleKey);
 
 export const PRICING_ADMIN_NAMES = new Set(["Ankit Bhatt", "Akanksha Bhatt"]);
 
-export const WORKERS = ["Nakul", "Divyesh", "Sagar"];
+export const EmployeeS = ["Nakul", "Divyesh", "Sagar"];

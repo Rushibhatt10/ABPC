@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { subscribeCollection } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay } from "../utils/format";
 import { BarChart3, TrendingUp, Users, Briefcase, IndianRupee, CheckCircle2, Clock, Award } from "lucide-react";
-import { WORKERS } from "../constants/authProfiles";
+import { EmployeeS } from "../constants/authProfiles";
 
 function MiniBar({ value, max, color = "bg-[var(--brand)]" }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
@@ -15,7 +15,7 @@ function MiniBar({ value, max, color = "bg-[var(--brand)]" }) {
 }
 
 export default function AnalyticsPage() {
-  const { isWorker } = useAuth();
+  const { isEmployee } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [invoices, setInvoices] = useState([]);
@@ -42,17 +42,17 @@ export default function AnalyticsPage() {
     return { totalRevenue, pendingRevenue, completedJobs, pendingJobs, paidInvoices, collectionRate };
   }, [invoices, jobs]);
 
-  // Worker performance
-  const workerStats = useMemo(() => {
-    return WORKERS.map((w) => {
-      const workerJobs = jobs.filter((j) => Array.isArray(j.assignedTo) ? j.assignedTo.includes(w) : j.assignedTo === w);
-      const completed = workerJobs.filter((j) => j.status === "completed").length;
-      const workerReports = reports.filter((r) => r.workerName === w).length;
-      return { name: w, total: workerJobs.length, completed, reports: workerReports };
+  // Employee performance
+  const EmployeeStats = useMemo(() => {
+    return EmployeeS.map((w) => {
+      const EmployeeJobs = jobs.filter((j) => Array.isArray(j.assignedTo) ? j.assignedTo.includes(w) : j.assignedTo === w);
+      const completed = EmployeeJobs.filter((j) => j.status === "completed").length;
+      const EmployeeReports = reports.filter((r) => r.EmployeeName === w).length;
+      return { name: w, total: EmployeeJobs.length, completed, reports: EmployeeReports };
     });
   }, [jobs, reports]);
 
-  const maxWorkerJobs = Math.max(...workerStats.map((w) => w.total), 1);
+  const maxEmployeeJobs = Math.max(...EmployeeStats.map((w) => w.total), 1);
 
   // Service breakdown
   const serviceBreakdown = useMemo(() => {
@@ -84,7 +84,7 @@ export default function AnalyticsPage() {
 
   const maxMonthRevenue = Math.max(...monthlyRevenue.map((m) => m.revenue), 1);
 
-  if (isWorker) {
+  if (isEmployee) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -138,14 +138,14 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Worker Performance */}
+        {/* Employee Performance */}
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <div className="flex items-center gap-2 mb-5">
             <Award className="w-4 h-4 text-[var(--brand)]" />
-            <h2 className="font-bold text-slate-800">Worker Performance</h2>
+            <h2 className="font-bold text-slate-800">Employee Performance</h2>
           </div>
           <div className="space-y-4">
-            {workerStats.map((w) => (
+            {EmployeeStats.map((w) => (
               <div key={w.name}>
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
@@ -160,7 +160,7 @@ export default function AnalyticsPage() {
                     <span>{w.reports} reports</span>
                   </div>
                 </div>
-                <MiniBar value={w.completed} max={maxWorkerJobs} color="bg-emerald-500" />
+                <MiniBar value={w.completed} max={maxEmployeeJobs} color="bg-emerald-500" />
               </div>
             ))}
           </div>

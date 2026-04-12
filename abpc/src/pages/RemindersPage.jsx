@@ -56,7 +56,7 @@ const getReminderCardStyle = (level) => {
 };
 
 export default function RemindersPage() {
-  const { isWorker } = useAuth();
+  const { isEmployee } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [invoices, setInvoices] = useState([]);
@@ -254,10 +254,10 @@ export default function RemindersPage() {
     }
   };
 
-  if (isWorker) {
+  if (isEmployee) {
     return (
       <section className="app-card text-center">
-        <p className="text-sm text-slate-500">Workers can only access today&apos;s jobs.</p>
+        <p className="text-sm text-slate-500">Employees can only access today&apos;s jobs.</p>
       </section>
     );
   }

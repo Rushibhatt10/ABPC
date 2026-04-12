@@ -109,6 +109,7 @@ export default function InvoicePrintPage() {
                 <th className="p-3 text-left">Service</th>
                 <th className="p-3 text-center">Qty</th>
                 <th className="p-3 text-center">Rate</th>
+                <th className="p-3 text-center">Warranty</th>
                 <th className="p-3 text-right">Amount</th>
               </tr>
             </thead>
@@ -120,6 +121,13 @@ export default function InvoicePrintPage() {
                   <td className="p-3 text-center">{item.quantity}</td>
                   <td className="p-3 text-center">
                     {item.price ? formatCurrency(item.price) : "—"}
+                  </td>
+                  <td className="p-3 text-center text-sm">
+                    {item.warranty ? (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
+                        {item.warranty}
+                      </span>
+                    ) : "—"}
                   </td>
                   <td className="p-3 text-right font-medium">
                     {formatCurrency(

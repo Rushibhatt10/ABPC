@@ -11,13 +11,13 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { isDriveUploadConfigured, uploadFileToDrive } from "../utils/driveUpload";
 
-const WORKERS = ["Nakul", "Divyesh", "Sagar"];
+const EmployeeS = ["Nakul", "Divyesh", "Sagar"];
 const MAX_IMAGE_MB = 1;
 const MAX_AUDIO_MB = 1;
 
 export default function ReportsPage() {
-  const { profile, isWorker, isAdmin } = useAuth();
-  const workerName = profile?.workerTag || profile?.name || "";
+  const { profile, isEmployee, isAdmin } = useAuth();
+  const EmployeeName = profile?.EmployeeTag || profile?.name || "";
 
   const [jobs, setJobs] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -26,7 +26,7 @@ export default function ReportsPage() {
   const [uploadProgress, setUploadProgress] = useState("");
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [filterJob, setFilterJob] = useState("");
-  const [filterWorker, setFilterWorker] = useState("");
+  const [filterEmployee, setFilterEmployee] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ jobId: "", notes: "", images: [], imageFiles: [] });
   const [deleteConfirm, setDeleteConfirm] = useState(null); // reportId to confirm delete
@@ -34,9 +34,9 @@ export default function ReportsPage() {
   const voiceRec = useVoiceRecorder();
 
   useEffect(() => {
-    // Worker query: no orderBy to avoid composite index requirement — sorted client-side below
-    const jobsQ = isWorker
-      ? query(collection(firestoreDb, "jobs"), where("assignedTo", "array-contains", workerName))
+    // Employee query: no orderBy to avoid composite index requirement — sorted client-side below
+    const jobsQ = isEmployee
+      ? query(collection(firestoreDb, "jobs"), where("assignedTo", "array-contains", EmployeeName))
       : query(collection(firestoreDb, "jobs"), orderBy("createdAt", "desc"));
 
     // Real-time reports subscription for instant admin visibility
@@ -48,16 +48,16 @@ export default function ReportsPage() {
       subscribeCollection("customers", setCustomers),
     ];
     return () => unsubs.forEach((u) => u());
-  }, [isWorker, workerName]);
+  }, [isEmployee, EmployeeName]);
 
   const visible = useMemo(() => {
     return reports.filter((r) => {
-      if (isWorker && r.workerName !== workerName) return false;
+      if (isEmployee && r.EmployeeName !== EmployeeName) return false;
       if (filterJob && r.jobId !== filterJob) return false;
-      if (!isWorker && filterWorker && r.workerName !== filterWorker) return false;
+      if (!isEmployee && filterEmployee && r.EmployeeName !== filterEmployee) return false;
       return true;
     });
-  }, [reports, isWorker, workerName, filterJob, filterWorker]);
+  }, [reports, isEmployee, EmployeeName, filterJob, filterEmployee]);
 
   const showMsg = (type, text) => {
     setMsg({ type, text });
@@ -116,7 +116,7 @@ export default function ReportsPage() {
       // Step 1: Create report document first (without URLs)
       const reportId = await createRecord("reports", {
         jobId: form.jobId,
-        workerName,
+        EmployeeName,
         uploaderUid: profile?.uid || "",
         notes: form.notes,
         imageUrls: [],
@@ -222,7 +222,7 @@ export default function ReportsPage() {
         "Phone Number": customer?.phone || "N/A",
         "Address": customer?.address || job?.address || "N/A",
         "Service Type": job?.serviceType || "N/A",
-        "Worker Name": r.workerName || "N/A",
+        "Employee Name": r.EmployeeName || "N/A",
         "Date": r.timestamp ? new Date(r.timestamp).toLocaleDateString("en-IN") : "N/A",
         "Time": r.timestamp ? new Date(r.timestamp).toLocaleTimeString("en-IN") : "N/A",
         "Notes": r.notes || "N/A",
@@ -310,7 +310,7 @@ export default function ReportsPage() {
       <tr>
         <th>Customer</th>
         <th>Service</th>
-        <th>Worker</th>
+        <th>Employee</th>
         <th>Date/Time</th>
         <th>Notes</th>
         <th>Payment Status</th>
@@ -324,7 +324,7 @@ export default function ReportsPage() {
           <tr>
             <td>${job?.customerName || "N/A"}</td>
             <td>${job?.serviceType || "N/A"}</td>
-            <td>${r.workerName || "N/A"}</td>
+            <td>${r.EmployeeName || "N/A"}</td>
             <td>${r.timestamp ? new Date(r.timestamp).toLocaleString("en-IN") : "N/A"}</td>
             <td>${r.notes || "—"}</td>
             <td>${allDone ? "✓ Complete" : "Pending"}</td>
@@ -349,8 +349,8 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">{isWorker ? "રિપોર્ટ્સ" : "Reports"}</h1>
-          <p className="text-slate-500 mt-0.5">{visible.length} {isWorker ? "રિપોર્ટ્સ" : "reports"}</p>
+          <h1 className="text-2xl font-black text-slate-900">{isEmployee ? "રિપોર્ટ્સ" : "Reports"}</h1>
+          <p className="text-slate-500 mt-0.5">{visible.length} {isEmployee ? "રિપોર્ટ્સ" : "reports"}</p>
         </div>
         <div className="flex gap-2">
           {isAdmin && (
@@ -371,7 +371,7 @@ export default function ReportsPage() {
               </button>
             </>
           )}
-          {isWorker && (
+          {isEmployee && (
             <button
               onClick={() => setShowForm(true)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm"
@@ -392,7 +392,7 @@ export default function ReportsPage() {
       )}
 
       {/* Admin filters */}
-      {!isWorker && (
+      {!isEmployee && (
         <div className="bg-white rounded-2xl border border-slate-200 p-4">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="w-4 h-4 text-slate-400" />
@@ -410,12 +410,12 @@ export default function ReportsPage() {
               ))}
             </select>
             <select
-              value={filterWorker}
-              onChange={(e) => setFilterWorker(e.target.value)}
+              value={filterEmployee}
+              onChange={(e) => setFilterEmployee(e.target.value)}
               className="px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
             >
-              <option value="">All Workers</option>
-              {WORKERS.map((w) => <option key={w} value={w}>{w}</option>)}
+              <option value="">All Employees</option>
+              {EmployeeS.map((w) => <option key={w} value={w}>{w}</option>)}
             </select>
           </div>
         </div>
@@ -425,8 +425,8 @@ export default function ReportsPage() {
       {visible.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="font-semibold text-slate-500">{isWorker ? "હજુ કોઈ રિપોર્ટ નથી" : "No reports yet"}</p>
-          {isWorker && <p className="text-sm text-slate-400 mt-1">ઉપર નવો રિપોર્ટ સબમિટ કરો</p>}
+          <p className="font-semibold text-slate-500">{isEmployee ? "હજુ કોઈ રિપોર્ટ નથી" : "No reports yet"}</p>
+          {isEmployee && <p className="text-sm text-slate-400 mt-1">ઉપર નવો રિપોર્ટ સબમિટ કરો</p>}
         </div>
       ) : (
         <div className="space-y-4">
@@ -440,10 +440,10 @@ export default function ReportsPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-[var(--brand-soft)] flex items-center justify-center text-[var(--brand)] text-xs font-black">
-                        {r.workerName?.slice(0, 2).toUpperCase()}
+                        {r.EmployeeName?.slice(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 text-sm">{r.workerName}</p>
+                        <p className="font-bold text-slate-900 text-sm">{r.EmployeeName}</p>
                         <p className="text-xs text-slate-400">{r.timestamp ? new Date(r.timestamp).toLocaleString("en-IN") : ""}</p>
                       </div>
                     </div>

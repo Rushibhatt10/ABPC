@@ -5,7 +5,7 @@ import { formatCurrency, formatDateDisplay, getWhatsAppNumber } from "../utils/f
 import { TrendingUp, CheckCircle2, Clock, MessageSquare, Search, Filter } from "lucide-react";
 
 export default function PaymentsPage() {
-  const { isWorker } = useAuth();
+  const { isEmployee } = useAuth();
   const [invoices, setInvoices] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all"); // all | pending | paid
@@ -55,7 +55,7 @@ export default function PaymentsPage() {
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(text)}`, "_blank");
   };
 
-  if (isWorker) {
+  if (isEmployee) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">

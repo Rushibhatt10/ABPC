@@ -8,7 +8,7 @@ export default function RequireRole({ allow = [], children }) {
     return <div className="p-8 text-center">Loading...</div>;
   }
 
-  const role = profile?.role || "worker";
+  const role = profile?.role || "Employee";
   if (!allow.includes(role)) {
     return <Navigate to="/admin" replace />;
   }

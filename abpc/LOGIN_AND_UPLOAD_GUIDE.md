@@ -13,7 +13,7 @@
 - Ankit Bhatt
 - Akanksha Bhatt
 
-**Workers:**
+**Employees:**
 - Nakul
 - Divyesh
 - Sagar
@@ -48,7 +48,7 @@
 // Step 1: Create report document
 const reportId = await createRecord("reports", {
   jobId: "...",
-  workerName: "Nakul",
+  EmployeeName: "Nakul",
   notes: "Work completed",
   imageUrls: [],      // Empty initially
   audioUrl: null,     // Empty initially
@@ -87,7 +87,7 @@ Collection: reports
 {
   id: "report123",
   jobId: "job456",
-  workerName: "Nakul",
+  EmployeeName: "Nakul",
   uploaderUid: "user789",
   notes: "Inspection completed successfully",
   imageUrls: [
@@ -114,7 +114,7 @@ Collection: reports
 ✅ New reports appear immediately
 ✅ Images load as thumbnails
 ✅ Audio player ready to play
-✅ Worker name and timestamp
+✅ Employee name and timestamp
 ✅ Job details
 ✅ Checklist status
 
@@ -181,7 +181,7 @@ try {
 
 ---
 
-## 📋 WORKER WORKFLOW
+## 📋 Employee WORKFLOW
 
 ### Step-by-Step
 1. **Login**: Enter name (e.g., "Nakul")
@@ -209,7 +209,7 @@ try {
 ### Step-by-Step
 1. **Login**: Enter name (e.g., "Ankit Bhatt")
 2. **View Reports**: See all reports in real-time
-3. **Filter**: By job or worker
+3. **Filter**: By job or Employee
 4. **View Media**:
    - Click images to preview
    - Play voice notes inline
