@@ -313,7 +313,7 @@ export default function ReportsPage() {
         <th>Worker</th>
         <th>Date/Time</th>
         <th>Notes</th>
-        <th>Status</th>
+        <th>Payment Status</th>
       </tr>
     </thead>
     <tbody>

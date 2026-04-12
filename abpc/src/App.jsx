@@ -17,6 +17,7 @@ import PaymentsPage from './pages/PaymentsPage';
 import WhatsAppPage from './pages/WhatsAppPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import SettingsPage from './pages/SettingsPage';
+import AMCPage from './pages/AMCPage';
 import AppShell from './components/AppShell';
 import Preloader from './components/Preloader.jsx';
 import QuotationPrintPage from './pages/QuotationPrintPage';
@@ -57,6 +58,7 @@ function App() {
                 <Route path="quotations" element={<QuotationsPage />} />
                 <Route path="quotations/:id" element={<QuotationPrintPage />} />
                 <Route path="payments" element={<PaymentsPage />} />
+                <Route path="amc" element={<AMCPage />} />
                 <Route path="whatsapp" element={<WhatsAppPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="settings" element={<SettingsPage />} />

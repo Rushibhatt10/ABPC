@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, deleteRecord, nextDocumentNumber, subscribeCollection, updateRecord } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getTodayISO, getWhatsAppNumber, toNumber } from "../utils/format";
 import { Receipt, Plus, X, Trash2, CheckCircle2, ExternalLink, MessageSquare, Search, FileDown } from "lucide-react";
+import ServicePicker from "../components/ServicePicker";
+import CustomerSearch from "../components/CustomerSearch";
 
 const createItem = () => ({ itemName: "", quantity: "", price: "", discount: "" });
 
@@ -14,7 +16,6 @@ export default function InvoicesPage() {
   const { isWorker } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [invoices, setInvoices] = useState([]);
-  const [priceList, setPriceList] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [deletingId, setDeletingId] = useState("");
@@ -24,25 +25,23 @@ export default function InvoicesPage() {
   const [form, setForm] = useState({
     customerId: "",
     date: getTodayISO(),
-    items: [createItem()],
+    items: [],
     received: "",
     paymentMode: "UPI",
     warranty: defaultWarranty,
     terms: defaultTerms,
   });
-
-  const [pricePicker, setPricePicker] = useState({ category: "", bhk: "1" });
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   useEffect(() => {
     const unsubs = [
       subscribeCollection("customers", setCustomers),
       subscribeCollection("invoices", setInvoices),
-      subscribeCollection("priceList", setPriceList),
     ];
     return () => unsubs.forEach((u) => u());
   }, []);
 
-  const customer = useMemo(() => customers.find((c) => c.id === form.customerId) || null, [customers, form.customerId]);
+  const customer = selectedCustomer;
 
   const totals = useMemo(() => {
     const subtotal = form.items.reduce((s, i) => s + toNumber(i.quantity) * toNumber(i.price), 0);
@@ -52,14 +51,6 @@ export default function InvoicesPage() {
     const balance = Math.max(total - received, 0);
     return { subtotal, discountTotal, total, received, balance };
   }, [form.items, form.received]);
-
-  const selectedPrice = useMemo(() => {
-    if (!pricePicker.category) return null;
-    const row = priceList.find((r) => r.category === pricePicker.category);
-    if (!row) return null;
-    const entry = row.bhkPrices?.[pricePicker.bhk];
-    return entry?.editable ?? entry?.base ?? null;
-  }, [priceList, pricePicker]);
 
   const filtered = useMemo(() => {
     if (!search) return [...invoices].reverse();
@@ -74,12 +65,15 @@ export default function InvoicesPage() {
     setTimeout(() => setMsg({ type: "", text: "" }), 3000);
   };
 
-  const addFromPriceList = () => {
-    if (selectedPrice === null) { showMsg("error", "Select a price list entry first."); return; }
-    const row = priceList.find((r) => r.category === pricePicker.category);
+  const handleServiceAdd = (item) => {
     setForm((p) => ({
       ...p,
-      items: [...p.items, { itemName: row?.serviceName || pricePicker.category, quantity: "1", price: String(selectedPrice), discount: "0" }],
+      items: [...p.items, {
+        itemName: item.itemName,
+        quantity: String(item.quantity),
+        price: String(item.price),
+        discount: "0",
+      }],
     }));
   };
 
@@ -122,7 +116,8 @@ export default function InvoicesPage() {
         status: totals.balance > 0 ? "Pending" : "Paid",
       });
 
-      setForm({ customerId: "", date: getTodayISO(), items: [createItem()], received: "", paymentMode: "UPI", warranty: defaultWarranty, terms: defaultTerms });
+      setForm({ customerId: "", date: getTodayISO(), items: [], received: "", paymentMode: "UPI", warranty: defaultWarranty, terms: defaultTerms });
+      setSelectedCustomer(null);
       setShowForm(false);
       showMsg("success", `Invoice ${invoiceNumber} created.`);
     } catch (e) {
@@ -315,15 +310,11 @@ export default function InvoicesPage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Customer *</label>
-                  <select
-                    value={form.customerId}
-                    onChange={(e) => setForm((p) => ({ ...p, customerId: e.target.value }))}
-                    required
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
-                  >
-                    <option value="">Select customer</option>
-                    {customers.map((c) => <option key={c.id} value={c.id}>{c.name} — {c.phone}</option>)}
-                  </select>
+                  <CustomerSearch
+                    customers={customers}
+                    value={selectedCustomer}
+                    onChange={setSelectedCustomer}
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Date</label>
@@ -336,65 +327,38 @@ export default function InvoicesPage() {
                 </div>
               </div>
 
-              {/* Price list picker */}
-              {priceList.length > 0 && (
-                <div className="bg-slate-50 rounded-xl p-4 space-y-3">
-                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Add from Price List</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <select
-                      value={pricePicker.category}
-                      onChange={(e) => setPricePicker((p) => ({ ...p, category: e.target.value }))}
-                      className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
-                    >
-                      <option value="">Select category</option>
-                      {priceList.map((r) => <option key={r.id} value={r.category}>{r.category}</option>)}
-                    </select>
-                    <select
-                      value={pricePicker.bhk}
-                      onChange={(e) => setPricePicker((p) => ({ ...p, bhk: e.target.value }))}
-                      className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
-                    >
-                      {["1", "2", "3", "4", "bunglow"].map((k) => (
-                        <option key={k} value={k}>{k === "bunglow" ? "Bunglow" : `${k} BHK`}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">Price: <strong>{selectedPrice !== null ? formatCurrency(selectedPrice) : "—"}</strong></span>
-                    <button type="button" onClick={addFromPriceList} className="px-3 py-1.5 rounded-xl bg-[var(--brand)] text-white text-xs font-bold hover:bg-[var(--brand-dark)]">
-                      Add Item
-                    </button>
-                  </div>
-                </div>
-              )}
+              {/* Service Picker */}
+              <ServicePicker onAdd={handleServiceAdd} addLabel="Add to Invoice" />
 
               {/* Items */}
               <div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Line Items</p>
-                <div className="space-y-3">
-                  {form.items.map((item, idx) => (
-                    <div key={idx} className="bg-slate-50 rounded-xl p-3 space-y-2">
-                      <input
-                        value={item.itemName}
-                        onChange={(e) => updateItem(idx, "itemName", e.target.value)}
-                        placeholder="Item name"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
-                      />
-                      <div className="grid grid-cols-3 gap-2">
-                        <input type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} placeholder="Qty" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-                        <input type="number" value={item.price} onChange={(e) => updateItem(idx, "price", e.target.value)} placeholder="Price" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-                        <input type="number" value={item.discount} onChange={(e) => updateItem(idx, "discount", e.target.value)} placeholder="Discount" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-                      </div>
-                      {form.items.length > 1 && (
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Line Items {form.items.length > 0 && `(${form.items.length})`}</p>
+                {form.items.length === 0 ? (
+                  <p className="text-sm text-slate-400 py-2">No items yet — use the picker above or add manually below.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {form.items.map((item, idx) => (
+                      <div key={idx} className="bg-slate-50 rounded-xl p-3 space-y-2">
+                        <input
+                          value={item.itemName}
+                          onChange={(e) => updateItem(idx, "itemName", e.target.value)}
+                          placeholder="Item name"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
+                        />
+                        <div className="grid grid-cols-3 gap-2">
+                          <input type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} placeholder="Qty" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+                          <input type="number" value={item.price} onChange={(e) => updateItem(idx, "price", e.target.value)} placeholder="Price ₹" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+                          <input type="number" value={item.discount} onChange={(e) => updateItem(idx, "discount", e.target.value)} placeholder="Discount" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+                        </div>
                         <button type="button" onClick={() => setForm((p) => ({ ...p, items: p.items.filter((_, i) => i !== idx) }))} className="text-xs text-rose-500 hover:text-rose-700 font-semibold">
                           Remove
                         </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <button type="button" onClick={() => setForm((p) => ({ ...p, items: [...p.items, createItem()] }))} className="mt-2 text-sm font-semibold text-[var(--brand)] hover:underline">
-                  + Add Item
+                  + Add manually
                 </button>
               </div>
 

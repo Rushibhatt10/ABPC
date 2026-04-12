@@ -1,59 +1,112 @@
-export const SERVICE_PRICING_MENU = [
+// Category → Subcategory service structure
+// Pricing is always entered manually — no fixed prices stored here
+// defaultUnit is just a UI hint; admin can override
+
+export const UNITS = [
+  { value: "sqft", label: "SqFt" },
+  { value: "sqmt", label: "SqMt" },
+  { value: "unit", label: "Unit" },
+  { value: "piece", label: "Per Piece" },
+  { value: "rft", label: "RFt" },
+];
+
+export const SERVICE_CATEGORIES = [
   {
-    serviceName: "Anti-Termite Treatment",
-    unitOptions: ["sqft", "sqmt"],
-    unitPrices: { sqft: 7, sqmt: 75 },
+    category: "Termite",
+    subcategories: [
+      { name: "Foundation Treatment (DOGLA)", defaultUnit: "sqft" },
+      { name: "Plinth Level Treatment", defaultUnit: "sqft" },
+      { name: "Before Flooring Treatment", defaultUnit: "sqft" },
+      { name: "Tube/Piping Installation Before Flooring", defaultUnit: "rft" },
+      { name: "Drilling Treatment", defaultUnit: "sqft" },
+      { name: "Wooden Ply Treatment", defaultUnit: "piece" },
+      { name: "Garden Treatment", defaultUnit: "sqft" },
+      { name: "AB TERMITE CORE-TECH (Package)", defaultUnit: "unit" },
+    ],
   },
   {
-    serviceName: "Drill Treatment",
-    unitOptions: ["sqft", "sqmt"],
-    unitPrices: { sqft: 12, sqmt: 130 },
+    category: "General Pest Control",
+    subcategories: [
+      { name: "Cockroach Gel", defaultUnit: "unit" },
+      { name: "Cockroach Spray", defaultUnit: "unit" },
+      { name: "Dual Action Treatment", defaultUnit: "unit" },
+    ],
   },
   {
-    serviceName: "Garden / Ply / Tube Treatment",
-    unitOptions: ["sqft", "sqmt", "unit"],
-    unitPrices: { sqft: 15, sqmt: 160, unit: 450 },
+    category: "Bed Bugs",
+    subcategories: [
+      { name: "Spray Treatment", defaultUnit: "unit" },
+    ],
   },
   {
-    serviceName: "Cockroach AMC",
-    unitOptions: ["unit"],
-    unitPrices: { unit: 1800 },
+    category: "Mosquitos",
+    subcategories: [
+      { name: "IRS Spray Treatment", defaultUnit: "unit" },
+      { name: "ULV Cold Fogging", defaultUnit: "unit" },
+    ],
   },
   {
-    serviceName: "Ant Control AMC",
-    unitOptions: ["unit"],
-    unitPrices: { unit: 1500 },
+    category: "Rodent",
+    subcategories: [
+      { name: "Roda Cake Treatment", defaultUnit: "unit" },
+      { name: "Roda Repellent Spray Treatment", defaultUnit: "unit" },
+      { name: "Rodent Car Treatment", defaultUnit: "unit" },
+      { name: "Roda Trap", defaultUnit: "piece" },
+      { name: "AB RODENT CORE-TECH (Package)", defaultUnit: "unit" },
+    ],
   },
   {
-    serviceName: "Bed Bugs",
-    unitOptions: ["unit"],
-    unitPrices: { unit: 3000 },
+    category: "Wood Borer",
+    subcategories: [
+      { name: "Brushing", defaultUnit: "sqft" },
+      { name: "Spray", defaultUnit: "sqft" },
+      { name: "Injection", defaultUnit: "unit" },
+    ],
   },
   {
-    serviceName: "Mosquito & Fly",
-    unitOptions: ["unit"],
-    unitPrices: { unit: 2200 },
+    category: "Ant Treatment",
+    subcategories: [
+      { name: "Ant Spray Treatment", defaultUnit: "unit" },
+      { name: "Dual Action Treatment", defaultUnit: "unit" },
+    ],
   },
   {
-    serviceName: "Rodent Control",
-    unitOptions: ["unit"],
-    unitPrices: { unit: 2500 },
+    category: "No Chemical Treatment",
+    subcategories: [
+      { name: "Collapsible Mosquito Net", defaultUnit: "piece" },
+      { name: "Bird Net", defaultUnit: "sqft" },
+      { name: "Bird Spike", defaultUnit: "piece" },
+      { name: "Invisible Grill", defaultUnit: "piece" },
+    ],
   },
   {
-    serviceName: "General Pest Control AMC",
-    unitOptions: ["unit"],
-    unitPrices: { unit: 2000 },
-  },
-  {
-    serviceName: "Wood Borer Treatment",
-    unitOptions: ["unit", "sqft"],
-    unitPrices: { unit: 600, sqft: 25 },
+    category: "General Pest Service",
+    isMultiSelect: true,
+    subcategories: [
+      { name: "Cockroach Gel", defaultUnit: "unit" },
+      { name: "Cockroach Spray", defaultUnit: "unit" },
+      { name: "Ant Spray", defaultUnit: "unit" },
+      { name: "Mosquito Spray", defaultUnit: "unit" },
+      { name: "Rodent Control", defaultUnit: "unit" },
+      { name: "Bed Bug Spray", defaultUnit: "unit" },
+    ],
   },
 ];
 
-export const DEFAULT_SERVICES = SERVICE_PRICING_MENU.map((service) => ({
-  name: service.serviceName,
-  serviceName: service.serviceName,
-  unitOptions: service.unitOptions,
-  unitPrices: service.unitPrices,
-}));
+// Flat list of all service names for search/display
+export const ALL_SERVICE_NAMES = SERVICE_CATEGORIES.flatMap((cat) =>
+  cat.subcategories.map((sub) => `${cat.category} — ${sub.name}`)
+);
+
+// Legacy export required by firestoreHelpers.js (ensureDefaultServices)
+// Kept as empty array since pricing is now manual — no defaults to seed
+export const DEFAULT_SERVICES = [];
+
+// Legacy export kept for any remaining imports
+export const SERVICE_PRICING_MENU = SERVICE_CATEGORIES.flatMap((cat) =>
+  cat.subcategories.map((sub) => ({
+    serviceName: `${cat.category} — ${sub.name}`,
+    unitOptions: [sub.defaultUnit || "unit"],
+    unitPrices: { [sub.defaultUnit || "unit"]: 0 },
+  }))
+);

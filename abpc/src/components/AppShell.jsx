@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Briefcase, FileText, BarChart3,
   IndianRupee, Receipt, MessageSquare, TrendingUp, Settings,
-  Bell, LogOut, Menu, X, ChevronRight, Shield, Zap,
+  Bell, LogOut, Menu, X, ChevronRight, Shield, Zap, CalendarClock,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -11,10 +11,9 @@ const adminNav = [
   { label: "Dashboard", to: "/admin", icon: LayoutDashboard, end: true },
   { label: "Customers", to: "/admin/customers", icon: Users },
   { label: "Jobs", to: "/admin/jobs", icon: Briefcase },
-  { label: "Reports", to: "/admin/reports", icon: FileText },
-  { label: "Pricing", to: "/admin/pricing", icon: IndianRupee },
   { label: "Invoices", to: "/admin/invoices", icon: Receipt },
   { label: "Quotations", to: "/admin/quotations", icon: FileText },
+  { label: "AMC", to: "/admin/amc", icon: CalendarClock },
   { label: "Payments", to: "/admin/payments", icon: TrendingUp },
   { label: "WhatsApp", to: "/admin/whatsapp", icon: MessageSquare },
   { label: "Analytics", to: "/admin/analytics", icon: BarChart3 },
