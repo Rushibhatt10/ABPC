@@ -1,24 +1,14 @@
 /**
- * ServicePicker — Category → Subcategory → Unit → Qty → Price → Warranty
- * Used in: InvoicesPage, QuotationsPage, JobsPage (CreateJobModal)
+ * ServicePicker — Category → Subcategory → Unit → Qty → Price
+ * Warranty is handled automatically from serviceTerms.js — not shown here.
  *
  * Props:
- *   onAdd(item) — called with { itemName, category, unit, quantity, price, total, warranty }
+ *   onAdd(item) — called with { itemName, category, unit, quantity, price, total }
  */
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { SERVICE_CATEGORIES, UNITS } from "../constants/services";
 import { formatCurrency } from "../utils/format";
-
-const WARRANTY_OPTIONS = [
-  { value: "", label: "No Warranty" },
-  { value: "1 Month", label: "1 Month" },
-  { value: "3 Months", label: "3 Months" },
-  { value: "6 Months", label: "6 Months" },
-  { value: "1 Year", label: "1 Year" },
-  { value: "2 Years", label: "2 Years" },
-  { value: "5 Years", label: "5 Years" },
-];
 
 export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
   const [category, setCategory] = useState("");
@@ -26,7 +16,6 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
   const [unit, setUnit] = useState("unit");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
-  const [warranty, setWarranty] = useState("");
   const [multiSelected, setMultiSelected] = useState([]);
 
   const selectedCat = SERVICE_CATEGORIES.find((c) => c.category === category);
@@ -39,7 +28,6 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
     setUnit("unit");
     setQuantity("");
     setPrice("");
-    setWarranty("");
   };
 
   const handleSubcategoryChange = (val) => {
@@ -63,6 +51,7 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
 
     if (isMulti) {
       if (multiSelected.length === 0) return;
+      if (!price || parseFloat(price) <= 0) return;
       multiSelected.forEach((name) => {
         onAdd({
           itemName: `${category} — ${name}`,
@@ -71,17 +60,16 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
           quantity: parseFloat(quantity) || 1,
           price: parseFloat(price) || 0,
           total: (parseFloat(price) || 0) * (parseFloat(quantity) || 1),
-          warranty: warranty || "",
         });
       });
       setMultiSelected([]);
       setQuantity("");
       setPrice("");
-      setWarranty("");
       return;
     }
 
     if (!subcategory) return;
+    if (!price || parseFloat(price) <= 0) return;
     onAdd({
       itemName: `${category} — ${subcategory}`,
       category,
@@ -89,12 +77,10 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
       quantity: parseFloat(quantity) || 1,
       price: parseFloat(price) || 0,
       total,
-      warranty: warranty || "",
     });
     setSubcategory("");
     setQuantity("");
     setPrice("");
-    setWarranty("");
   };
 
   const showFields = subcategory || (isMulti && multiSelected.length > 0);
@@ -105,11 +91,8 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
 
       {/* Category + Subcategory */}
       <div className="grid grid-cols-2 gap-2">
-        <select
-          value={category}
-          onChange={(e) => handleCategoryChange(e.target.value)}
-          className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none bg-white"
-        >
+        <select value={category} onChange={(e) => handleCategoryChange(e.target.value)}
+          className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none bg-white">
           <option value="">Select category</option>
           {SERVICE_CATEGORIES.map((c) => (
             <option key={c.category} value={c.category}>{c.category}</option>
@@ -117,12 +100,9 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
         </select>
 
         {!isMulti && (
-          <select
-            value={subcategory}
-            onChange={(e) => handleSubcategoryChange(e.target.value)}
+          <select value={subcategory} onChange={(e) => handleSubcategoryChange(e.target.value)}
             disabled={!category}
-            className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none bg-white disabled:opacity-50"
-          >
+            className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none bg-white disabled:opacity-50">
             <option value="">Select service</option>
             {selectedCat?.subcategories.map((s) => (
               <option key={s.name} value={s.name}>{s.name}</option>
@@ -136,12 +116,8 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
         <div className="grid grid-cols-2 gap-1.5">
           {selectedCat.subcategories.map((s) => (
             <label key={s.name} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white cursor-pointer hover:border-[var(--brand)] transition-colors text-sm">
-              <input
-                type="checkbox"
-                checked={multiSelected.includes(s.name)}
-                onChange={() => toggleMulti(s.name)}
-                className="accent-[var(--brand)]"
-              />
+              <input type="checkbox" checked={multiSelected.includes(s.name)}
+                onChange={() => toggleMulti(s.name)} className="accent-[var(--brand)]" />
               {s.name}
             </label>
           ))}
@@ -151,50 +127,16 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
       {/* Unit + Qty + Price */}
       {showFields && (
         <div className="grid grid-cols-3 gap-2">
-          <select
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-            className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none bg-white"
-          >
-            {UNITS.map((u) => (
-              <option key={u.value} value={u.value}>{u.label}</option>
-            ))}
+          <select value={unit} onChange={(e) => setUnit(e.target.value)}
+            className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none bg-white">
+            {UNITS.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
           </select>
-          <input
-            type="number" min="0" step="1" value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-            placeholder="Qty"
-            className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
-          />
-          <input
-            type="number" min="0" step="1" value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            placeholder="Price ₹"
-            className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
-          />
-        </div>
-      )}
-
-      {/* Warranty selector */}
-      {showFields && (
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Warranty</label>
-          <div className="flex flex-wrap gap-1.5">
-            {WARRANTY_OPTIONS.map((w) => (
-              <button
-                key={w.value}
-                type="button"
-                onClick={() => setWarranty(w.value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                  warranty === w.value
-                    ? "bg-[var(--brand)] text-white border-[var(--brand)]"
-                    : "bg-white text-slate-600 border-slate-200 hover:border-[var(--brand)]"
-                }`}
-              >
-                {w.label}
-              </button>
-            ))}
-          </div>
+          <input type="number" min="0" step="1" value={quantity}
+            onChange={(e) => setQuantity(e.target.value)} placeholder="Qty"
+            className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+          <input type="number" min="0" step="1" value={price}
+            onChange={(e) => setPrice(e.target.value)} placeholder="Price ₹"
+            className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
         </div>
       )}
 
@@ -202,16 +144,13 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
       <div className="flex items-center justify-between pt-1">
         <span className="text-sm text-slate-600">
           {quantity && price
-            ? <>Total: <strong>{formatCurrency(total)}</strong>{warranty && <span className="text-xs text-emerald-600 ml-2">· {warranty} warranty</span>}</>
+            ? <>Total: <strong>{formatCurrency(total)}</strong></>
             : <span className="text-slate-400">Enter qty &amp; price</span>
           }
         </span>
-        <button
-          type="button"
-          onClick={handleAdd}
-          disabled={!category || (!isMulti && !subcategory)}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors disabled:opacity-40"
-        >
+        <button type="button" onClick={handleAdd}
+          disabled={!category || (!isMulti && !subcategory) || !price || parseFloat(price) <= 0}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors disabled:opacity-40">
           <Plus className="w-3.5 h-3.5" />
           {addLabel}
         </button>

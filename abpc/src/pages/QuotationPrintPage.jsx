@@ -1,173 +1,234 @@
-import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import { formatCurrency, formatDateDisplay } from "../utils/format";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { subscribeDoc } from "../utils/firestoreHelpers";
+import { formatCurrency, formatDateDisplay } from "../utils/format";
+import { Printer, ArrowLeft } from "lucide-react";
 
 export default function QuotationPrintPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [quotation, setQuotation] = useState(null);
-  const articleRef = useRef(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
-    const unsub = subscribeDoc("quotations", id, (data) => {
-      setQuotation(data);
-    });
-    return unsub;
+    return subscribeDoc("quotations", id, (data) => { setQuotation(data); setLoading(false); });
   }, [id]);
 
-  if (!quotation) return <div className="p-10 text-center">Loading...</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen" style={{ background: "#fff" }}>
+      <p style={{ color: "#8B7E74", fontSize: 14 }}>Loading quotation…</p>
+    </div>
+  );
+  if (!quotation) return (
+    <div className="flex items-center justify-center min-h-screen" style={{ background: "#fff" }}>
+      <p style={{ color: "#8B7E74", fontSize: 14 }}>Quotation not found.</p>
+    </div>
+  );
 
-  const total =
-    quotation.totalAmount ||
-    quotation.items?.reduce((sum, i) => sum + (i.total || 0), 0);
+  const total = quotation.totalAmount || quotation.items?.reduce((s, i) => s + (i.total || 0), 0) || 0;
+
+  const S = {
+    page: {
+      width: "100%", maxWidth: "210mm", minHeight: "297mm",
+      background: "#ffffff", margin: "0 auto",
+      padding: "14mm 16mm", boxSizing: "border-box",
+      fontFamily: "'Inter', sans-serif", color: "#2E2A27",
+      position: "relative", boxShadow: "0 8px 40px rgba(0,0,0,0.10)",
+    },
+    outerBorder: { position: "absolute", inset: "8mm", border: "1.5px solid #D8CFC4", pointerEvents: "none" },
+    innerBorder: { position: "absolute", inset: "11mm", border: "0.5px solid #D8CFC4", pointerEvents: "none" },
+    watermark: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", opacity: 0.04, pointerEvents: "none", zIndex: 0 },
+    content: { position: "relative", zIndex: 1 },
+    divider: { borderTop: "1px solid #D8CFC4", margin: "5mm 0" },
+    sectionTitle: { fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#8B7E74", marginBottom: 8 },
+    label: { fontSize: 9, color: "#8B7E74", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 2 },
+    value: { fontSize: 12, fontWeight: 500, color: "#2E2A27", lineHeight: 1.5 },
+    grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4mm", marginBottom: "4mm" },
+    field: { marginBottom: "3mm" },
+    box: { border: "1px solid #E6DFD6", borderRadius: 4, padding: "4mm", background: "rgba(0,0,0,0.02)" },
+  };
 
   return (
-    <div className="bg-gray-100 py-6 flex justify-center print:bg-white">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+        @media print {
+          .no-print { display: none !important; }
+          body { margin: 0; background: #fff !important; }
+          .doc-page { box-shadow: none !important; }
+        }
+      `}</style>
 
-      <article
-        ref={articleRef}
-        className="relative bg-white w-full max-w-[210mm] min-h-[297mm] shadow print:shadow-none px-6 sm:px-10 py-10 text-gray-800 overflow-hidden"
-      >
+      {/* Action bar */}
+      <div className="no-print sticky top-0 z-10 flex items-center gap-3 px-4 py-3 border-b"
+        style={{ background: "#FAF7F2", borderColor: "#E6DFD6" }}>
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: "#8B7E74" }}>
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
+        <div className="flex-1" />
+        <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: "#8B7E74" }}>
+          <Printer className="w-4 h-4" /> Print / Save PDF
+        </button>
+      </div>
 
-        {/* WATERMARK */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
-          <img src="/cropped_circle_image.png" alt="" className="w-[240px]" />
-        </div>
-
-        {/* HEADER */}
-        <div className="bg-[#1f2937] text-white rounded-xl px-6 py-6 flex justify-between items-center">
-
-          {/* LEFT */}
-          <div className="space-y-1">
-            <h1 className="text-xl font-semibold">
-              A B Pest Control
-            </h1>
-            <p className="text-xs tracking-widest opacity-70">
-              INSECTICIDE SERVICES
-            </p>
+      <div style={{ background: "#fff", minHeight: "100vh", padding: "40px 16px" }} className="print:p-0 print:m-0">
+        <div className="doc-page" style={S.page}>
+          <div style={S.outerBorder} />
+          <div style={S.innerBorder} />
+          <div style={S.watermark}>
+            <img src="/cropped_circle_image.png" alt="" style={{ width: 260, height: 260, objectFit: "contain" }} />
           </div>
 
-          {/* RIGHT */}
-          <div className="flex items-center gap-5">
+          <div style={S.content}>
 
-            <div className="text-right">
-              <p className="text-lg font-semibold tracking-wider">
-                QUOTATION
+            {/* HEADER */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "5mm" }}>
+              <div>
+                <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#2E2A27", letterSpacing: "0.02em", lineHeight: 1.2 }}>A.B. Pest Control</p>
+                <p style={{ fontSize: 9, color: "#8B7E74", letterSpacing: "0.18em", textTransform: "uppercase", marginTop: 3 }}>Insecticide Services</p>
+                <p style={{ fontSize: 8.5, color: "#6E6259", marginTop: 3, lineHeight: 1.6 }}>Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 98251 88413</p>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ width: 52, height: 52, borderRadius: "50%", border: "1.5px solid #D8CFC4", overflow: "hidden", background: "#FAF7F2", marginLeft: "auto" }}>
+                  <img src="/cropped_circle_image.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                </div>
+                <p style={{ fontSize: 8, color: "#8B7E74", marginTop: 4, letterSpacing: "0.06em" }}>Ref: {quotation.estimateNumber}</p>
+              </div>
+            </div>
+
+            <div style={S.divider} />
+
+            {/* TITLE */}
+            <div style={{ textAlign: "center", margin: "6mm 0 8mm" }}>
+              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#2E2A27", lineHeight: 1.4 }}>
+                Quotation
               </p>
-              <p className="text-xs opacity-70">
-                #{quotation.estimateNumber}
-              </p>
+              <div style={{ width: 50, height: 2, background: "#8B7E74", margin: "5px auto 0", borderRadius: 1 }} />
             </div>
 
-            <div className="bg-white p-1.5 rounded-full flex items-center justify-center w-12 h-12 flex-shrink-0">
-              <img src="/cropped_circle_image.png" alt="Logo" className="w-full h-full object-contain" />
+            {/* SECTION 1: QUOTATION FOR */}
+            <div style={{ marginBottom: "5mm" }}>
+              <p style={S.sectionTitle}>1. Quotation For</p>
+              <div style={S.box}>
+                <div style={S.grid2}>
+                  <div style={S.field}>
+                    <p style={S.label}>Client Name</p>
+                    <p style={S.value}>{quotation.customerName || "—"}</p>
+                  </div>
+                  <div style={S.field}>
+                    <p style={S.label}>Contact Number</p>
+                    <p style={S.value}>{quotation.customerPhone || "—"}</p>
+                  </div>
+                </div>
+                <div style={S.field}>
+                  <p style={S.label}>Address</p>
+                  <p style={S.value}>{quotation.customerAddress || "—"}</p>
+                </div>
+                <div style={S.grid2}>
+                  <div style={S.field}>
+                    <p style={S.label}>Quotation Date</p>
+                    <p style={S.value}>{formatDateDisplay(quotation.date)}</p>
+                  </div>
+                  {quotation.propertyType && (
+                    <div style={S.field}>
+                      <p style={S.label}>Property Type</p>
+                      <p style={S.value}>{quotation.propertyType}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 2: SERVICES */}
+            <div style={{ marginBottom: "5mm" }}>
+              <p style={S.sectionTitle}>2. Services</p>
+              <div style={S.box}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #D8CFC4" }}>
+                      {["#", "Service", "Qty", "Unit", "Amount"].map((h, i) => (
+                        <th key={h} style={{ textAlign: i >= 2 ? "right" : i === 0 ? "left" : "left", padding: "4px 6px", fontSize: 9, fontWeight: 600, letterSpacing: "0.1em", color: "#8B7E74", textTransform: "uppercase" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {quotation.items?.map((item, i) => (
+                      <tr key={i} style={{ borderBottom: "1px solid #E6DFD6" }}>
+                        <td style={{ padding: "7px 6px", color: "#8B7E74", fontSize: 10 }}>{i + 1}</td>
+                        <td style={{ padding: "7px 6px", color: "#2E2A27", fontWeight: 500 }}>{item.itemName}</td>
+                        <td style={{ padding: "7px 6px", textAlign: "right", color: "#6E6259" }}>{item.quantity}</td>
+                        <td style={{ padding: "7px 6px", textAlign: "right", color: "#6E6259" }}>{item.unit || "—"}</td>
+                        <td style={{ padding: "7px 6px", textAlign: "right", color: "#2E2A27", fontWeight: 600 }}>
+                          {formatCurrency(item.total ?? (item.quantity * (item.unitPrice || 0)))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* SECTION 3: TOTAL */}
+            <div style={{ marginBottom: "5mm" }}>
+              <p style={S.sectionTitle}>3. Summary</p>
+              <div style={S.box}>
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <div style={{ minWidth: 200 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0 3px", fontSize: 14, fontWeight: 700, color: "#2E2A27", borderTop: "1.5px solid #D8CFC4", marginTop: 4 }}>
+                      <span>Total</span><span>{formatCurrency(total)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* METHODOLOGY */}
+            {quotation.methodology && (
+              <div style={{ marginBottom: "4mm" }}>
+                <p style={S.sectionTitle}>4. Methodology</p>
+                <div style={S.box}>
+                  <p style={{ fontSize: 10, color: "#2E2A27", lineHeight: 1.7, whiteSpace: "pre-line" }}>{quotation.methodology}</p>
+                </div>
+              </div>
+            )}
+
+            {/* PAYMENT TERMS */}
+            {quotation.paymentTerms && (
+              <div style={{ marginBottom: "4mm" }}>
+                <p style={S.sectionTitle}>5. Payment Terms</p>
+                <div style={S.box}>
+                  <p style={{ fontSize: 10, color: "#2E2A27", lineHeight: 1.7, whiteSpace: "pre-line" }}>{quotation.paymentTerms}</p>
+                </div>
+              </div>
+            )}
+
+            {/* TERMS */}
+            {quotation.terms && (
+              <div style={{ marginBottom: "5mm" }}>
+                <p style={S.sectionTitle}>6. Terms & Conditions</p>
+                <div style={S.box}>
+                  <p style={{ fontSize: 10, color: "#2E2A27", lineHeight: 1.7, whiteSpace: "pre-line" }}>{quotation.terms}</p>
+                </div>
+              </div>
+            )}
+
+            {/* SIGNATURE */}
+            <div style={S.divider} />
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6mm" }}>
+              <div style={{ textAlign: "center", minWidth: 120 }}>
+                <div style={{ height: 32, borderBottom: "1px solid #8B7E74", marginBottom: 6, width: 120 }} />
+                <p style={{ fontSize: 10, fontWeight: 600, color: "#2E2A27", letterSpacing: "0.04em" }}>Authorized Signatory</p>
+                <p style={{ fontSize: 9, color: "#8B7E74", marginTop: 2 }}>AB Pest Control</p>
+              </div>
+            </div>
+            <div style={{ textAlign: "center", marginTop: "5mm" }}>
+              <p style={{ fontSize: 8, color: "#8B7E74", letterSpacing: "0.06em" }}>This quotation is valid for 15 days from the date of issue.</p>
             </div>
 
           </div>
         </div>
-
-        {/* CUSTOMER + DATE */}
-        <div className="mt-8 border-b border-gray-200 pb-4 flex justify-between text-sm">
-
-          <div>
-            <p className="text-gray-500">Quotation For</p>
-            <p className="font-semibold uppercase">
-              {quotation.customerName}
-            </p>
-            <p className="text-gray-600">
-              {quotation.customerAddress}
-            </p>
-          </div>
-
-          <div className="text-right">
-            <p>
-              <span className="text-gray-500">Date:</span>{" "}
-              {formatDateDisplay(quotation.date)}
-            </p>
-          </div>
-
-        </div>
-
-        {/* TABLE */}
-        <div className="mt-6 overflow-x-auto">
-          <table className="w-full text-sm border border-gray-200">
-
-            <thead className="bg-gray-900 text-white">
-              <tr>
-                <th className="p-3 text-left">Service</th>
-                <th className="p-3 text-center">Qty</th>
-                <th className="p-3 text-center">Unit</th>
-                <th className="p-3 text-center">Warranty</th>
-                <th className="p-3 text-right">Amount</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {quotation.items?.map((item, i) => (
-                <tr key={i} className="border-b">
-                  <td className="p-3">{item.itemName}</td>
-                  <td className="p-3 text-center">{item.quantity}</td>
-                  <td className="p-3 text-center">{item.unit}</td>
-                  <td className="p-3 text-center">
-                    {item.warranty ? (
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
-                        {item.warranty}
-                      </span>
-                    ) : "—"}
-                  </td>
-                  <td className="p-3 text-right font-medium">
-                    {formatCurrency(item.total)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* TOTAL */}
-        <div className="flex justify-end mt-10">
-          <div className="w-64 border border-gray-300">
-
-            <div className="flex justify-between p-3 text-sm">
-              <span>Sub Total</span>
-              <span>{formatCurrency(total)}</span>
-            </div>
-
-            <div className="flex justify-between p-3 bg-gray-900 text-white font-semibold">
-              <span>Total</span>
-              <span>{formatCurrency(total)}</span>
-            </div>
-
-          </div>
-        </div>
-
-        {/* TERMS */}
-        <div className="mt-12 text-sm">
-          <p className="font-semibold mb-1">Terms & Conditions</p>
-          <p className="text-gray-600">
-            {quotation.terms ||
-              "1. Quotation valid for 15 days.\n2. Taxes extra if applicable."}
-          </p>
-        </div>
-
-        {/* SIGNATURE */}
-        <div className="mt-20 flex justify-between items-end">
-
-          <div className="text-sm text-gray-500">
-            For A B Pest Control
-          </div>
-
-          <div className="text-center">
-            <div className="h-12"></div>
-            <p className="text-sm font-medium border-t pt-1">
-              Authorized Signatory
-            </p>
-          </div>
-
-        </div>
-
-      </article>
-    </div>
+      </div>
+    </>
   );
 }

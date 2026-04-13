@@ -2,14 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, deleteRecord, subscribeCollection, updateRecord } from "../utils/firestoreHelpers";
 import { formatDateDisplay, getTodayISO } from "../utils/format";
-import { CalendarClock, Plus, X, Trash2, Search, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { CalendarClock, Plus, X, Trash2, Search, AlertCircle, CheckCircle2, Clock, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import ServicePicker from "../components/ServicePicker";
 import CustomerSearch from "../components/CustomerSearch";
 
 const DURATIONS = [
   { label: "1 Month", months: 1 },
   { label: "3 Months (Quarterly)", months: 3 },
-  { label: "6 Months", months: 6 },
+  { label: "6 Months (Half yearly", months: 6 },
   { label: "12 Months (Annual)", months: 12 },
 ];
 
@@ -26,6 +27,7 @@ function daysUntil(dateStr) {
 
 export default function AMCPage() {
   const { isEmployee } = useAuth();
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [amcs, setAmcs] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -249,6 +251,13 @@ export default function AMCPage() {
                 {amc.notes && (
                   <p className="text-xs text-slate-500 mt-2 italic">{amc.notes}</p>
                 )}
+
+                <div className="flex gap-2 mt-3">
+                  <button onClick={() => navigate(`/admin/amc/${amc.id}`)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--brand-soft)] border border-[var(--brand)] text-xs font-semibold text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors">
+                    <FileText className="w-3 h-3" /> View Agreement
+                  </button>
+                </div>
               </div>
             );
           })}

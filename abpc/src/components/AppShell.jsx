@@ -2,10 +2,11 @@ import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Briefcase, FileText, BarChart3,
-  IndianRupee, Receipt, MessageSquare, TrendingUp, Settings,
-  Bell, LogOut, Menu, X, ChevronRight, Shield, Zap, CalendarClock,
+  Receipt, MessageSquare, TrendingUp, Settings,
+  Bell, LogOut, Menu, X, ChevronRight, Shield, CalendarClock, Award,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import Logo from "./Logo";
 
 const adminNav = [
   { label: "Dashboard", to: "/admin", icon: LayoutDashboard, end: true },
@@ -41,16 +42,8 @@ export default function AppShell({ children }) {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300 leading-none">AB Pest Control</p>
-            <p className="text-sm font-black text-white leading-tight mt-0.5">Console</p>
-          </div>
-        </div>
+      <div className="px-1 py-4 border-b border-white/10">
+        <Logo variant="horizontal" className="w-full" />
       </div>
 
       {/* Nav */}
@@ -66,8 +59,8 @@ export default function AppShell({ children }) {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 group ${
                   isActive
-                    ? "bg-white/15 text-white shadow-sm"
-                    : "text-white/60 hover:text-white hover:bg-white/10"
+                    ? "bg-white/20 text-white shadow-sm"
+                    : "text-white/65 hover:text-white hover:bg-white/10"
                 }`
               }
             >
@@ -111,7 +104,7 @@ export default function AppShell({ children }) {
   return (
     <div className="flex h-screen bg-[var(--bg-soft)] overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-60 flex-shrink-0 bg-gradient-to-b from-[#13562d] to-[#1f7a42]">
+      <aside className="hidden lg:flex flex-col w-60 flex-shrink-0" style={{ background: "linear-gradient(180deg, #4A3F38 0%, #6B5E55 100%)" }}>
         <SidebarContent />
       </aside>
 
@@ -122,7 +115,7 @@ export default function AppShell({ children }) {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="relative w-64 flex flex-col bg-gradient-to-b from-[#13562d] to-[#1f7a42] shadow-2xl">
+          <aside className="relative w-64 flex flex-col shadow-2xl" style={{ background: "linear-gradient(180deg, #4A3F38 0%, #6B5E55 100%)" }}>
             <SidebarContent />
           </aside>
         </div>
@@ -131,7 +124,7 @@ export default function AppShell({ children }) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden overflow-x-hidden">
         {/* Top Header */}
-        <header className="flex-shrink-0 h-14 bg-white border-b border-slate-200 flex items-center px-4 lg:px-6 gap-4 z-30">
+        <header className="flex-shrink-0 h-14 bg-[#FAF7F2] border-b border-[#E6DFD6] flex items-center px-4 lg:px-6 gap-4 z-30">
           <button
             className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
             onClick={() => setSidebarOpen(true)}

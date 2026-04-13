@@ -17,6 +17,7 @@ import {
   Briefcase, Plus, X, CheckCircle2, Clock,
   User, Calendar, MapPin, ChevronDown, ChevronUp,
   RefreshCw, History, Search, Link2, UploadCloud, FileText, Receipt,
+  Users, ChevronRight, ArrowLeft,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -210,6 +211,12 @@ function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy,
                 <Receipt className="w-3 h-3" /> View Invoice
               </a>
             )}
+            {job.status === "completed" && (
+              <a href={`/admin/certificate/${job.id}`} target="_blank" rel="noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors">
+                <FileText className="w-3 h-3" /> Certificate
+              </a>
+            )}
             {job.history?.length > 0 && (
               <button onClick={() => setShowHistory(!showHistory)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
@@ -297,22 +304,24 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
     reworkSource ? { id: reworkSource.customerId, name: reworkSource.customerName, phone: reworkSource.customerPhone || "", address: reworkSource.address || reworkSource.customerAddress || "" } : null
   );
   const [form, setForm] = useState({ scheduledDate: getTodayISO(), status: "pending", notes: "" });
-  const [pickedService, setPickedService] = useState(null);
-  const [previewJobs, setPreviewJobs] = useState([]);
 
-  // services are passed now or subscribed in parent
-  const [services, setServices] = useState([]);
-  useEffect(() => {
-    const unsub = subscribeCollection("services", setServices);
-    return () => unsub();
-  }, []);
+  // Unified treatment + pricing state
+  const [treatmentKey, setTreatmentKey] = useState("");
+  const [price, setPrice] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [unit, setUnit] = useState("unit");
 
+  const UNITS = [{ value: "sqft", label: "SqFt" }, { value: "sqmt", label: "SqMt" }, { value: "unit", label: "Unit" }, { value: "piece", label: "Per Piece" }];
 
+  const selectedTemplate = treatmentKey ? TREATMENT_TEMPLATES[treatmentKey] : null;
+  const previewJobs = treatmentKey ? getJobsByTreatment(treatmentKey) : [];
+  const total = (parseFloat(price) || 0) * (parseFloat(quantity) || 0);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!selectedCustomer) { alert("Please select a customer."); return; }
-    if (!pickedService) { alert("Please select a service."); return; }
+    if (!treatmentKey) { alert("Please select a treatment."); return; }
+    if (!price || parseFloat(price) <= 0) { alert("Please enter a price."); return; }
 
     onSave({
       customerId: selectedCustomer.id || "",
@@ -320,36 +329,23 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
       customerPhone: selectedCustomer.phone || "",
       address: selectedCustomer.address || "",
       ...form,
-      serviceId: pickedService.itemName,
-      serviceName: pickedService.itemName,
-      serviceType: pickedService.itemName,
-      category: pickedService.category || "",
-      unit: pickedService.unit || "unit",
-      quantity: Number(pickedService.quantity) || 0,
-      basePrice: Number(pickedService.price) || 0,
-      adjustedPrice: Number(pickedService.price) || 0,
-      finalPrice: Number(pickedService.total) || 0,
-      totalAmount: Number(pickedService.total) || 0,
-      warranty: pickedService.warranty || "",
-      warrantyType: pickedService.warranty && pickedService.warranty !== "No Warranty" ? "limited" : "none",
-      warrantyDays: parseWarrantyDays(pickedService.warranty) || 0,
-      treatmentKey: pickedService.treatmentKey || "",
-      treatmentLabel: pickedService.treatmentKey ? (TREATMENT_TEMPLATES[pickedService.treatmentKey]?.label || "") : pickedService.itemName,
+      serviceId: treatmentKey,
+      serviceName: selectedTemplate?.label || treatmentKey,
+      serviceType: selectedTemplate?.label || treatmentKey,
+      category: selectedTemplate?.category || "",
+      unit,
+      quantity: parseFloat(quantity) || 1,
+      basePrice: parseFloat(price) || 0,
+      adjustedPrice: parseFloat(price) || 0,
+      finalPrice: total,
+      totalAmount: total,
+      warranty: "",
+      warrantyType: "none",
+      warrantyDays: 0,
+      treatmentKey,
+      treatmentLabel: selectedTemplate?.label || "",
       createdAt: new Date().toISOString(),
     });
-  };
-
-  const handleServicePicked = (item) => {
-    // Find treatmentKey from label
-    const tKey = Object.keys(TREATMENT_TEMPLATES).find(
-      key => TREATMENT_TEMPLATES[key].label === item.itemName
-    );
-    setPickedService({ ...item, treatmentKey: tKey });
-    if (tKey) {
-      setPreviewJobs(getJobsByTreatment(tKey));
-    } else {
-      setPreviewJobs([]);
-    }
   };
 
   return (
@@ -361,6 +357,7 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"><X className="w-4 h-4" /></button>
         </div>
+
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
           {reworkSource && (
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-violet-50 border border-violet-200 text-xs text-violet-700">
@@ -375,35 +372,71 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
             <CustomerSearch customers={customers} value={selectedCustomer} onChange={setSelectedCustomer} />
           </div>
 
-          {previewJobs.length > 0 && (
-            <div className="mt-2 bg-slate-50 rounded-xl border border-slate-200 p-3">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{previewJobs.length} tasks will be created</p>
-              <div className="flex flex-wrap gap-1">
-                {previewJobs.map((j, i) => (
-                  <span key={i} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${i < 2 ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
-                    {i + 1}. {j}
-                  </span>
+          {/* Unified Treatment + Pricing */}
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Treatment & Pricing *</label>
+            <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 space-y-3">
+
+              {/* Treatment groups */}
+              <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+                {TREATMENT_GROUPS.map((grp) => (
+                  <div key={grp.group}>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{grp.group}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {grp.items.map((key) => (
+                        <button key={key} type="button"
+                          onClick={() => { setTreatmentKey(key); setPrice(""); setQuantity("1"); setUnit("unit"); }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                            treatmentKey === key
+                              ? "bg-[var(--brand)] text-white border-[var(--brand)]"
+                              : "bg-white text-slate-600 border-slate-200 hover:border-[var(--brand)]"
+                          }`}>
+                          {TREATMENT_TEMPLATES[key].label.replace(/^[^—]+— /, "")}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
-          )}
 
-          {/* Service & Pricing */}
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Service & Pricing</label>
-            <ServicePicker onAdd={handleServicePicked} addLabel="Select Service" />
-            {pickedService && (
-              <div className="mt-2 flex items-center justify-between px-3 py-2.5 rounded-xl bg-[var(--brand-soft)] border border-emerald-200">
-                <div>
-                  <p className="text-sm font-bold text-slate-800">{pickedService.itemName}</p>
-                  <p className="text-xs text-slate-500">{pickedService.quantity} {pickedService.unit} × ₹{pickedService.price}{pickedService.warranty ? ` · ${pickedService.warranty}` : ""}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-black text-[var(--brand)]">₹{(pickedService.total || 0).toLocaleString("en-IN")}</p>
-                  <button type="button" onClick={() => setPickedService(null)} className="text-xs text-rose-500 hover:underline">Change</button>
-                </div>
-              </div>
-            )}
+              {/* Price + Unit + Qty — shown after treatment selected */}
+              {treatmentKey && (
+                <>
+                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200">
+                    <select value={unit} onChange={(e) => setUnit(e.target.value)}
+                      className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none bg-white">
+                      {UNITS.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
+                    </select>
+                    <input type="number" min="0" step="1" value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)} placeholder="Qty"
+                      className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+                    <input type="number" min="0" step="1" value={price}
+                      onChange={(e) => setPrice(e.target.value)} placeholder="Price ₹"
+                      className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+                  </div>
+
+                  {/* Summary */}
+                  <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[var(--brand-soft)] border border-emerald-200">
+                    <div>
+                      <p className="text-xs font-bold text-slate-700">{selectedTemplate?.label}</p>
+                      <p className="text-[10px] text-slate-500">{quantity} {unit} × ₹{price || 0}</p>
+                    </div>
+                    <p className="font-black text-[var(--brand)] text-sm">₹{total.toLocaleString("en-IN")}</p>
+                  </div>
+
+                  {/* Task preview */}
+                  {previewJobs.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {previewJobs.map((j, i) => (
+                        <span key={i} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${i < 2 ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                          {i + 1}. {j}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
 
           {/* Scheduled Date */}
@@ -439,6 +472,86 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
   );
 }
 
+/** Customer Jobs Panel — shows all jobs for a selected customer */
+function CustomerJobsPanel({ customer, jobs, subJobs, isEmployee, onMarkSubDone, onRaiseRework, onGenerateInvoice, busy, onBack }) {
+  const customerJobs = useMemo(() =>
+    jobs.filter((j) => j.customerId === customer.id || j.customerName === customer.name)
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
+    [jobs, customer]
+  );
+
+  const counts = {
+    all: customerJobs.length,
+    pending: customerJobs.filter(j => j.status === "pending" || !j.status).length,
+    in_progress: customerJobs.filter(j => j.status === "in_progress").length,
+    completed: customerJobs.filter(j => j.status === "completed").length,
+    rework: customerJobs.filter(j => j.jobType === "Rework").length,
+  };
+
+  const [filter, setFilter] = useState("all");
+  const filtered = filter === "all" ? customerJobs : customerJobs.filter(j => {
+    if (filter === "rework") return j.jobType === "Rework";
+    return j.status === filter;
+  });
+
+  return (
+    <div className="space-y-4">
+      {/* Back + Customer header */}
+      <div className="flex items-center gap-3">
+        <button onClick={onBack}
+          className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded-2xl bg-[var(--brand-soft)] flex items-center justify-center text-[var(--brand)] text-sm font-black flex-shrink-0">
+            {customer.name?.slice(0, 2).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="font-black text-slate-900 truncate">{customer.name}</p>
+            <p className="text-xs text-slate-400">{customer.phone} · {customer.propertyType}</p>
+          </div>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-xl font-black text-slate-900">{counts.all}</p>
+          <p className="text-xs text-slate-400">total jobs</p>
+        </div>
+      </div>
+
+      {/* Stats strip */}
+      <div className="grid grid-cols-4 gap-2">
+        {[
+          { key: "pending",    label: "Pending",    color: "bg-amber-50 text-amber-700 border-amber-100" },
+          { key: "in_progress",label: "Active",     color: "bg-blue-50 text-blue-700 border-blue-100" },
+          { key: "completed",  label: "Completed",  color: "bg-emerald-50 text-emerald-700 border-emerald-100" },
+          { key: "rework",     label: "Rework",     color: "bg-violet-50 text-violet-700 border-violet-100" },
+        ].map(s => (
+          <button key={s.key} onClick={() => setFilter(filter === s.key ? "all" : s.key)}
+            className={`rounded-xl border p-2.5 text-center transition-all ${s.color} ${filter === s.key ? "ring-2 ring-offset-1 ring-current" : "opacity-80 hover:opacity-100"}`}>
+            <p className="text-lg font-black leading-none">{counts[s.key]}</p>
+            <p className="text-[10px] font-bold mt-0.5">{s.label}</p>
+          </button>
+        ))}
+      </div>
+
+      {/* Job list */}
+      {filtered.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
+          <Briefcase className="w-10 h-10 text-slate-200 mx-auto mb-2" />
+          <p className="text-sm text-slate-400">No jobs in this category</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map(job => (
+            <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={isEmployee}
+              onMarkSubDone={onMarkSubDone} onRaiseRework={onRaiseRework}
+              onGenerateInvoice={onGenerateInvoice} busy={busy} onJobUpdated={() => {}} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function JobsPage() {
   const { profile, isEmployee } = useAuth();
   const EmployeeName = profile?.EmployeeTag || profile?.name || "";
@@ -455,6 +568,8 @@ export default function JobsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState({ type: "", text: "" });
+  const [viewMode, setViewMode] = useState("jobs"); // "jobs" | "customers"
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   // Auto-open rework modal when navigated from ComplaintsPage
   useEffect(() => {
@@ -695,6 +810,13 @@ export default function JobsPage() {
         </div>
         {!isEmployee && (
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:ml-auto">
+            {/* View toggle */}
+            <div className="flex rounded-xl border border-slate-200 bg-white overflow-hidden">
+              <button onClick={() => setViewMode("customers")}
+                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold transition-colors ${viewMode === "customers" ? "bg-[var(--brand)] text-white" : "text-slate-500 hover:text-slate-700"}`}>
+                <Users className="w-3.5 h-3.5" /> By Customer
+              </button>
+            </div>
             <button onClick={handleCloudUpload} disabled={busy}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors shadow-sm disabled:opacity-60 w-full sm:w-auto min-h-[44px] active:scale-95">
               <UploadCloud className="w-4 h-4" /> Cloud Export
@@ -712,12 +834,60 @@ export default function JobsPage() {
           }`}>{msg.text}</div>
       )}
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder={isEmployee ? "જોબ ID અથવા કસ્ટમર નામ સર્ચ કરો..." : "Search by customer, phone, job ID, service..."}
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white" />
-      </div>
+      {/* ── CUSTOMER VIEW ── */}
+      {!isEmployee && viewMode === "customers" && (
+        selectedCustomer ? (
+          <CustomerJobsPanel
+            customer={selectedCustomer}
+            jobs={jobs}
+            subJobs={subJobs}
+            isEmployee={false}
+            onMarkSubDone={handleMarkSubDone}
+            onRaiseRework={handleRaiseRework}
+            onGenerateInvoice={handleGenerateInvoice}
+            busy={busy}
+            onBack={() => setSelectedCustomer(null)}
+          />
+        ) : (
+          <div className="space-y-3">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input value={search} onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search customers..."
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white" />
+            </div>
+            {/* Customer list */}
+            {customers
+              .filter(c => !search.trim() || c.name?.toLowerCase().includes(search.toLowerCase()) || c.phone?.includes(search))
+              .map(c => {
+                const cJobs = jobs.filter(j => j.customerId === c.id || j.customerName === c.name);
+                if (cJobs.length === 0) return null;
+                return (
+                  <button key={c.id} onClick={() => setSelectedCustomer(c)}
+                    className="w-full bg-white rounded-2xl border border-slate-200 px-4 py-3.5 flex items-center gap-3 hover:border-[var(--brand)] hover:shadow-sm transition-all text-left active:scale-[0.99]">
+                    <div className="w-10 h-10 rounded-2xl bg-[var(--brand-soft)] flex items-center justify-center text-[var(--brand)] text-sm font-black flex-shrink-0">
+                      {c.name?.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-slate-900 text-sm truncate">{c.name}</p>
+                      <p className="text-xs text-slate-400">{c.phone}</p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-xs text-slate-400">{c.propertyType}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">{cJobs.length}</span>
+                      <ChevronRight className="w-4 h-4 text-slate-300" />
+                    </div>
+                  </button>
+                );
+              })
+            }
+          </div>
+        )
+      )}
+
+      {/* ── JOBS VIEW ── */}
+      {(isEmployee || viewMode === "jobs") && (<>
 
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {[
@@ -779,9 +949,11 @@ export default function JobsPage() {
         </div>
       )}
 
+      </>)}
+
       {showModal && (
         <CreateJobModal customers={customers} onClose={() => { setShowModal(false); setReworkSource(null); }}
-          onSave={handleCreate} saving={saving} reworkSource={reworkSource} isEmployee={isEmployee} />
+          onSave={handleCreate} saving={saving} reworkSource={reworkSource} />
       )}
     </div>
   );

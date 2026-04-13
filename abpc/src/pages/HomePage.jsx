@@ -266,155 +266,111 @@ function AdminDashboard({ profile }) {
 
   const recentJobs = useMemo(() => [...jobs].reverse().slice(0, 5), [jobs]);
   const recentCustomers = useMemo(() => [...customers].reverse().slice(0, 4), [customers]);
+  const unreadMessages = messages.filter(m => !m.read).length;
+  const firstName = profile?.name?.split(" ")[0] || "there";
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   const quickLinks = [
-    { label: "New Customer", to: "/admin/customers", icon: Users, color: "bg-blue-500" },
-    { label: "Create Job", to: "/admin/jobs", icon: Briefcase, color: "bg-emerald-500" },
-    { label: "New Invoice", to: "/admin/invoices", icon: Receipt, color: "bg-violet-500" },
-    { label: "New Quotation", to: "/admin/quotations", icon: FileText, color: "bg-amber-500" },
+    { label: "New Customer",  to: "/admin/customers",  icon: Users,     gradient: "from-blue-500 to-blue-600" },
+    { label: "Create Job",    to: "/admin/jobs",        icon: Briefcase, gradient: "from-emerald-500 to-emerald-600" },
+    { label: "New Invoice",   to: "/admin/invoices",    icon: Receipt,   gradient: "from-violet-500 to-violet-600" },
+    { label: "New Quotation", to: "/admin/quotations",  icon: FileText,  gradient: "from-amber-500 to-amber-600" },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Welcome back, {profile?.name?.split(" ")[0]} 👋</h1>
-          <p className="text-slate-500 mt-1">Here's what's happening at AB Pest Control today.</p>
+    <div className="space-y-6 sm:space-y-8">
+
+      {/* ── HERO HEADER ── */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl"
+        style={{ background: "linear-gradient(135deg, #4A3F38 0%, #6B5E55 60%, #8B7E74 100%)" }}>
+        <div className="absolute inset-0 opacity-10"
+          style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+        <div className="relative px-5 sm:px-8 py-6 sm:py-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-1">{greeting}</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight">{firstName} 👋</h1>
+            <p className="text-white/70 text-sm mt-1.5">Here's your business snapshot for today.</p>
+          </div>
+          <Link to="/admin/jobs"
+            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/15 hover:bg-white/25 text-white text-sm font-bold transition-all backdrop-blur-sm border border-white/20 self-start sm:self-auto active:scale-95">
+            <Plus className="w-4 h-4" /> New Job
+          </Link>
         </div>
-        <Link
-          to="/admin/jobs"
-          className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New Job
-        </Link>
       </div>
 
-      {/* Stats */}
+      {/* ── STAT CARDS ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard label="Total Revenue" value={formatCurrency(stats.totalRevenue)} icon={TrendingUp} color="green" sub="All time collected" />
-        <StatCard label="Pending Amount" value={formatCurrency(stats.pendingAmount)} icon={Clock} color="amber" sub={`${stats.pendingCount} invoices`} />
-        <StatCard label="Today's Jobs" value={stats.todayJobs} icon={Calendar} color="blue" sub="Scheduled today" />
-        <StatCard label="Total Customers" value={customers.length} icon={Users} color="violet" sub="In CRM" />
+        {[
+          { label: "Total Revenue",   value: formatCurrency(stats.totalRevenue),  sub: "All time collected",                          icon: TrendingUp, bg: "bg-emerald-50", border: "border-emerald-100", iconBg: "bg-emerald-500", text: "text-emerald-700" },
+          { label: "Pending Amount",  value: formatCurrency(stats.pendingAmount), sub: `${stats.pendingCount} invoice${stats.pendingCount !== 1 ? "s" : ""}`, icon: Clock,      bg: "bg-amber-50",   border: "border-amber-100",   iconBg: "bg-amber-500",   text: "text-amber-700"   },
+          { label: "Today's Jobs",    value: stats.todayJobs,                     sub: "Scheduled today",                             icon: Calendar,   bg: "bg-blue-50",    border: "border-blue-100",    iconBg: "bg-blue-500",    text: "text-blue-700"    },
+          { label: "Total Customers", value: customers.length,                    sub: "In CRM",                                      icon: Users,      bg: "bg-violet-50",  border: "border-violet-100",  iconBg: "bg-violet-500",  text: "text-violet-700"  },
+        ].map((s) => {
+          const Icon = s.icon;
+          return (
+            <div key={s.label} className={`rounded-2xl border ${s.border} ${s.bg} p-4 sm:p-5 flex flex-col gap-3`}>
+              <div className={`w-9 h-9 rounded-xl ${s.iconBg} flex items-center justify-center shadow-sm`}>
+                <Icon className="w-[18px] h-[18px] text-white" />
+              </div>
+              <div>
+                <p className="text-xl sm:text-2xl font-black text-slate-900 leading-none">{s.value}</p>
+                <p className={`text-xs font-bold mt-1 ${s.text}`}>{s.label}</p>
+                {s.sub && <p className="text-[11px] text-slate-400 mt-0.5">{s.sub}</p>}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Quick Actions */}
+      {/* ── QUICK ACTIONS ── */}
       <div>
-        <h2 className="text-base font-bold text-slate-800 mb-3">Quick Actions</h2>
+        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Quick Actions</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {quickLinks.map((q) => {
             const Icon = q.icon;
             return (
-              <Link
-                key={q.to}
-                to={q.to}
-                className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col items-center gap-2.5 hover:border-[var(--brand)] hover:shadow-md transition-all group"
-              >
-                <div className={`w-10 h-10 rounded-xl ${q.color} flex items-center justify-center`}>
+              <Link key={q.to} to={q.to}
+                className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 flex flex-col items-center gap-3 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 active:scale-95">
+                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${q.gradient} flex items-center justify-center shadow-md`}>
                   <Icon className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xs font-bold text-slate-700 text-center group-hover:text-[var(--brand)]">{q.label}</span>
+                <span className="text-xs font-bold text-slate-600 text-center group-hover:text-slate-900 transition-colors leading-tight">{q.label}</span>
+                <ArrowRight className="absolute bottom-3 right-3 w-3 h-3 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all" />
               </Link>
             );
           })}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Recent Jobs */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-slate-800">Recent Jobs</h2>
-            <Link to="/admin/jobs" className="text-xs font-semibold text-[var(--brand)] flex items-center gap-1 hover:underline">
-              View all <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-          <div className="space-y-2">
-            {recentJobs.length === 0 ? (
-              <p className="text-sm text-slate-400 py-4 text-center">No jobs yet</p>
-            ) : (
-              recentJobs.map((job) => (
-                <div key={job.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">{job.customerName}</p>
-                    <p className="text-xs text-slate-400">{job.serviceType} · {formatDateDisplay(job.scheduledDate)}</p>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                    job.status === "completed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-                  }`}>
-                    {job.status || "pending"}
-                  </span>
-                </div>
-              ))
+      {/* ── WEBSITE ENQUIRIES ── */}
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
+              <MessageSquare className="w-3.5 h-3.5 text-violet-600" />
+            </div>
+            <h2 className="font-bold text-slate-800 text-sm">Website Enquiries</h2>
+            {unreadMessages > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold">{unreadMessages}</span>
             )}
           </div>
-        </div>
-
-        {/* Recent Customers */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-slate-800">Recent Customers</h2>
-            <Link to="/admin/customers" className="text-xs font-semibold text-[var(--brand)] flex items-center gap-1 hover:underline">
-              View all <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-          <div className="space-y-2">
-            {recentCustomers.length === 0 ? (
-              <p className="text-sm text-slate-400 py-4 text-center">No customers yet</p>
-            ) : (
-              recentCustomers.map((c) => (
-                <div key={c.id} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
-                  <div className="w-8 h-8 rounded-lg bg-[var(--brand-soft)] flex items-center justify-center text-[var(--brand)] text-xs font-black flex-shrink-0">
-                    {c.name?.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 truncate">{c.name}</p>
-                    <p className="text-xs text-slate-400">{c.phone}</p>
-                  </div>
-                  <span className="text-xs text-slate-400">{c.propertyType}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Site Messages */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <MessageSquare className="w-4 h-4 text-[var(--brand)]" />
-          <h2 className="font-bold text-slate-800">Website Enquiries</h2>
-          {messages.filter(m => !m.read).length > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-600 text-xs font-bold">
-              {messages.filter(m => !m.read).length} new
-            </span>
-          )}
         </div>
         {messages.length === 0 ? (
-          <div className="py-8 text-center">
+          <div className="py-10 text-center">
             <MessageSquare className="w-8 h-8 text-slate-200 mx-auto mb-2" />
             <p className="text-sm text-slate-400">No enquiries yet</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="divide-y divide-slate-50">
             {[...messages].reverse().map((msg) => (
-              <div
-                key={msg.id}
-                className={`p-4 rounded-xl border transition-colors ${
-                  msg.read
-                    ? "bg-slate-50 border-slate-100"
-                    : "bg-amber-50 border-amber-200"
-                }`}
-              >
+              <div key={msg.id} className={`px-5 py-4 hover:bg-slate-50 transition-colors ${!msg.read ? "bg-amber-50/40" : ""}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                       <span className="font-bold text-sm text-slate-900">{msg.full_name}</span>
-                      {!msg.read && (
-                        <span className="px-1.5 py-0.5 rounded-full bg-amber-400 text-white text-[10px] font-bold uppercase">New</span>
-                      )}
-                      <span className="text-xs text-slate-400 ml-auto">
+                      {!msg.read && <span className="px-1.5 py-0.5 rounded-full bg-amber-400 text-white text-[10px] font-bold">NEW</span>}
+                      <span className="text-[11px] text-slate-400 ml-auto">
                         {msg.createdAt ? new Date(msg.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : ""}
                       </span>
                     </div>
@@ -430,22 +386,17 @@ function AdminDashboard({ profile }) {
                         </a>
                       )}
                     </div>
-                    <p className="text-sm text-slate-700 leading-relaxed">{msg.message}</p>
+                    <p className="text-sm text-slate-600 leading-relaxed">{msg.message}</p>
                   </div>
                   <div className="flex flex-col gap-1.5 shrink-0">
                     {!msg.read && (
-                      <button
-                        onClick={() => updateRecord("messages", msg.id, { read: true })}
-                        className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold hover:bg-emerald-200 transition-colors whitespace-nowrap"
-                      >
+                      <button onClick={() => updateRecord("messages", msg.id, { read: true })}
+                        className="px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold hover:bg-emerald-200 transition-colors whitespace-nowrap">
                         Mark read
                       </button>
                     )}
-                    <button
-                      onClick={() => deleteRecord("messages", msg.id)}
-                      className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors self-end"
-                      title="Delete"
-                    >
+                    <button onClick={() => deleteRecord("messages", msg.id)}
+                      className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors self-end">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -455,6 +406,7 @@ function AdminDashboard({ profile }) {
           </div>
         )}
       </div>
+
     </div>
   );
 }

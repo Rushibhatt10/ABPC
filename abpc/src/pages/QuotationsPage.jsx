@@ -6,13 +6,9 @@ import { formatCurrency, formatDateDisplay, getTodayISO, getWhatsAppNumber, toNu
 import { FileText, Plus, X, Trash2, ExternalLink, MessageSquare, Search, ArrowRight, FileDown } from "lucide-react";
 import ServicePicker from "../components/ServicePicker";
 import CustomerSearch from "../components/CustomerSearch";
+import { getTermsForCategories } from "../constants/serviceTerms";
 
 const createItem = () => ({ itemName: "", quantity: "", unit: "job", unitPrice: "" });
-
-const defaultMethodology = "Methodology: Drilling at regular intervals, chemical injection through nozzles, and final sealing.";
-const defaultWarranty = "Warranty: As per treatment type, subject to site conditions.";
-const defaultPaymentTerms = "Payment terms: 50% advance and remaining on completion.";
-const defaultTerms = "Terms: 1) Quotation valid for 15 days. 2) Taxes extra if applicable.";
 
 export default function QuotationsPage() {
   const { isEmployee } = useAuth();
@@ -29,10 +25,9 @@ export default function QuotationsPage() {
     customerId: "",
     date: getTodayISO(),
     items: [],
-    methodology: defaultMethodology,
-    warranty: defaultWarranty,
-    paymentTerms: defaultPaymentTerms,
-    terms: defaultTerms,
+    methodology: "",
+    paymentTerms: "",
+    terms: "",
   });
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
@@ -65,16 +60,23 @@ export default function QuotationsPage() {
   };
 
   const handleServiceAdd = (item) => {
-    setForm((p) => ({
-      ...p,
-      items: [...p.items, {
+    setForm((p) => {
+      const newItems = [...p.items, {
         itemName: item.itemName,
         quantity: String(item.quantity),
         unit: item.unit || "unit",
         unitPrice: String(item.price),
-        warranty: item.warranty || "",
-      }],
-    }));
+      }];
+      const categories = [...new Set(newItems.map(i => i.itemName?.split(" — ")[0]).filter(Boolean))];
+      const t = getTermsForCategories(categories);
+      return {
+        ...p,
+        items: newItems,
+        methodology: t.methodology,
+        paymentTerms: t.paymentTerms,
+        terms: t.terms,
+      };
+    });
   };
 
   const updateItem = (idx, key, val) => {
@@ -88,12 +90,13 @@ export default function QuotationsPage() {
     try {
       const estimateNumber = await nextDocumentNumber("EST");
       const items = form.items
-        .filter((i) => i.itemName && toNumber(i.quantity) > 0)
+        .filter((i) => i.itemName && toNumber(i.quantity) > 0 && toNumber(i.unitPrice) > 0)
         .map((i) => ({
           itemName: i.itemName,
           quantity: toNumber(i.quantity),
           unit: i.unit || "job",
           unitPrice: toNumber(i.unitPrice),
+          warranty: i.warranty || "",
           total: toNumber(i.quantity) * toNumber(i.unitPrice),
         }));
 
@@ -108,13 +111,12 @@ export default function QuotationsPage() {
         items,
         totalAmount: items.reduce((s, i) => s + i.total, 0),
         methodology: form.methodology,
-        warranty: form.warranty,
         paymentTerms: form.paymentTerms,
         terms: form.terms,
         status: "Draft",
       });
 
-      setForm({ customerId: "", date: getTodayISO(), items: [], methodology: defaultMethodology, warranty: defaultWarranty, paymentTerms: defaultPaymentTerms, terms: defaultTerms });
+      setForm({ customerId: "", date: getTodayISO(), items: [], methodology: "", paymentTerms: "", terms: "" });
       setSelectedCustomer(null);
       setShowForm(false);
       showMsg("success", `Quotation ${estimateNumber} created.`);
@@ -347,27 +349,21 @@ export default function QuotationsPage() {
               {/* Service Picker */}
               <ServicePicker onAdd={handleServiceAdd} addLabel="Add to Quotation" />
 
-              <div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Line Items {form.items.length > 0 && `(${form.items.length})`}</p>
-                {form.items.length === 0 ? (
-                  <p className="text-sm text-slate-400 py-2">No items yet — use the picker above or add manually below.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {form.items.map((item, idx) => (
-                      <div key={idx} className="bg-slate-50 rounded-xl p-3 space-y-2">
-                        <input value={item.itemName} onChange={(e) => updateItem(idx, "itemName", e.target.value)} placeholder="Item name" className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-                        <div className="grid grid-cols-3 gap-2">
-                          <input type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} placeholder="Qty" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-                          <input value={item.unit} onChange={(e) => updateItem(idx, "unit", e.target.value)} placeholder="Unit" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-                          <input type="number" value={item.unitPrice} onChange={(e) => updateItem(idx, "unitPrice", e.target.value)} placeholder="Price ₹" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-                        </div>
-                        <button type="button" onClick={() => setForm((p) => ({ ...p, items: p.items.filter((_, i) => i !== idx) }))} className="text-xs text-rose-500 hover:text-rose-700 font-semibold">Remove</button>
+              {form.items.length > 0 && (
+                <div className="space-y-2">
+                  {form.items.map((item, idx) => (
+                    <div key={idx} className="bg-slate-50 rounded-xl p-3 space-y-2">
+                      <input value={item.itemName} onChange={(e) => updateItem(idx, "itemName", e.target.value)} placeholder="Item name" className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+                      <div className="grid grid-cols-3 gap-2">
+                        <input type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} placeholder="Qty" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+                        <input value={item.unit} onChange={(e) => updateItem(idx, "unit", e.target.value)} placeholder="Unit" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+                        <input type="number" value={item.unitPrice} onChange={(e) => updateItem(idx, "unitPrice", e.target.value)} placeholder="Price ₹" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
                       </div>
-                    ))}
-                  </div>
-                )}
-                <button type="button" onClick={() => setForm((p) => ({ ...p, items: [...p.items, createItem()] }))} className="mt-2 text-sm font-semibold text-[var(--brand)] hover:underline">+ Add manually</button>
-              </div>
+                      <button type="button" onClick={() => setForm((p) => ({ ...p, items: p.items.filter((_, i) => i !== idx) }))} className="text-xs text-rose-500 hover:text-rose-700 font-semibold">Remove</button>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="bg-[var(--brand-soft)] rounded-xl p-4 flex items-center justify-between">
                 <span className="font-bold text-slate-800">Total</span>
@@ -375,15 +371,23 @@ export default function QuotationsPage() {
               </div>
 
               <div className="space-y-3">
+                {form.items.length === 0 && (
+                  <p className="text-xs text-slate-400 italic px-1">Add a service above — methodology, payment terms, and conditions will auto-fill.</p>
+                )}
                 {[
-                  { key: "methodology", label: "Methodology" },
-                  { key: "warranty", label: "Warranty" },
-                  { key: "paymentTerms", label: "Payment Terms" },
-                  { key: "terms", label: "Terms & Conditions" },
+                  { key: "methodology", label: "Methodology", placeholder: "Add a service to auto-fill..." },
+                  { key: "paymentTerms", label: "Payment Terms", placeholder: "Add a service to auto-fill..." },
+                  { key: "terms", label: "Terms & Conditions", placeholder: "Add a service to auto-fill..." },
                 ].map((f) => (
                   <div key={f.key}>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{f.label}</label>
-                    <textarea value={form[f.key]} onChange={(e) => setForm((p) => ({ ...p, [f.key]: e.target.value }))} rows={2} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none min-h-[42px]" />
+                    <textarea
+                      value={form[f.key]}
+                      onChange={(e) => setForm((p) => ({ ...p, [f.key]: e.target.value }))}
+                      placeholder={f.placeholder}
+                      rows={2}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none min-h-[42px]"
+                    />
                   </div>
                 ))}
               </div>
