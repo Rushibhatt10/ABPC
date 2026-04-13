@@ -14,81 +14,61 @@ export const SERVICE_CATEGORIES = [
   {
     category: "Termite",
     subcategories: [
-      { name: "Foundation Treatment (DOGLA)", defaultUnit: "sqft" },
+      { name: "Foundation Treatment", defaultUnit: "sqft" },
       { name: "Plinth Level Treatment", defaultUnit: "sqft" },
       { name: "Before Flooring Treatment", defaultUnit: "sqft" },
-      { name: "Tube/Piping Installation Before Flooring", defaultUnit: "rft" },
-      { name: "Drilling Treatment", defaultUnit: "sqft" },
-      { name: "Wooden Ply Treatment", defaultUnit: "piece" },
-      { name: "Garden Treatment", defaultUnit: "sqft" },
-      { name: "AB TERMITE CORE-TECH (Package)", defaultUnit: "unit" },
+      { name: "Piping Tube Before Flooring", defaultUnit: "rft" },
+      { name: "Post (Drilling Treatment)", defaultUnit: "sqft" },
     ],
   },
   {
-    category: "General Pest Control",
+    category: "Wood / Ply",
     subcategories: [
-      { name: "Cockroach Gel", defaultUnit: "unit" },
-      { name: "Cockroach Spray", defaultUnit: "unit" },
-      { name: "Dual Action Treatment", defaultUnit: "unit" },
+      { name: "Wood / Ply Treatment", defaultUnit: "piece" },
+    ],
+  },
+  {
+    category: "Garden",
+    subcategories: [
+      { name: "Garden Treatment", defaultUnit: "sqft" },
+    ],
+  },
+  {
+    category: "Cockroach",
+    subcategories: [
+      { name: "Spray Treatment", defaultUnit: "unit" },
+      { name: "Gel Treatment", defaultUnit: "unit" },
+    ],
+  },
+  {
+    category: "Ant",
+    subcategories: [
+      { name: "Ant Treatment", defaultUnit: "unit" },
     ],
   },
   {
     category: "Bed Bugs",
     subcategories: [
-      { name: "Spray Treatment", defaultUnit: "unit" },
+      { name: "Bed Bug Treatment", defaultUnit: "unit" },
     ],
   },
   {
-    category: "Mosquitos",
+    category: "Mosquito",
     subcategories: [
-      { name: "IRS Spray Treatment", defaultUnit: "unit" },
-      { name: "ULV Cold Fogging", defaultUnit: "unit" },
+      { name: "IRS Treatment", defaultUnit: "unit" },
+      { name: "ULV Treatment", defaultUnit: "unit" },
     ],
   },
   {
     category: "Rodent",
     subcategories: [
-      { name: "Roda Cake Treatment", defaultUnit: "unit" },
-      { name: "Roda Repellent Spray Treatment", defaultUnit: "unit" },
-      { name: "Rodent Car Treatment", defaultUnit: "unit" },
-      { name: "Roda Trap", defaultUnit: "piece" },
-      { name: "AB RODENT CORE-TECH (Package)", defaultUnit: "unit" },
+      { name: "Rodent Treatment", defaultUnit: "unit" },
     ],
   },
   {
     category: "Wood Borer",
     subcategories: [
-      { name: "Brushing", defaultUnit: "sqft" },
-      { name: "Spray", defaultUnit: "sqft" },
-      { name: "Injection", defaultUnit: "unit" },
-    ],
-  },
-  {
-    category: "Ant Treatment",
-    subcategories: [
-      { name: "Ant Spray Treatment", defaultUnit: "unit" },
-      { name: "Dual Action Treatment", defaultUnit: "unit" },
-    ],
-  },
-  {
-    category: "No Chemical Treatment",
-    subcategories: [
-      { name: "Collapsible Mosquito Net", defaultUnit: "piece" },
-      { name: "Bird Net", defaultUnit: "sqft" },
-      { name: "Bird Spike", defaultUnit: "piece" },
-      { name: "Invisible Grill", defaultUnit: "piece" },
-    ],
-  },
-  {
-    category: "General Pest Service",
-    isMultiSelect: true,
-    subcategories: [
-      { name: "Cockroach Gel", defaultUnit: "unit" },
-      { name: "Cockroach Spray", defaultUnit: "unit" },
-      { name: "Ant Spray", defaultUnit: "unit" },
-      { name: "Mosquito Spray", defaultUnit: "unit" },
-      { name: "Rodent Control", defaultUnit: "unit" },
-      { name: "Bed Bug Spray", defaultUnit: "unit" },
+      { name: "Wood Borer Treatment", defaultUnit: "unit" },
     ],
   },
 ];
@@ -99,8 +79,16 @@ export const ALL_SERVICE_NAMES = SERVICE_CATEGORIES.flatMap((cat) =>
 );
 
 // Legacy export required by firestoreHelpers.js (ensureDefaultServices)
-// Kept as empty array since pricing is now manual — no defaults to seed
-export const DEFAULT_SERVICES = [];
+export const DEFAULT_SERVICES = SERVICE_CATEGORIES.flatMap((cat) =>
+  cat.subcategories.map((sub) => ({
+    name: `${cat.category} — ${sub.name}`,
+    serviceName: `${cat.category} — ${sub.name}`,
+    unitOptions: [sub.defaultUnit || "unit"],
+    unitPrices: { [sub.defaultUnit || "unit"]: 0 },
+    pricingType: sub.defaultUnit === "unit" ? "fixed" : "per_sq_ft",
+    description: `Professional ${sub.name} for ${cat.category} control.`
+  }))
+);
 
 // Legacy export kept for any remaining imports
 export const SERVICE_PRICING_MENU = SERVICE_CATEGORIES.flatMap((cat) =>

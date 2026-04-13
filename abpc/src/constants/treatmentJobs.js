@@ -8,6 +8,7 @@ const ALWAYS_FIRST = ["Inspection", "Preparation"];
 
 export const TREATMENT_TEMPLATES = {
   // ── TERMITE ──────────────────────────────────────────────
+  // ── TERMITE ──────────────────────────────────────────────
   "termite_foundation": {
     label: "Termite — Foundation Treatment",
     category: "Termite",
@@ -53,14 +54,14 @@ export const TREATMENT_TEMPLATES = {
 
   // ── WOOD / PLY ───────────────────────────────────────────
   "wood_ply": {
-    label: "Wood / Ply Treatment",
-    category: "Wood Borer",
+    label: "Wood / Ply — Wood / Ply Treatment",
+    category: "Wood / Ply",
     jobs: ["All Side Chemical Spray on Ply"],
   },
 
   // ── GARDEN ───────────────────────────────────────────────
   "garden": {
-    label: "Garden Treatment",
+    label: "Garden — Garden Treatment",
     category: "Garden",
     jobs: ["Spray", "Chemical Pour"],
   },
@@ -68,7 +69,7 @@ export const TREATMENT_TEMPLATES = {
   // ── COCKROACH ────────────────────────────────────────────
   "cockroach_spray": {
     label: "Cockroach — Spray Treatment",
-    category: "General Pest Control",
+    category: "Cockroach",
     jobs: [
       "Kitchen Area Spray",
       "Bathroom Spray",
@@ -81,7 +82,7 @@ export const TREATMENT_TEMPLATES = {
   },
   "cockroach_gel": {
     label: "Cockroach — Gel Treatment",
-    category: "General Pest Control",
+    category: "Cockroach",
     jobs: [
       "Kitchen Area",
       "Store Room",
@@ -99,8 +100,8 @@ export const TREATMENT_TEMPLATES = {
 
   // ── ANT ──────────────────────────────────────────────────
   "ant": {
-    label: "Ant Treatment",
-    category: "Ant Treatment",
+    label: "Ant — Ant Treatment",
+    category: "Ant",
     jobs: [
       "Kitchen Area",
       "Store Room",
@@ -118,7 +119,7 @@ export const TREATMENT_TEMPLATES = {
 
   // ── BED BUGS ─────────────────────────────────────────────
   "bedbug": {
-    label: "Bed Bug Treatment",
+    label: "Bed Bugs — Bed Bug Treatment",
     category: "Bed Bugs",
     jobs: [
       "Bed Treatment",
@@ -137,7 +138,7 @@ export const TREATMENT_TEMPLATES = {
   // ── MOSQUITO ─────────────────────────────────────────────
   "mosquito_irs": {
     label: "Mosquito — IRS Treatment",
-    category: "Mosquitos",
+    category: "Mosquito",
     jobs: [
       "Walls Spray",
       "Curtains Spray",
@@ -151,7 +152,7 @@ export const TREATMENT_TEMPLATES = {
   },
   "mosquito_ulv": {
     label: "Mosquito — ULV Treatment",
-    category: "Mosquitos",
+    category: "Mosquito",
     jobs: [
       "Plantation Fogging",
       "Air Flow Fogging",
@@ -161,7 +162,7 @@ export const TREATMENT_TEMPLATES = {
 
   // ── RODENT ───────────────────────────────────────────────
   "rodent": {
-    label: "Rodent Treatment",
+    label: "Rodent — Rodent Treatment",
     category: "Rodent",
     jobs: [
       "Rodent Trap Installation",
@@ -174,7 +175,7 @@ export const TREATMENT_TEMPLATES = {
 
   // ── WOOD BORER ───────────────────────────────────────────
   "wood_borer": {
-    label: "Wood Borer Treatment",
+    label: "Wood Borer — Wood Borer Treatment",
     category: "Wood Borer",
     jobs: [
       "Spray",

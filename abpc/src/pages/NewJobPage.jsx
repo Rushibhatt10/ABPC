@@ -3,6 +3,9 @@ import { useAuth } from "../context/AuthContext";
 import { createRecord, deleteRecord, ensureDefaultServices, nextDocumentNumber } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getTodayISO, toNumber } from "../utils/format";
 import { subscribeCollection } from "../utils/firestoreHelpers";
+import { SERVICE_CATEGORIES } from "../constants/services";
+import { TREATMENT_GROUPS, TREATMENT_TEMPLATES, buildSubJobs } from "../constants/treatmentJobs";
+import { Check, ChevronRight, Zap, Plus, Info } from "lucide-react";
 
 const defaultForm = {
   customerId: "",
@@ -28,6 +31,9 @@ export default function NewJobPage() {
   const [deletingJobId, setDeletingJobId] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [treatmentKey, setTreatmentKey] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
 
   useEffect(() => {
     ensureDefaultServices().catch(() => {});
@@ -79,13 +85,46 @@ export default function NewJobPage() {
       unitPrice: service?.unitPrice ? String(service.unitPrice) : "",
       fixedPrice: service?.fixedPrice ? String(service.fixedPrice) : "",
     }));
+
+    // Find treatmentKey from label
+    const fullName = service?.serviceName || service?.name || "";
+    const tKey = Object.keys(TREATMENT_TEMPLATES).find(
+      key => TREATMENT_TEMPLATES[key].label === fullName
+    );
+    setTreatmentKey(tKey || "");
   };
+
+  const handleCategoryChange = (catName) => {
+    setSelectedCategory(catName);
+    setSelectedSubcategory("");
+  };
+
+  const handleSubcategoryChange = (subName) => {
+    setSelectedSubcategory(subName);
+    const fullName = `${selectedCategory} — ${subName}`;
+    const service = services.find(s => (s.serviceName === fullName || s.name === fullName || s.name === subName));
+    if (service) {
+      handleServiceChange(service.id);
+    } else {
+      // If not in catalog, we still set treatmentKey for subjobs if it exists in templates
+      const tKey = Object.keys(TREATMENT_TEMPLATES).find(
+        key => TREATMENT_TEMPLATES[key].label === fullName
+      );
+      setTreatmentKey(tKey || "");
+    }
+  };
+
+
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
-    if (!selectedCustomer || !selectedService) {
-      setSuccess("Please select customer and service.");
+    if (!selectedCustomer) {
+      setError("Please select a customer.");
+      return;
+    }
+    if (!selectedService && !treatmentKey) {
+      setError("Please select a treatment.");
       return;
     }
 
@@ -93,15 +132,17 @@ export default function NewJobPage() {
     setSuccess("");
 
     try {
+      const treatmentTemplate = treatmentKey ? TREATMENT_TEMPLATES[treatmentKey] : null;
+
       const jobId = await createRecord("jobs", {
         customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
         customerPhone: selectedCustomer.phone,
         customerAddress: selectedCustomer.address,
         address: form.jobAddress.trim() || selectedCustomer.address || "",
-        serviceId: selectedService.id,
-        serviceName: selectedService.name,
-        serviceType: selectedService.name,
+        serviceId: selectedService?.id || treatmentKey,
+        serviceName: selectedService?.name || treatmentTemplate?.label || "Custom Service",
+        serviceType: selectedService?.name || treatmentTemplate?.label || "Custom Service",
         pricingMode: form.pricingMode,
         areaSqft: toNumber(form.areaSqft),
         unitPrice: toNumber(form.unitPrice),
@@ -110,15 +151,17 @@ export default function NewJobPage() {
         assignedTo: form.assignedTo,
         scheduledDate: form.scheduledDate,
         notes: form.notes,
-        checklist: {
-          inspectionDone: false,
-          chemicalApplied: false,
-          areaCovered: false,
-          customerSatisfied: false,
-        },
-        images: [],
+        treatmentKey: treatmentKey || "",
         status: "pending",
+        history: [{ event: "Job created", at: new Date().toISOString() }],
+        images: [],
       });
+
+      // Create Sub-Jobs if treatmentKey exists
+      if (treatmentKey) {
+        const subJobsList = buildSubJobs(jobId, treatmentKey);
+        await Promise.all(subJobsList.map(sj => createRecord("subJobs", sj)));
+      }
 
       let estimateNumber = "";
       if (form.createQuotation) {
@@ -155,8 +198,9 @@ export default function NewJobPage() {
 
       setForm((prev) => ({
         ...defaultForm,
-        serviceId: prev.serviceId,
+        customerId: prev.customerId,
       }));
+      setTreatmentKey("");
       setSuccess(
         estimateNumber
           ? `Job created and quotation ${estimateNumber} prepared.`
@@ -168,6 +212,8 @@ export default function NewJobPage() {
       setSaving(false);
     }
   };
+
+
 
   const deleteJob = async (job) => {
     const confirmed = window.confirm(`Delete job for ${job.customerName || "customer"} on ${job.scheduledDate}?`);
@@ -244,18 +290,54 @@ export default function NewJobPage() {
           </div>
         </section>
 
-        <section className="app-card space-y-3">
-          <p className="text-sm font-bold text-slate-900">Step 2: Service</p>
-          <select className="field-input" onChange={(event) => handleServiceChange(event.target.value)} value={form.serviceId}>
-            <option value="">Select service</option>
-            {services.map((service) => (
-              <option key={service.id} value={service.id}>
-                {service.name}
-              </option>
-            ))}
-          </select>
+        <section className="app-card space-y-4">
+          <p className="text-sm font-bold text-slate-900">Step 2: Service & Pricing</p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <select
+              className="field-input"
+              value={selectedCategory}
+              onChange={(e) => handleCategoryChange(e.target.value)}
+            >
+              <option value="">Select category</option>
+              {SERVICE_CATEGORIES.map((c) => (
+                <option key={c.category} value={c.category}>{c.category}</option>
+              ))}
+            </select>
 
-          {selectedService ? <p className="text-xs text-slate-500">{selectedService.description}</p> : null}
+            <select
+              className="field-input transition-all"
+              value={selectedSubcategory}
+              onChange={(e) => handleSubcategoryChange(e.target.value)}
+              disabled={!selectedCategory}
+            >
+              <option value="">Select service</option>
+              {SERVICE_CATEGORIES.find(c => c.category === selectedCategory)?.subcategories.map((s) => (
+                <option key={s.name} value={s.name}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {treatmentKey && TREATMENT_TEMPLATES[treatmentKey] && (
+             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs border border-emerald-100">
+               <Zap className="w-3.5 h-3.5" />
+               <span>Treatment Type: <strong>{TREATMENT_TEMPLATES[treatmentKey].label.split(" — ")[1]}</strong> selected automatically.</span>
+             </div>
+          )}
+
+          <details className="cursor-pointer">
+            <summary className="text-xs text-slate-400 hover:text-slate-600">Advanced: Service Catalog ID</summary>
+            <div className="mt-2">
+              <select className="field-input" onChange={(event) => handleServiceChange(event.target.value)} value={form.serviceId}>
+                <option value="">Manually select from catalog</option>
+                {services.map((service) => (
+                  <option key={service.id} value={service.id}>
+                    {service.serviceName || service.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </details>
 
           <div className="grid grid-cols-2 gap-2">
             <button

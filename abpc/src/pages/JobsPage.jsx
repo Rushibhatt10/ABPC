@@ -298,19 +298,21 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
   );
   const [form, setForm] = useState({ scheduledDate: getTodayISO(), status: "pending", notes: "" });
   const [pickedService, setPickedService] = useState(null);
-  const [treatmentKey, setTreatmentKey] = useState("");
   const [previewJobs, setPreviewJobs] = useState([]);
 
-  const handleTreatmentSelect = (key) => {
-    setTreatmentKey(key);
-    setPreviewJobs(getJobsByTreatment(key));
-  };
+  // services are passed now or subscribed in parent
+  const [services, setServices] = useState([]);
+  useEffect(() => {
+    const unsub = subscribeCollection("services", setServices);
+    return () => unsub();
+  }, []);
+
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!selectedCustomer) { alert("Please select a customer."); return; }
     if (!pickedService) { alert("Please select a service."); return; }
-    if (!treatmentKey) { alert("Please select a treatment type."); return; }
 
     onSave({
       customerId: selectedCustomer.id || "",
@@ -331,10 +333,23 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
       warranty: pickedService.warranty || "",
       warrantyType: pickedService.warranty && pickedService.warranty !== "No Warranty" ? "limited" : "none",
       warrantyDays: parseWarrantyDays(pickedService.warranty) || 0,
-      treatmentKey,
-      treatmentLabel: TREATMENT_TEMPLATES[treatmentKey]?.label || "",
+      treatmentKey: pickedService.treatmentKey || "",
+      treatmentLabel: pickedService.treatmentKey ? (TREATMENT_TEMPLATES[pickedService.treatmentKey]?.label || "") : pickedService.itemName,
       createdAt: new Date().toISOString(),
     });
+  };
+
+  const handleServicePicked = (item) => {
+    // Find treatmentKey from label
+    const tKey = Object.keys(TREATMENT_TEMPLATES).find(
+      key => TREATMENT_TEMPLATES[key].label === item.itemName
+    );
+    setPickedService({ ...item, treatmentKey: tKey });
+    if (tKey) {
+      setPreviewJobs(getJobsByTreatment(tKey));
+    } else {
+      setPreviewJobs([]);
+    }
   };
 
   return (
@@ -360,44 +375,23 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
             <CustomerSearch customers={customers} value={selectedCustomer} onChange={setSelectedCustomer} />
           </div>
 
-          {/* Treatment Type */}
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Treatment Type *</label>
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-              {TREATMENT_GROUPS.map((grp) => (
-                <div key={grp.group}>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{grp.group}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {grp.items.map((key) => (
-                      <button key={key} type="button" onClick={() => handleTreatmentSelect(key)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                          treatmentKey === key ? "bg-[var(--brand)] text-white border-[var(--brand)]" : "bg-white text-slate-600 border-slate-200 hover:border-[var(--brand)]"
-                        }`}>
-                        {TREATMENT_TEMPLATES[key].label.replace(/^[^—]+— /, "")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-            {previewJobs.length > 0 && (
-              <div className="mt-2 bg-slate-50 rounded-xl border border-slate-200 p-3">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{previewJobs.length} jobs will be created</p>
-                <div className="flex flex-wrap gap-1">
-                  {previewJobs.map((j, i) => (
-                    <span key={i} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${i < 2 ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
-                      {i + 1}. {j}
-                    </span>
-                  ))}
-                </div>
+          {previewJobs.length > 0 && (
+            <div className="mt-2 bg-slate-50 rounded-xl border border-slate-200 p-3">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{previewJobs.length} tasks will be created</p>
+              <div className="flex flex-wrap gap-1">
+                {previewJobs.map((j, i) => (
+                  <span key={i} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${i < 2 ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                    {i + 1}. {j}
+                  </span>
+                ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Service & Pricing */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Service & Pricing</label>
-            <ServicePicker onAdd={(item) => setPickedService(item)} addLabel="Select Service" />
+            <ServicePicker onAdd={handleServicePicked} addLabel="Select Service" />
             {pickedService && (
               <div className="mt-2 flex items-center justify-between px-3 py-2.5 rounded-xl bg-[var(--brand-soft)] border border-emerald-200">
                 <div>
