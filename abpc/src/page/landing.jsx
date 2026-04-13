@@ -727,7 +727,7 @@ useEffect(() => {
  <div className="flex items-start gap-4 border-t border-current/5 pt-4">
  <Phone size={20} className="text-blue-500 mt-1 shrink-0" />
  <span className="text-sm md:text-base opacity-80">+91 9825188413</span>
- <span className="text-sm md:text-base opacity-80">+91 9825188413</span>
+ <span className="text-sm md:text-base opacity-80">+91 9374488004</span>
  </div>
  </div>
  </div>
