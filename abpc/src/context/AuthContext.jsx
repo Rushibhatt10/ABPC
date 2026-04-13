@@ -4,9 +4,8 @@ import { firebaseAuth, googleProvider } from "../firebase/auth";
 import { AUTH_PROFILES, isEmployeeRole, PRICING_ADMIN_NAMES } from "../constants/authProfiles";
 
 const AuthContext = createContext(null);
-const SESSION_KEY = "abpc_Employee_session";
+const SESSION_KEY = "abpc_worker_session";
 
-// Only these Google accounts are allowed as admins
 const ALLOWED_ADMIN_EMAILS = new Set([
   "ankbhatt8004@gmail.com",
   "abpestcontrol8@gmail.com",
@@ -14,68 +13,77 @@ const ALLOWED_ADMIN_EMAILS = new Set([
 ]);
 
 const ADMIN_PROFILES = AUTH_PROFILES.filter((p) => !isEmployeeRole(p.key)).map((p) => ({
-  ...p, role: "admin", EmployeeName: p.name,
+  ...p, role: "admin", workerName: p.name,
 }));
 
-const Employee_PROFILES = AUTH_PROFILES.filter((p) => isEmployeeRole(p.key)).map((p) => ({
-  ...p, role: "Employee", EmployeeName: p.EmployeeTag || p.name,
+const WORKER_PROFILES = AUTH_PROFILES.filter((p) => isEmployeeRole(p.key)).map((p) => ({
+  ...p, role: "worker", workerName: p.EmployeeTag || p.name,
 }));
 
 export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore Employee session from localStorage on mount
   useEffect(() => {
-    const restoreEmployee = async () => {
-      try {
-        const saved = localStorage.getItem(SESSION_KEY);
-        if (saved) {
-          const { key } = JSON.parse(saved);
-          const match = Employee_PROFILES.find((p) => p.key === key);
-          if (match) {
-            // Ensure anonymous Firebase session exists for Firestore access
-            if (!firebaseAuth.currentUser) {
-              await signInAnonymously(firebaseAuth);
-            }
-            setProfile(match);
-          }
-        }
-      } catch { /* ignore */ }
-    };
-    restoreEmployee();
-  }, []);
+    let workerProfile = null;
 
-  // Firebase auth state — handles admin Google sessions
-  useEffect(() => {
-    const unsub = onAuthStateChanged(firebaseAuth, (firebaseUser) => {
-      if (firebaseUser?.email) {
+    // Check for saved worker session first
+    try {
+      const saved = localStorage.getItem(SESSION_KEY);
+      if (saved) {
+        const { key } = JSON.parse(saved);
+        const savedProfile = WORKER_PROFILES.find((p) => p.key === key);
+        if (savedProfile) {
+          workerProfile = savedProfile;
+        }
+      }
+    } catch { /* ignore */ }
+
+    // Firebase auth state listener
+    const unsub = onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
+      if (firebaseUser && firebaseUser.email) {
+        // Real Google user — check if allowed admin
         const email = firebaseUser.email.toLowerCase();
         if (ALLOWED_ADMIN_EMAILS.has(email)) {
-          const adminProfile = ADMIN_PROFILES.find(
-            (p) => p.email.toLowerCase() === email
-          );
+          const adminProfile = ADMIN_PROFILES.find((p) => p.email.toLowerCase() === email);
           if (adminProfile) {
-            setProfile(adminProfile);
             localStorage.removeItem(SESSION_KEY);
-          } else {
-            // Authenticated with Google but email not mapped — sign out
-            signOut(firebaseAuth);
+            setProfile(adminProfile);
+            setLoading(false);
+            return;
+          }
+        }
+        // Email not in allowed list — sign out silently
+        await signOut(firebaseAuth);
+        setProfile(null);
+        setLoading(false);
+      } else if (firebaseUser && !firebaseUser.email) {
+        // Anonymous user — this is a worker session
+        if (workerProfile) {
+          setProfile(workerProfile);
+        }
+        setLoading(false);
+      } else {
+        // No Firebase user at all
+        if (workerProfile) {
+          // Profile has a saved session but no Firebase anon session — create one
+          try {
+            await signInAnonymously(firebaseAuth);
+          } catch {
+            setProfile(null);
+            setLoading(false);
           }
         } else {
-          // Not an allowed admin email — reject and sign out
-          signOut(firebaseAuth);
-          setProfile((prev) => (prev?.role === "admin" ? null : prev));
+          setProfile(null);
+          setLoading(false);
         }
-      } else {
-        setProfile((prev) => (prev?.role === "admin" ? null : prev));
       }
-      setLoading(false);
     });
+
     return unsub;
   }, []);
 
-  // Admin login — Google Sign-In popup
+  // Admin: Google Sign-In popup
   const loginAdmin = async () => {
     const result = await signInWithPopup(firebaseAuth, googleProvider);
     const email = result.user.email?.toLowerCase();
@@ -83,25 +91,26 @@ export function AuthProvider({ children }) {
       await signOut(firebaseAuth);
       throw new Error("This Google account is not authorized as an admin.");
     }
-    // profile set by onAuthStateChanged
+    // profile will be set by onAuthStateChanged
   };
 
-  // Employee login — local only, signs in anonymously to Firebase so Firestore rules pass
-  const loginEmployee = async (key) => {
-    const Employee = Employee_PROFILES.find((p) => p.key === key);
-    if (!Employee) throw new Error("Employee not found.");
-    // Anonymous Firebase session satisfies `request.auth != null` in Firestore rules
+  // Worker: local password auth + anonymous Firebase session for Firestore
+  const loginWorker = async (key) => {
+    const worker = WORKER_PROFILES.find((p) => p.key === key);
+    if (!worker) throw new Error("Worker not found.");
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ key }));
     if (!firebaseAuth.currentUser) {
       await signInAnonymously(firebaseAuth);
+    } else {
+      setProfile(worker);
     }
-    setProfile(Employee);
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ key }));
   };
 
-  // Legacy login() kept so any existing callers don't break
+
+  // Legacy login() for backward compat
   const login = async (keyOrEmail, password) => {
-    const Employee = Employee_PROFILES.find((p) => p.key === keyOrEmail && p.password === password);
-    if (Employee) { loginEmployee(Employee.key); return; }
+    const worker = WORKER_PROFILES.find((p) => p.key === keyOrEmail && p.password === password);
+    if (worker) { await loginWorker(worker.key); return; }
     await loginAdmin();
   };
 
@@ -109,8 +118,10 @@ export function AuthProvider({ children }) {
     const wasAdmin = profile?.role === "admin";
     setProfile(null);
     localStorage.removeItem(SESSION_KEY);
-    if (wasAdmin) {
-      try { await signOut(firebaseAuth); } catch { /* ignore */ }
+    try { await signOut(firebaseAuth); } catch { /* ignore */ }
+    if (!wasAdmin) {
+      // Re-sign in anonymously so Firestore still works if needed
+      // Actually just leave it — they're logged out
     }
   };
 
@@ -118,12 +129,16 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!profile,
     profile,
     loading,
-    isEmployee: profile?.role === "Employee",
+    isWorker: profile?.role === "worker",
     isAdmin: profile?.role === "admin",
+    // Keep isEmployee as alias for backward compat with existing pages
+    isEmployee: profile?.role === "worker",
     isPricingAdmin: PRICING_ADMIN_NAMES.has(String(profile?.name || "")),
     login,
     loginAdmin,
-    loginEmployee,
+    loginWorker,
+    // alias for LoginPage
+    loginEmployee: loginWorker,
     logout,
   }), [profile, loading]);
 

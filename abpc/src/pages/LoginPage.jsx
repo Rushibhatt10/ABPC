@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { Zap, Shield, HardHat } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -10,27 +10,44 @@ const Employee_PASSWORD_MAP = {
 };
 
 export default function LoginPage() {
-  const { loginAdmin, loginEmployee, isAuthenticated } = useAuth();
+  const { loginAdmin, loginEmployee, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState("admin");
-  const [EmployeePass, setEmployeePass] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (isAuthenticated && !loading) {
+      navigate("/admin", { replace: true });
+    }
+  }, [isAuthenticated, loading, navigate]);
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0d3d20] to-[#1f7a42]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="text-white text-sm font-medium">Authorizing access...</div>
+      </div>
+    </div>
+  );
 
   if (isAuthenticated) return <Navigate to="/admin" replace />;
 
-  const switchTab = (t) => { setTab(t); setError(""); };
+  const switchTab = (t) => { 
+    setTab(t); 
+    setError(""); 
+    setPassword("");
+  };
 
-  // Admin: Google Sign-In popup
   const handleGoogleSignIn = async () => {
     setError("");
-    setLoading(true);
+    setBusy(true);
     try {
       await loginAdmin();
-      navigate("/admin", { replace: true });
     } catch (err) {
       const msg = err.message || "";
-      if (msg.includes("popup-closed") || msg.includes("cancelled")) {
+      if (msg.includes("popup-closed") || msg.includes("cancelled") || msg.includes("popup_closed")) {
         setError("Sign-in cancelled.");
       } else if (msg.includes("not authorized")) {
         setError("This Google account is not authorized.");
@@ -38,125 +55,148 @@ export default function LoginPage() {
         setError("Sign-in failed. Try again.");
       }
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   };
 
-  // Employee: password only
+
   const handleEmployeeSubmit = async (e) => {
     e.preventDefault();
+    if (!password) return;
     setError("");
-    const key = Employee_PASSWORD_MAP[EmployeePass.trim()];
+    const key = Employee_PASSWORD_MAP[password.trim()];
     if (!key) { setError("Incorrect password."); return; }
-    setLoading(true);
+    setBusy(true);
     try {
-      loginEmployee(key);
-      navigate("/admin", { replace: true });
+      await loginEmployee(key);
     } catch (err) {
       setError(err.message || "Login failed.");
-    } finally {
-      setLoading(false);
+      setBusy(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0d3d20] via-[#13562d] to-[#1f7a42] p-4">
-      <div className="absolute inset-0 opacity-10"
-        style={{ backgroundImage: "radial-gradient(circle at 25% 25%, white 1px, transparent 1px), radial-gradient(circle at 75% 75%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0d3d20] via-[#13562d] to-[#1f7a42] p-4 font-sans">
+      {/* Animated Background Orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-400/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
+      </div>
 
       <div className="relative w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/20">
 
-          {/* Branding */}
-          <div className="bg-gradient-to-r from-[#13562d] to-[#1f7a42] px-8 py-8 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-3">
-              <Zap className="w-7 h-7 text-white" />
+          {/* Header */}
+          <div className="bg-gradient-to-br from-[#13562d] to-[#1f7a42] px-8 py-10 text-center relative">
+            <div className="absolute inset-0 opacity-20"
+              style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
+            
+            <div className="relative z-10">
+              <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <Zap className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-2xl font-black text-white tracking-tight">AB PEST CONTROL</h1>
+              <p className="text-emerald-100/80 text-[10px] sm:text-xs mt-1.5 font-bold uppercase tracking-[0.2em]">Enterprise Operating System</p>
             </div>
-            <h1 className="text-xl font-black text-white">AB Pest Control</h1>
-            <p className="text-emerald-200 text-xs mt-1 tracking-wide">Company Operating System</p>
           </div>
 
-          {/* Tabs */}
-          <div className="flex border-b border-slate-200">
+          {/* Tab Selector */}
+          <div className="flex p-1.5 bg-slate-100/50 mx-6 mt-6 rounded-xl border border-slate-200/60">
             {[
-              { key: "admin",  label: "Admin",  Icon: Shield },
-              { key: "Employee", label: "Employee", Icon: HardHat },
+              { key: "admin", label: "Admin Portal", Icon: Shield },
+              { key: "Employee", label: "Worker Access", Icon: HardHat },
             ].map(({ key, label, Icon }) => (
-              <button key={key} onClick={() => switchTab(key)}
-                className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-bold transition-colors ${
+              <button
+                key={key}
+                onClick={() => switchTab(key)}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-black transition-all duration-300 ${
                   tab === key
-                    ? "text-[var(--brand)] border-b-2 border-[var(--brand)] bg-[var(--brand-soft)]"
+                    ? "bg-white text-[#13562d] shadow-md border border-slate-200"
                     : "text-slate-400 hover:text-slate-600"
-                }`}>
-                <Icon className="w-4 h-4" /> {label}
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${tab === key ? "text-[#13562d]" : "text-slate-400"}`} />
+                {label}
               </button>
             ))}
           </div>
 
-          <div className="px-8 py-8">
+          <div className="px-8 pb-10 pt-8">
+            {error && (
+              <div className="mb-6 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-700 text-xs font-semibold">
+                  <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  {error}
+                </div>
+              </div>
+            )}
 
-            {/* Admin — Google Sign-In only */}
+            {/* Admin Login */}
             {tab === "admin" && (
-              <div className="space-y-4">
-                <p className="text-sm text-slate-500 text-center">
-                  Admin access is secured via Google.<br />
-                  Only authorized accounts can sign in.
-                </p>
-
-                {error && (
-                  <p className="px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700 font-medium text-center">
-                    {error}
+              <div className="space-y-6">
+                <div className="text-center space-y-3 mb-4">
+                  <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                    Admin access is strictly secured via Google.<br />
+                    Only authorized company emails can sign in.
                   </p>
-                )}
+                </div>
 
                 <button
                   onClick={handleGoogleSignIn}
-                  disabled={loading}
-                  className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 font-semibold text-sm transition-all disabled:opacity-60 shadow-sm"
+                  disabled={busy}
+                  className="w-full flex items-center justify-center gap-3 py-4 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 font-black text-xs uppercase tracking-widest transition-all shadow-sm active:scale-[0.98] disabled:opacity-50"
                 >
-                  {/* Google logo SVG */}
                   <svg width="18" height="18" viewBox="0 0 18 18">
-                    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
-                    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-                    <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
-                    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z"/>
+                    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
+                    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" />
+                    <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" />
+                    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
                   </svg>
-                  {loading ? "Signing in…" : "Sign in with Google"}
+                  {busy ? "Authenticating..." : "Continue with Google"}
                 </button>
               </div>
             )}
 
-            {/* Employee — password only */}
+            {/* Employee Login */}
             {tab === "Employee" && (
-              <form onSubmit={handleEmployeeSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Password</label>
+              <form onSubmit={handleEmployeeSubmit} className="space-y-6">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Employee PIN</label>
                   <input
                     type="password"
-                    value={EmployeePass}
-                    onChange={(e) => setEmployeePass(e.target.value)}
-                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your 8-digit PIN"
                     required
                     autoFocus
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm text-slate-800 transition-colors"
+                    className="w-full px-4 py-4 rounded-xl border border-slate-200 focus:border-[#1f7a42] focus:ring-4 focus:ring-emerald-500/5 focus:outline-none text-center text-lg font-black tracking-[0.5em] transition-all bg-slate-50/30 placeholder:tracking-normal placeholder:text-xs placeholder:font-bold"
                   />
-                  <p className="text-xs text-slate-400 mt-1.5">Each Employee has a unique password</p>
+                  <p className="text-[10px] text-slate-400 mt-2 font-bold text-center uppercase tracking-wider">Access to assigned jobs only</p>
                 </div>
-                {error && (
-                  <p className="px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700 font-medium">
-                    {error}
-                  </p>
-                )}
-                <button type="submit" disabled={loading || !EmployeePass.trim()}
-                  className="w-full py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors disabled:opacity-60">
-                  {loading ? "Signing in…" : "Sign In"}
+                <button
+                  type="submit"
+                  disabled={busy || !password.trim()}
+                  className="w-full py-4 rounded-xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-[0.98] disabled:opacity-50"
+                >
+                  {busy ? "Validating..." : "Launch Dashboard"}
                 </button>
               </form>
             )}
 
           </div>
         </div>
-        <p className="text-center text-emerald-200/50 text-xs mt-5">AB Pest Control © {new Date().getFullYear()}</p>
+        
+        {/* Footer */}
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <p className="text-[10px] font-black text-emerald-100/40 uppercase tracking-[0.3em]">
+            AB Pest Control © {new Date().getFullYear()}
+          </p>
+          <div className="flex items-center gap-4">
+            <span className="w-1 h-1 rounded-full bg-emerald-400/30"></span>
+            <span className="w-1 h-1 rounded-full bg-emerald-400/30"></span>
+            <span className="w-1 h-1 rounded-full bg-emerald-400/30"></span>
+          </div>
+        </div>
       </div>
     </div>
   );

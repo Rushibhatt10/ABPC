@@ -5,7 +5,7 @@ export const AUTH_PROFILES = [
     name: "Ankit Bhatt",
     roleName: "Admin",
     email: "ankbhatt8004@gmail.com",
-    password: "merabacchahaitu",
+    password: "ankit123",
     EmployeeTag: null,
     avatar: "AB",
   },
@@ -15,9 +15,19 @@ export const AUTH_PROFILES = [
     name: "Akanksha Bhatt",
     roleName: "Admin",
     email: "bhattakanksha029@gmail.com",
-    password: "merabacchahaitu",
+    password: "akanksha123",
     EmployeeTag: null,
     avatar: "AK",
+  },
+  {
+    key: "abpestcontrol",
+    loginLabel: "AB Pest Control Admin",
+    name: "AB Admin",
+    roleName: "Admin",
+    email: "abpestcontrol8@gmail.com",
+    password: "admin8@abpc",
+    EmployeeTag: null,
+    avatar: "AB",
   },
   {
     key: "nakul",
@@ -56,6 +66,6 @@ export const getProfileByKey = (key) => AUTH_PROFILES.find((p) => p.key === key)
 export const isEmployeeRole = (roleKey) =>
   ["nakul", "divyesh", "sagar"].includes(roleKey);
 
-export const PRICING_ADMIN_NAMES = new Set(["Ankit Bhatt", "Akanksha Bhatt"]);
+export const PRICING_ADMIN_NAMES = new Set(["Ankit Bhatt", "Akanksha Bhatt", "AB Admin"]);
 
 export const EmployeeS = ["Nakul", "Divyesh", "Sagar"];
