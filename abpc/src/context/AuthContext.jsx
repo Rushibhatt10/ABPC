@@ -10,6 +10,7 @@ const SESSION_KEY = "abpc_Employee_session";
 const ALLOWED_ADMIN_EMAILS = new Set([
   "ankbhatt8004@gmail.com",
   "abpestcontrol8@gmail.com",
+  "bhattakanksha029@gmail.com",
 ]);
 
 const ADMIN_PROFILES = AUTH_PROFILES.filter((p) => !isEmployeeRole(p.key)).map((p) => ({

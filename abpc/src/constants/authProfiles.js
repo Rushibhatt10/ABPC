@@ -14,7 +14,7 @@ export const AUTH_PROFILES = [
     loginLabel: "Akanksha Bhatt",
     name: "Akanksha Bhatt",
     roleName: "Admin",
-    email: "abpestcontrol8@gmail.com",
+    email: "bhattakanksha029@gmail.com",
     password: "merabacchahaitu",
     EmployeeTag: null,
     avatar: "AK",
