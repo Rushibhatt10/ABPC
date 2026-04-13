@@ -69,7 +69,7 @@ export default function PaymentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-black text-slate-900">Payments</h1>
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900">Payments</h1>
         <p className="text-slate-500 mt-0.5">Track collections and pending dues</p>
       </div>
 
@@ -82,7 +82,7 @@ export default function PaymentsPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: "Total Collected", value: formatCurrency(stats.collected), color: "bg-emerald-50 border-emerald-100 text-emerald-700", icon: TrendingUp },
           { label: "Total Pending", value: formatCurrency(stats.pending), color: "bg-amber-50 border-amber-100 text-amber-700", icon: Clock },
@@ -91,9 +91,9 @@ export default function PaymentsPage() {
         ].map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className={`rounded-2xl border p-5 ${s.color}`}>
+            <div key={s.label} className={`rounded-2xl border p-4 sm:p-5 ${s.color}`}>
               <Icon className="w-5 h-5 mb-2 opacity-70" />
-              <p className="text-2xl font-black text-slate-900">{s.value}</p>
+              <p className="text-xl sm:text-2xl font-black text-slate-900">{s.value}</p>
               <p className="text-xs font-semibold mt-0.5">{s.label}</p>
             </div>
           );
@@ -134,14 +134,14 @@ export default function PaymentsPage() {
 
       {/* Payment list */}
       {filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 text-center">
           <TrendingUp className="w-12 h-12 text-slate-300 mx-auto mb-3" />
           <p className="font-semibold text-slate-500">No payments found</p>
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[500px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
                   <th className="text-left px-5 py-3.5 font-bold text-slate-600">Invoice</th>

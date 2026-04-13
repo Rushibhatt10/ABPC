@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, subscribeCollection, updateRecord } from "../utils/firestoreHelpers";
 import { formatDateDisplay, toDateObject, daysBetween } from "../utils/format";
+import { warrantyStatus } from "../utils/warranty";
 import {
   AlertTriangle, CheckCircle2, Clock, MessageSquare,
   Plus, X, RefreshCw, ShieldCheck, AlertCircle, ChevronDown, ChevronUp, Search,
@@ -10,8 +11,6 @@ import {
 
 const COMPLAINT_TYPES = ["Complaint", "Feedback", "Rework Request"];
 const COMPLAINT_STATUSES = ["Open", "In Progress", "Resolved"];
-const WARRANTY_MONTHS = 12;
-
 const STATUS_COLORS = {
   Open: "bg-rose-100 text-rose-700",
   "In Progress": "bg-amber-100 text-amber-700",
@@ -30,15 +29,6 @@ function safeDate(value) {
   const d = toDateObject(value);
   if (!d) return null;
   return d.toISOString().split("T")[0];
-}
-
-function isUnderWarranty(completedAt) {
-  if (!completedAt) return false;
-  const completed = toDateObject(completedAt);
-  if (!completed) return false;
-  const now = new Date();
-  const monthsDiff = (now.getFullYear() - completed.getFullYear()) * 12 + (now.getMonth() - completed.getMonth());
-  return monthsDiff < WARRANTY_MONTHS;
 }
 
 function isPendingIssue(complaint) {
@@ -88,7 +78,7 @@ export default function ComplaintsPage() {
   const enriched = useMemo(() =>
     complaints.map((c) => {
       const job = jobs.find((j) => j.id === c.linkedJobId);
-      const warranty = job ? isUnderWarranty(job.completedAt) : false;
+      const warranty = job ? warrantyStatus(job) === "active" : false;
       const pending = isPendingIssue(c);
       return { ...c, job, warranty, pendingIssue: pending };
     }),

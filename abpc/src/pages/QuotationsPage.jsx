@@ -199,14 +199,14 @@ export default function QuotationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Quotations</h1>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Quotations</h1>
           <p className="text-slate-500 mt-0.5">{quotations.length} total quotations</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm w-full sm:w-auto min-h-[44px] active:scale-95 sm:ml-auto"
         >
           <Plus className="w-4 h-4" />
           New Quotation
@@ -222,14 +222,14 @@ export default function QuotationsPage() {
       )}
 
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         {[
           { label: "Total", value: quotations.length, color: "bg-blue-50 text-blue-700 border-blue-100" },
           { label: "Draft", value: quotations.filter((q) => q.status === "Draft").length, color: "bg-amber-50 text-amber-700 border-amber-100" },
           { label: "Converted", value: quotations.filter((q) => q.status === "Converted to Invoice").length, color: "bg-emerald-50 text-emerald-700 border-emerald-100" },
         ].map((s) => (
           <div key={s.label} className={`rounded-2xl border p-4 ${s.color}`}>
-            <p className="text-xl font-black text-slate-900">{s.value}</p>
+            <p className="text-lg sm:text-xl font-black text-slate-900">{s.value}</p>
             <p className="text-xs font-semibold mt-0.5">{s.label}</p>
           </div>
         ))}
@@ -248,14 +248,14 @@ export default function QuotationsPage() {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 text-center">
           <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
           <p className="font-semibold text-slate-500">No quotations yet</p>
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map((q) => (
-            <div key={q.id} className="bg-white rounded-2xl border border-slate-200 p-5">
+            <div key={q.id} className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
                   <div className="flex items-center gap-2">
@@ -321,14 +321,14 @@ export default function QuotationsPage() {
       {/* Create Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-full sm:max-w-2xl mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
               <h2 className="font-bold text-slate-900">Create Quotation</h2>
               <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Customer *</label>
@@ -340,7 +340,7 @@ export default function QuotationsPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Date</label>
-                  <input type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm" />
+                  <input type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm min-h-[42px]" />
                 </div>
               </div>
 
@@ -383,7 +383,7 @@ export default function QuotationsPage() {
                 ].map((f) => (
                   <div key={f.key}>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">{f.label}</label>
-                    <textarea value={form[f.key]} onChange={(e) => setForm((p) => ({ ...p, [f.key]: e.target.value }))} rows={2} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none" />
+                    <textarea value={form[f.key]} onChange={(e) => setForm((p) => ({ ...p, [f.key]: e.target.value }))} rows={2} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none min-h-[42px]" />
                   </div>
                 ))}
               </div>

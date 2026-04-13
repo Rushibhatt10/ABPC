@@ -35,7 +35,7 @@ function StatCard({ label, value, icon, color, sub }) {
           <IconComponent className="w-5 h-5" />
         </div>
       </div>
-      <p className="text-2xl font-black text-slate-900">{value}</p>
+      <p className="text-xl sm:text-2xl font-black text-slate-900">{value}</p>
       <p className="text-sm font-semibold mt-0.5">{label}</p>
       {sub && <p className="text-xs mt-1 opacity-70">{sub}</p>}
     </div>
@@ -158,7 +158,7 @@ function EmployeeDashboard({ profile }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-black text-slate-900">હેય, {profile?.name} 👋</h1>
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900">હેય, {profile?.name} 👋</h1>
         <p className="text-slate-500 mt-1">આજના તમારા અસાઇન કરેલા ટાસ્ક અહીં છે.</p>
       </div>
 
@@ -170,7 +170,7 @@ function EmployeeDashboard({ profile }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <StatCard label="ટોટલ જોબ્સ" value={jobs.length} icon={Briefcase} color="blue" />
         <StatCard label="આજના જોબ્સ" value={todayJobs.length} icon={Calendar} color="green" />
       </div>
@@ -277,9 +277,9 @@ function AdminDashboard({ profile }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Welcome back, {profile?.name?.split(" ")[0]} 👋</h1>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Welcome back, {profile?.name?.split(" ")[0]} 👋</h1>
           <p className="text-slate-500 mt-1">Here's what's happening at AB Pest Control today.</p>
         </div>
         <Link
@@ -292,7 +292,7 @@ function AdminDashboard({ profile }) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard label="Total Revenue" value={formatCurrency(stats.totalRevenue)} icon={TrendingUp} color="green" sub="All time collected" />
         <StatCard label="Pending Amount" value={formatCurrency(stats.pendingAmount)} icon={Clock} color="amber" sub={`${stats.pendingCount} invoices`} />
         <StatCard label="Today's Jobs" value={stats.todayJobs} icon={Calendar} color="blue" sub="Scheduled today" />
@@ -321,9 +321,9 @@ function AdminDashboard({ profile }) {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Recent Jobs */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-slate-800">Recent Jobs</h2>
             <Link to="/admin/jobs" className="text-xs font-semibold text-[var(--brand)] flex items-center gap-1 hover:underline">
@@ -352,7 +352,7 @@ function AdminDashboard({ profile }) {
         </div>
 
         {/* Recent Customers */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-slate-800">Recent Customers</h2>
             <Link to="/admin/customers" className="text-xs font-semibold text-[var(--brand)] flex items-center gap-1 hover:underline">
@@ -381,7 +381,7 @@ function AdminDashboard({ profile }) {
       </div>
 
       {/* Site Messages */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5">
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-4">
           <MessageSquare className="w-4 h-4 text-[var(--brand)]" />
           <h2 className="font-bold text-slate-800">Website Enquiries</h2>

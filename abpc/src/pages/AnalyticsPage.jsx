@@ -98,12 +98,12 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-black text-slate-900">Analytics</h1>
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900">Analytics</h1>
         <p className="text-slate-500 mt-0.5">Business performance overview</p>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: "Total Revenue", value: formatCurrency(stats.totalRevenue), icon: TrendingUp, color: "bg-emerald-50 border-emerald-100 text-emerald-700" },
           { label: "Pending Revenue", value: formatCurrency(stats.pendingRevenue), icon: Clock, color: "bg-amber-50 border-amber-100 text-amber-700" },
@@ -112,18 +112,18 @@ export default function AnalyticsPage() {
         ].map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className={`rounded-2xl border p-5 ${s.color}`}>
+            <div key={s.label} className={`rounded-2xl border p-4 sm:p-5 ${s.color}`}>
               <Icon className="w-5 h-5 mb-2 opacity-70" />
-              <p className="text-2xl font-black text-slate-900">{s.value}</p>
+              <p className="text-xl sm:text-2xl font-black text-slate-900">{s.value}</p>
               <p className="text-xs font-semibold mt-0.5">{s.label}</p>
             </div>
           );
         })}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Monthly Revenue */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
           <h2 className="font-bold text-slate-800 mb-5">Monthly Revenue (Last 6 Months)</h2>
           <div className="space-y-3">
             {monthlyRevenue.map((m) => (
@@ -139,7 +139,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Employee Performance */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
           <div className="flex items-center gap-2 mb-5">
             <Award className="w-4 h-4 text-[var(--brand)]" />
             <h2 className="font-bold text-slate-800">Employee Performance</h2>
@@ -167,7 +167,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Service Breakdown */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
           <h2 className="font-bold text-slate-800 mb-5">Top Services</h2>
           <div className="space-y-3">
             {serviceBreakdown.length === 0 ? (
@@ -187,7 +187,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Summary Stats */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
           <h2 className="font-bold text-slate-800 mb-5">Business Summary</h2>
           <div className="space-y-3">
             {[

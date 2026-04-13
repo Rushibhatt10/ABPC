@@ -24,14 +24,14 @@ function CustomerModal({ customer, onClose, onSave, saving }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-full sm:max-w-md mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100">
           <h2 className="font-bold text-slate-900">{customer ? "Edit Customer" : "Add Customer"}</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
             <X className="w-4 h-4" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Full Name *</label>
             <input
@@ -39,7 +39,7 @@ function CustomerModal({ customer, onClose, onSave, saving }) {
               onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
               required
               placeholder="Customer full name"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm min-h-[42px]"
             />
           </div>
           <div>
@@ -49,7 +49,7 @@ function CustomerModal({ customer, onClose, onSave, saving }) {
               onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
               required
               placeholder="10-digit mobile number"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm min-h-[42px]"
             />
           </div>
           <div>
@@ -59,7 +59,7 @@ function CustomerModal({ customer, onClose, onSave, saving }) {
               onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
               placeholder="Email address"
               type="email"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm min-h-[42px]"
             />
           </div>
           <div>
@@ -70,7 +70,7 @@ function CustomerModal({ customer, onClose, onSave, saving }) {
               required
               placeholder="Full property address"
               rows={2}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none"
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none min-h-[42px]"
             />
           </div>
           <div>
@@ -99,7 +99,7 @@ function CustomerModal({ customer, onClose, onSave, saving }) {
               onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
               placeholder="Any additional notes..."
               rows={2}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none"
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none min-h-[42px]"
             />
           </div>
           <div className="flex gap-3 pt-2">
@@ -166,7 +166,7 @@ function CustomerDetail({ customer, jobs, quotations, invoices, onEdit, onDelete
           { label: "Invoices", value: customerInvoices.length },
         ].map((s) => (
           <div key={s.label} className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-xl font-black text-slate-900">{s.value}</p>
+            <p className="text-lg sm:text-xl font-black text-slate-900">{s.value}</p>
             <p className="text-xs text-slate-500 font-semibold">{s.label}</p>
           </div>
         ))}
@@ -303,14 +303,14 @@ export default function CustomersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Customers</h1>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Customers</h1>
           <p className="text-slate-500 mt-0.5">{customers.length} total customers in CRM</p>
         </div>
         <button
           onClick={() => { setEditCustomer(null); setShowModal(true); }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm w-full sm:w-auto min-h-[44px] active:scale-95 sm:ml-auto"
         >
           <Plus className="w-4 h-4" />
           Add Customer
@@ -389,7 +389,7 @@ export default function CustomersPage() {
               deleting={deleting}
             />
           ) : (
-            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 text-center">
               <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
               <p className="font-semibold text-slate-500">Select a customer</p>
               <p className="text-sm text-slate-400 mt-1">Click on a customer to view their details</p>
