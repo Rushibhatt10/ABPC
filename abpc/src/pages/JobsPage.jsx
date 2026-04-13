@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { collection, orderBy, query, where } from "firebase/firestore";
 import { firestoreDb } from "../firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { createRecord, subscribeCollection, subscribeQuery, updateRecord } from "../utils/firestoreHelpers";
+import { createRecord, subscribeCollection, subscribeQuery, updateRecord, nextDocumentNumber } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getTodayISO } from "../utils/format";
 import { EmployeeS } from "../constants/authProfiles";
 import MapLink from "../components/MapLink";
@@ -16,12 +16,11 @@ import "../components/ServiceCalculator.css";
 import {
   Briefcase, Plus, X, CheckCircle2, Clock,
   User, Calendar, MapPin, ChevronDown, ChevronUp,
-  RefreshCw, History, Search, Link2, UploadCloud, FileText,
+  RefreshCw, History, Search, Link2, UploadCloud, FileText, Receipt,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { isDriveUploadConfigured, uploadFileToDrive } from "../utils/driveUpload";
-import { getWarrantyLabel, parseWarrantyDays, warrantyStatus as getJobWarrantyStatus } from "../utils/warranty";
 
 const STATUS_COLORS = {
   pending: "bg-amber-100 text-amber-700",
@@ -30,44 +29,45 @@ const STATUS_COLORS = {
 };
 
 /**
- * Returns true only if the job has an explicit warranty AND it hasn't expired.
- * "No Warranty" (empty string or "none") → always false.
+ * Parses warranty string into days.
+ * Returns 0 for unknown/invalid formats.
+ */
+function parseWarrantyDays(w) {
+  if (!w || w === "No Warranty") return 0;
+  const lower = w.toLowerCase().trim();
+  const n = parseInt(lower) || 1;
+  if (lower.includes("year"))  return n * 365;
+  if (lower.includes("month")) return n * 30;
+  if (lower.includes("day"))   return parseInt(lower) || 0;
+  return 0; // unknown format → no warranty
+}
+
+/**
+ * Returns true ONLY if job has a valid warranty AND it hasn't expired.
  */
 function isUnderWarranty(job) {
-  const w = job.warranty || "";
-  if (!w || w === "No Warranty") return false;
-  // If job isn't completed yet, warranty hasn't started
-  if (!job.completedAt) return false;
-  // Parse warranty duration from the string (e.g. "1 Year", "6 Months", "3 Months")
-  const start = new Date(job.completedAt);
-  const lower = w.toLowerCase();
-  let days = 0;
-  if (lower.includes("year")) {
-    const n = parseInt(lower) || 1;
-    days = n * 365;
-  } else if (lower.includes("month")) {
-    const n = parseInt(lower) || 1;
-    days = n * 30;
-  } else if (lower.includes("day")) {
-    days = parseInt(lower) || 0;
-  } else {
-    // Unknown format — treat as active warranty (legacy data)
-    days = 365;
-  }
+  const days = parseWarrantyDays(job.warranty);
   if (days === 0) return false;
-  const expiry = new Date(start);
+  if (!job.completedAt) return false;
+  const expiry = new Date(job.completedAt);
   expiry.setDate(expiry.getDate() + days);
   return new Date() <= expiry;
 }
 
+/**
+ * "none"    → no warranty or "No Warranty"
+ * "pending" → warranty set but job not completed yet
+ * "active"  → warranty valid and not expired
+ * "expired" → warranty set but past expiry
+ */
 function warrantyStatus(job) {
-  const w = job.warranty || "";
-  if (!w || w === "No Warranty") return "none";
+  const days = parseWarrantyDays(job.warranty);
+  if (days === 0) return "none";
   if (!job.completedAt) return "pending";
   return isUnderWarranty(job) ? "active" : "expired";
 }
 
-function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy, onJobUpdated }) {
+function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy, onJobUpdated, onGenerateInvoice }) {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showReport, setShowReport] = useState(false);
@@ -75,8 +75,7 @@ function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy,
   const completedCount = jobSubJobs.filter((s) => s.status === "done").length;
   const jobAddress = job.address || job.customerAddress || "";
   const isRework = job.jobType === "Rework";
-  const wStatus = getJobWarrantyStatus(job);
-  const warrantyLabel = getWarrantyLabel(job);
+  const wStatus = warrantyStatus(job);
 
   return (
     <div className={`bg-white rounded-2xl border overflow-hidden ${isRework ? "border-violet-200" : "border-slate-200"}`}>
@@ -109,9 +108,9 @@ function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy,
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-slate-900 truncate">{job.customerName}</h3>
             <p className="text-sm text-slate-500 mt-0.5">{job.serviceType || job.serviceName}</p>
-            {wStatus === "active" && warrantyLabel && (
+            {wStatus === "active" && job.warranty && (
               <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                🛡 {warrantyLabel}
+                🛡 {job.warranty}
               </span>
             )}
             {!isEmployee && job.customerPhone && (
@@ -197,6 +196,19 @@ function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy,
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
                 <FileText className="w-3 h-3" /> View Report
               </button>
+            )}
+            {/* Invoice — Generate or View */}
+            {job.status === "completed" && !job.invoiceId && (
+              <button onClick={() => onGenerateInvoice(job)} disabled={busy}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors active:scale-95">
+                <Receipt className="w-3 h-3" /> Generate Invoice
+              </button>
+            )}
+            {job.invoiceId && (
+              <a href={`/admin/invoices/${job.invoiceId}`} target="_blank" rel="noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
+                <Receipt className="w-3 h-3" /> View Invoice
+              </a>
             )}
             {job.history?.length > 0 && (
               <button onClick={() => setShowHistory(!showHistory)}
@@ -526,6 +538,52 @@ export default function JobsPage() {
     setShowModal(true);
   };
 
+  const handleGenerateInvoice = async (job) => {
+    setBusy(true);
+    showMsg("success", "Creating invoice…");
+    try {
+      const invoiceNumber = await nextDocumentNumber("INV");
+      const total = Number(job.finalPrice || job.totalAmount || 0);
+      const items = [{
+        itemName: job.treatmentLabel || job.serviceType || job.serviceName || "Service",
+        quantity: Number(job.quantity) || 1,
+        price: Number(job.basePrice) || total,
+        discount: 0,
+        warranty: job.warranty || "",
+        finalAmount: total,
+      }];
+
+      const invoiceId = await createRecord("invoices", {
+        invoiceNumber,
+        jobId: job.id,
+        date: new Date().toISOString().split("T")[0],
+        customerId: job.customerId || "",
+        customerName: job.customerName || "",
+        customerPhone: job.customerPhone || "",
+        customerAddress: job.address || job.customerAddress || "",
+        items,
+        subtotal: total,
+        discountTotal: 0,
+        total,
+        received: 0,
+        balance: total,
+        paymentMode: "UPI",
+        warranty: job.warranty || "",
+        terms: "Terms: 1) Payment due on completion. 2) Taxes extra if applicable.",
+        status: "Pending",
+        fromJob: true,
+      });
+
+      // Link invoice back to job
+      await updateRecord("jobs", job.id, { invoiceId });
+      showMsg("success", `Invoice ${invoiceNumber} created.`);
+    } catch (e) {
+      showMsg("error", e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleMarkSubDone = async (sj) => {
     setBusy(true);
     try {
@@ -700,7 +758,7 @@ export default function JobsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filtered.map((job) => (
             <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={isEmployee}
-              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} />
+              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} />
           ))}
         </div>
       ) : (
@@ -708,13 +766,13 @@ export default function JobsPage() {
           {jobChains.map(({ original, reworks }) => (
             <div key={original.id}>
               <JobCard job={original} subJobs={subJobs} isEmployee={false}
-                onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} />
+                onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} />
               {reworks.length > 0 && (
                 <div className="ml-6 mt-2 space-y-2 border-l-2 border-violet-200 pl-4">
                   <p className="text-xs font-bold text-violet-500 uppercase tracking-wider mb-2">Rework Jobs ({reworks.length})</p>
                   {reworks.map((rw) => (
                     <JobCard key={rw.id} job={rw} subJobs={subJobs} isEmployee={false}
-                      onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} />
+                      onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} />
                   ))}
                 </div>
               )}
@@ -722,7 +780,7 @@ export default function JobsPage() {
           ))}
           {filtered.filter(j => j.parentJobId && !jobChains.find(c => c.original.id === j.parentJobId)).map((job) => (
             <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={false}
-              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} />
+              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} />
           ))}
         </div>
       )}
