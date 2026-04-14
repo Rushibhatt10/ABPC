@@ -9,22 +9,27 @@ import {
 
 // ── Message templates ──────────────────────────────────────────────────────
 function buildMessage(type, data) {
-  const { name, service, amount, invoiceNo, estimateNo, amcExpiry, jobDate, phone } = data;
+  const { name, service, amount, invoiceNo, estimateNo, amcExpiry, invoiceId, quotationId, jobId } = data;
   const sig = "\n\n— AB Pest Control\n📞 +91 98251 88413";
+  const base = typeof window !== "undefined" ? window.location.origin : "";
+
+  const invoiceLink  = invoiceId   ? `\n🔗 View Invoice: ${base}/admin/invoices/${invoiceId}`      : "";
+  const quoteLink    = quotationId ? `\n🔗 View Quotation: ${base}/admin/quotations/${quotationId}` : "";
+  const certLink     = jobId       ? `\n🔗 View Certificate: ${base}/admin/certificate/${jobId}`    : "";
 
   switch (type) {
     case "quotation":
-      return `Hello ${name} 👋,\n\nYour quotation *${estimateNo || ""}* for *${service}* is ready.\n\n💰 Total: *${amount}*\n\nPlease review and confirm at your earliest convenience.${sig}`;
+      return `Hello ${name} 👋,\n\nYour quotation *${estimateNo || ""}* for *${service}* is ready.\n\n💰 Total: *${amount}*${quoteLink}\n\nPlease review and confirm at your earliest convenience.${sig}`;
     case "invoice":
-      return `Hello ${name} 👋,\n\nYour invoice *${invoiceNo || ""}* for *${service}* has been generated.\n\n💰 Amount: *${amount}*\n\nKindly make the payment at your earliest convenience.${sig}`;
+      return `Hello ${name} 👋,\n\nYour invoice *${invoiceNo || ""}* for *${service}* has been generated.\n\n💰 Amount: *${amount}*${invoiceLink}\n\nKindly make the payment at your earliest convenience.${sig}`;
     case "invoice_reminder":
-      return `Hello ${name},\n\nThis is a gentle reminder that your invoice *${invoiceNo || ""}* of *${amount}* is still pending.\n\nPlease complete the payment to avoid any inconvenience.${sig}`;
+      return `Hello ${name},\n\nThis is a gentle reminder that your invoice *${invoiceNo || ""}* of *${amount}* is still pending.${invoiceLink}\n\nPlease complete the payment to avoid any inconvenience.${sig}`;
     case "payment_reminder":
-      return `Hello ${name},\n\nKindly complete your pending payment of *${amount}* at the earliest.\n\nThank you for choosing AB Pest Control! 🙏${sig}`;
+      return `Hello ${name},\n\nKindly complete your pending payment of *${amount}* at the earliest.${invoiceLink}\n\nThank you for choosing AB Pest Control! 🙏${sig}`;
     case "amc_renewal":
       return `Hello ${name} 👋,\n\nYour Annual Maintenance Contract (AMC) is expiring on *${amcExpiry || "soon"}*.\n\nRenew now to continue uninterrupted pest control service at your property.${sig}`;
     case "followup":
-      return `Hello ${name} 👋,\n\nWe hope your recent *${service}* service went well!\n\nPlease let us know if you have any concerns or need a follow-up visit. We're always here to help. 😊${sig}`;
+      return `Hello ${name} 👋,\n\nWe hope your recent *${service}* service went well!${certLink}\n\nPlease let us know if you have any concerns or need a follow-up visit. We're always here to help. 😊${sig}`;
     case "custom":
       return `Hello ${name},\n\n${sig}`;
     default:
@@ -64,6 +69,9 @@ function WhatsAppModal({ job, invoices, quotations, amcs, onClose }) {
     amcExpiry: customerAmc?.endDate ? formatDateDisplay(customerAmc.endDate) : "",
     jobDate: formatDateDisplay(job.scheduledDate),
     phone: job.customerPhone || "",
+    invoiceId: latestInvoice?.id || job.invoiceId || "",
+    quotationId: latestQuotation?.id || "",
+    jobId: job.id || "",
   };
 
   // Auto-generate message when type changes
