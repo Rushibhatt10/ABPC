@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { subscribeCollection } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getWhatsAppNumber } from "../utils/format";
@@ -13,38 +14,64 @@ function buildMessage(type, data) {
   const sig = "\n\n— AB Pest Control\n📞 +91 98251 88413";
   const base = typeof window !== "undefined" ? window.location.origin : "";
 
-  const invoiceLink  = invoiceId   ? `\n🔗 View Invoice: ${base}/admin/invoices/${invoiceId}`      : "";
-  const quoteLink    = quotationId ? `\n🔗 View Quotation: ${base}/admin/quotations/${quotationId}` : "";
-  const certLink     = jobId       ? `\n🔗 View Certificate: ${base}/admin/certificate/${jobId}`    : "";
-
   switch (type) {
     case "quotation":
-      return `Hello ${name} 👋,\n\nYour quotation *${estimateNo || ""}* for *${service}* is ready.\n\n💰 Total: *${amount}*${quoteLink}\n\nPlease review and confirm at your earliest convenience.${sig}`;
+      return `Hello ${name} 👋,
+
+Your quotation *${estimateNo || ""}* for *${service}* is ready.
+
+💰 Total: *${amount}*
+
+Please review and confirm at your earliest convenience.${sig}`;
     case "invoice":
-      return `Hello ${name} 👋,\n\nYour invoice *${invoiceNo || ""}* for *${service}* has been generated.\n\n💰 Amount: *${amount}*${invoiceLink}\n\nKindly make the payment at your earliest convenience.${sig}`;
+      return `Hello ${name} 👋,
+
+Your invoice *${invoiceNo || ""}* for *${service}* has been generated.
+
+💰 Amount: *${amount}*
+
+Kindly make the payment at your earliest convenience.${sig}`;
     case "invoice_reminder":
-      return `Hello ${name},\n\nThis is a gentle reminder that your invoice *${invoiceNo || ""}* of *${amount}* is still pending.${invoiceLink}\n\nPlease complete the payment to avoid any inconvenience.${sig}`;
+      return `Hello ${name},
+
+This is a gentle reminder that your invoice *${invoiceNo || ""}* of *${amount}* is still pending.
+
+Please complete the payment to avoid any inconvenience.${sig}`;
     case "payment_reminder":
-      return `Hello ${name},\n\nKindly complete your pending payment of *${amount}* at the earliest.${invoiceLink}\n\nThank you for choosing AB Pest Control! 🙏${sig}`;
+      return `Hello ${name},
+
+Kindly complete your pending payment of *${amount}* at the earliest.
+
+Thank you for choosing AB Pest Control! 🙏${sig}`;
     case "amc_renewal":
-      return `Hello ${name} 👋,\n\nYour Annual Maintenance Contract (AMC) is expiring on *${amcExpiry || "soon"}*.\n\nRenew now to continue uninterrupted pest control service at your property.${sig}`;
+      return `Hello ${name} 👋,
+
+Your Annual Maintenance Contract (AMC) is expiring on *${amcExpiry || "soon"}*.
+
+Renew now to continue uninterrupted pest control service at your property.${sig}`;
     case "followup":
-      return `Hello ${name} 👋,\n\nWe hope your recent *${service}* service went well!${certLink}\n\nPlease let us know if you have any concerns or need a follow-up visit. We're always here to help. 😊${sig}`;
+      return `We hope your recent *${service}* service went well! 
+
+Please find your service certificate attached.
+
+Please let us know if you have any concerns or need a follow-up visit. We're always here to help. 😊${sig}`;
     case "custom":
-      return `Hello ${name},\n\n${sig}`;
+      return `Hello ${name},
+
+${sig}`;
     default:
       return "";
   }
 }
 
 const MESSAGE_TYPES = [
-  { id: "quotation",        label: "Quotation Share",       icon: FileText,     color: "text-violet-600", bg: "bg-violet-50 border-violet-200" },
-  { id: "invoice",          label: "Invoice Share",         icon: Receipt,      color: "text-blue-600",   bg: "bg-blue-50 border-blue-200" },
-  { id: "invoice_reminder", label: "Invoice Reminder",      icon: Bell,         color: "text-amber-600",  bg: "bg-amber-50 border-amber-200" },
-  { id: "payment_reminder", label: "Payment Reminder",      icon: Bell,         color: "text-rose-600",   bg: "bg-rose-50 border-rose-200" },
-  { id: "amc_renewal",      label: "AMC Renewal",           icon: RefreshCw,    color: "text-emerald-600",bg: "bg-emerald-50 border-emerald-200" },
-  { id: "followup",         label: "Job Follow-up",         icon: Briefcase,    color: "text-slate-600",  bg: "bg-slate-50 border-slate-200" },
-  { id: "custom",           label: "Custom Message",        icon: MessageSquare,color: "text-[var(--brand)]", bg: "bg-[var(--brand-soft)] border-[var(--brand)]" },
+  { id: "quotation", label: "Quotation Share", icon: FileText, color: "text-violet-600", bg: "bg-violet-50 border-violet-200" },
+  { id: "invoice", label: "Invoice Share", icon: Receipt, color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
+  { id: "invoice_reminder", label: "Invoice Reminder", icon: Bell, color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
+  { id: "payment_reminder", label: "Payment Reminder", icon: Bell, color: "text-rose-600", bg: "bg-rose-50 border-rose-200" },
+  { id: "amc_renewal", label: "AMC Renewal", icon: RefreshCw, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
+  { id: "followup", label: "Job Follow-up", icon: Briefcase, color: "text-slate-600", bg: "bg-slate-50 border-slate-200" },
+  { id: "custom", label: "Custom Message", icon: MessageSquare, color: "text-[var(--brand)]", bg: "bg-[var(--brand-soft)] border-[var(--brand)]" },
 ];
 
 // ── WhatsApp Compose Modal ─────────────────────────────────────────────────
@@ -121,11 +148,10 @@ function WhatsAppModal({ job, invoices, quotations, amcs, onClose }) {
               <p className="text-sm font-semibold text-slate-800 truncate">{data.service}</p>
               <p className="text-xs text-slate-400">{data.jobDate} · {data.amount}</p>
             </div>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${
-              job.status === "completed" ? "bg-emerald-100 text-emerald-700" :
-              job.status === "in_progress" ? "bg-blue-100 text-blue-700" :
-              "bg-amber-100 text-amber-700"
-            }`}>{job.status || "pending"}</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${job.status === "completed" ? "bg-emerald-100 text-emerald-700" :
+                job.status === "in_progress" ? "bg-blue-100 text-blue-700" :
+                  "bg-amber-100 text-amber-700"
+              }`}>{job.status || "pending"}</span>
           </div>
 
           {/* Message type selector */}
@@ -137,9 +163,8 @@ function WhatsAppModal({ job, invoices, quotations, amcs, onClose }) {
                 const active = msgType === t.id;
                 return (
                   <button key={t.id} type="button" onClick={() => setMsgType(t.id)}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold text-left transition-all ${
-                      active ? `${t.bg} ring-1 ring-current` : "border-slate-200 text-slate-600 hover:border-slate-300 bg-white"
-                    }`}>
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold text-left transition-all ${active ? `${t.bg} ring-1 ring-current` : "border-slate-200 text-slate-600 hover:border-slate-300 bg-white"
+                      }`}>
                     <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${active ? t.color : "text-slate-400"}`} />
                     <span className={active ? t.color : ""}>{t.label}</span>
                   </button>
@@ -167,15 +192,38 @@ function WhatsAppModal({ job, invoices, quotations, amcs, onClose }) {
             <p className="text-[10px] text-slate-400 mt-1">You can edit the message before sending.</p>
           </div>
 
-          {/* Send button */}
-          <button onClick={handleSend} disabled={!phone || !message.trim()}
-            className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl text-white font-black text-sm transition-all active:scale-95 disabled:opacity-50 shadow-lg"
-            style={{ background: "linear-gradient(135deg, #25D366, #128C7E)" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-            </svg>
-            Send via WhatsApp
-          </button>
+          {/* Send buttons */}
+          <div className="flex flex-col gap-3">
+            <button onClick={handleSend} disabled={!phone || !message.trim()}
+              className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl text-white font-black text-sm transition-all active:scale-95 disabled:opacity-50 shadow-lg"
+              style={{ background: "linear-gradient(135deg, #25D366, #128C7E)" }}>
+              <Send className="w-4 h-4 ml-1" />
+              Send Text Message
+            </button>
+
+            <div className="relative py-2">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100"></span></div>
+              <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest text-slate-300 bg-white px-2">OR</div>
+            </div>
+
+            {/* Link to Print Page for Share API */}
+            {(msgType === "quotation" || msgType === "invoice" || msgType === "followup") && (
+              <Link
+                to={
+                  msgType === "quotation" ? `/admin/quotations/${data.quotationId}` :
+                    msgType === "invoice" ? `/admin/invoices/${data.invoiceId}` :
+                      `/admin/certificate/${data.jobId}`
+                }
+                className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl bg-blue-600 text-white font-black text-sm transition-all active:scale-95 shadow-md">
+                <FileText className="w-4 h-4" />
+                Send Actual PDF File
+              </Link>
+            )}
+            <p className="text-[10px] text-center text-slate-400">
+              Note: To send the <b>PDF file</b>, use the Blue button above.<br />
+              It will open the document where you can click "Share to WhatsApp".
+            </p>
+          </div>
 
         </div>
       </div>
@@ -253,19 +301,17 @@ export default function WhatsAppPage() {
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 rounded-xl p-1">
         {[
-          { key: "jobs",      label: "Jobs",      badge: jobs.length },
+          { key: "jobs", label: "Jobs", badge: jobs.length },
           { key: "reminders", label: "Reminders", badge: pendingInvoices.length, alert: pendingInvoices.length > 0 },
-          { key: "quick",     label: "Quick Send", badge: customers.length },
+          { key: "quick", label: "Quick Send", badge: customers.length },
         ].map(t => (
           <button key={t.key} onClick={() => setActiveTab(t.key)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all ${
-              activeTab === t.key ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
-            }`}>
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === t.key ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}>
             {t.label}
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-              t.alert ? "bg-rose-500 text-white" :
-              activeTab === t.key ? "bg-slate-100 text-slate-600" : "bg-slate-200 text-slate-500"
-            }`}>{t.badge}</span>
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${t.alert ? "bg-rose-500 text-white" :
+                activeTab === t.key ? "bg-slate-100 text-slate-600" : "bg-slate-200 text-slate-500"
+              }`}>{t.badge}</span>
           </button>
         ))}
       </div>
@@ -339,11 +385,10 @@ export default function WhatsAppPage() {
                               <p className="text-xs font-bold text-slate-800 truncate">{job.treatmentLabel || job.serviceType || job.serviceName}</p>
                               <p className="text-[10px] text-slate-400">{job.scheduledDate} · {job.finalPrice ? `₹${Number(job.finalPrice).toLocaleString("en-IN")}` : ""}</p>
                             </div>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${
-                              job.status === "completed" ? "bg-emerald-100 text-emerald-700" :
-                              job.status === "in_progress" ? "bg-blue-100 text-blue-700" :
-                              "bg-amber-100 text-amber-700"
-                            }`}>{job.status || "pending"}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${job.status === "completed" ? "bg-emerald-100 text-emerald-700" :
+                                job.status === "in_progress" ? "bg-blue-100 text-blue-700" :
+                                  "bg-amber-100 text-amber-700"
+                              }`}>{job.status || "pending"}</span>
                             <button onClick={() => setSelectedJob(job)}
                               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white flex-shrink-0"
                               style={{ background: "#25D366" }}>

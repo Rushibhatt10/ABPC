@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { subscribeDoc } from "../utils/firestoreHelpers";
 import { formatDateDisplay } from "../utils/format";
-import { Printer, ArrowLeft } from "lucide-react";
+import { Printer, ArrowLeft, Download, Share2 } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 function addMonths(dateStr, months) {
   const d = new Date(dateStr);
@@ -17,6 +19,7 @@ export default function AMCPrintPage() {
   const navigate = useNavigate();
   const [amc, setAmc] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(""); // "downloading" or "sharing"
 
   useEffect(() => {
     if (!id) return;
@@ -25,6 +28,67 @@ export default function AMCPrintPage() {
       setLoading(false);
     });
   }, [id]);
+
+  const generatePDFBlob = async () => {
+    const element = document.querySelector(".amc-page");
+    if (!element) return null;
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: "#ffffff",
+      windowWidth: 794,
+    });
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+    pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
+    return pdf.output("blob");
+  };
+
+  const handleDownloadPDF = async () => {
+    setBusy("downloading");
+    try {
+      const blob = await generatePDFBlob();
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `AMC_Agreement_${amc.customerName || id}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF download failed", err);
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const handleSharePDF = async () => {
+    setBusy("sharing");
+    try {
+      const blob = await generatePDFBlob();
+      if (!blob) return;
+      const file = new File([blob], `AMC_Agreement_${amc.customerName || id}.pdf`, { type: "application/pdf" });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `AMC Agreement ${amc.customerName}`,
+          text: `Hello, here is your AMC agreement from AB Pest Control.`,
+        });
+      } else {
+        alert("Sharing not supported on this browser. Please use 'Download PDF' and attach it manually.");
+      }
+    } catch (err) {
+      console.error("Sharing failed", err);
+    } finally {
+      setBusy("");
+    }
+  };
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen" style={{ background: "#ffffff" }}>
@@ -78,15 +142,10 @@ export default function AMCPrintPage() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
-        @media print {
-          .no-print { display: none !important; }
-          body { margin: 0; background: #ffffff !important; }
-          .amc-page { box-shadow: none !important; }
-        }
       `}</style>
 
       {/* Action bar */}
-      <div className="no-print sticky top-0 z-10 flex items-center gap-3 px-4 py-3 border-b"
+      <div className="no-print sticky top-0 z-10 flex flex-wrap items-center gap-3 px-4 py-3 border-b"
         style={{ background: "#FAF7F2", borderColor: "#E6DFD6" }}>
         <button onClick={() => navigate(-1)}
           className="flex items-center gap-1.5 text-sm font-semibold"
@@ -94,16 +153,30 @@ export default function AMCPrintPage() {
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
         <div className="flex-1" />
+        <button 
+          onClick={handleSharePDF} 
+          disabled={!!busy}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white transition-all active:scale-95 disabled:opacity-50" 
+          style={{ background: "#25D366" }}>
+          <Share2 className="w-4 h-4" /> {busy === "sharing" ? "Processing..." : "Share to WhatsApp"}
+        </button>
+        <button 
+          onClick={handleDownloadPDF} 
+          disabled={!!busy}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white transition-all active:scale-95 disabled:opacity-50" 
+          style={{ background: "#4C7A2D" }}>
+          <Download className="w-4 h-4" /> {busy === "downloading" ? "Downloading..." : "Download PDF"}
+        </button>
         <button onClick={() => window.print()}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white"
-          style={{ background: "#8B7E74" }}>
-          <Printer className="w-4 h-4" /> Print / Save PDF
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-slate-600 border border-slate-300 transition-all active:scale-95"
+          style={{ background: "#fff" }}>
+          <Printer className="w-4 h-4" /> Print View
         </button>
       </div>
 
       {/* Page wrapper */}
       <div style={{ background: "#ffffff", minHeight: "100vh", padding: "40px 16px" }}
-        className="print:p-0 print:m-0">
+        className="print-container">
 
         <div className="amc-page" style={S.page}>
           <div style={S.outerBorder} />

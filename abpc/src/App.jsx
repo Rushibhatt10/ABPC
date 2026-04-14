@@ -56,13 +56,9 @@ function App() {
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="pricing" element={<PricingPage />} />
                 <Route path="invoices" element={<InvoicesPage />} />
-                <Route path="invoices/:id" element={<InvoicePrintPage />} />
                 <Route path="quotations" element={<QuotationsPage />} />
-                <Route path="quotations/:id" element={<QuotationPrintPage />} />
                 <Route path="payments" element={<PaymentsPage />} />
                 <Route path="amc" element={<AMCPage />} />
-                <Route path="amc/:id" element={<AMCPrintPage />} />
-                <Route path="certificate/:id" element={<CertificatePage />} />
                 <Route path="whatsapp" element={<WhatsAppPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
@@ -72,6 +68,12 @@ function App() {
                 <Route path="reminders" element={<PaymentsPage />} />
                 <Route path="new-job" element={<JobsPage />} />
               </Route>
+
+              {/* Print Pages - No AppShell to avoid layout blockers */}
+              <Route path="/admin/invoices/:id" element={<RequireAuth><InvoicePrintPage /></RequireAuth>} />
+              <Route path="/admin/quotations/:id" element={<RequireAuth><QuotationPrintPage /></RequireAuth>} />
+              <Route path="/admin/amc/:id" element={<RequireAuth><AMCPrintPage /></RequireAuth>} />
+              <Route path="/admin/certificate/:id" element={<RequireAuth><CertificatePage /></RequireAuth>} />
 
               {/* Legacy public pages */}
               <Route path="/insects" element={<Insects />} />

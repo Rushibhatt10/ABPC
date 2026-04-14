@@ -628,22 +628,89 @@ a {
 
 /* A4 PRINT PERFECT */
 @media print {
-  body {
-    margin: 0;
-    padding: 0;
-    background: white;
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    visibility: visible !important;
+  }
+
+  /* Hide navigation, sidebars, preloader, and explicitly marked elements */
+  nav, aside, header, footer, .no-print, .action-bar, [class*="preloader"], [class*="sidebar"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  
+  /* Force transparency on all layout wrappers */
+  div, section, main, #root {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* Reset layout containers that break printing */
+  .h-screen, 
+  .min-h-screen,
+  [class*="h-screen"],
+  [class*="min-h-screen"],
+  #root,
+  body,
+  html {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  /* Ensure no z-index is blocking the content */
+  * {
+    z-index: auto !important;
+  }
+  
+  /* Reset AppShell specific flex containers for print without breaking inline flex */
+  .flex.h-screen {
+    display: block !important;
+  }
+
+  /* Ensure main content takes full width */
+  main, .flex-1, .app-shell-main {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
   }
 
   @page {
     size: A4;
-    margin: 0;
+    margin: 5mm;
   }
 
-  article {
-    width: 210mm;
-    min-height: 297mm;
-    padding: 10mm;
-    box-sizing: border-box;
+  /* Reset document pages with high specificity */
+  body .doc-page, 
+  body .amc-page, 
+  body .cert-page, 
+  body .print-page {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 auto !important;
+    padding: 14mm 16mm !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    page-break-after: always;
+    display: block !important;
+    position: relative !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 10 !important;
+  }
+
+  /* Hide scrollbars during print */
+  ::-webkit-scrollbar {
+    display: none !important;
   }
 }
 
@@ -656,6 +723,13 @@ a {
 .bg-white {
   background: rgba(255, 255, 255, 0.04) !important;
   backdrop-filter: blur(10px);
+}
+/* Don't override bg-white inside print pages */
+@media print {
+  .bg-white, .bg-slate-50, .bg-slate-100 {
+    background: white !important;
+    backdrop-filter: none !important;
+  }
 }
 .bg-slate-50,
 .bg-slate-100 {
@@ -830,4 +904,154 @@ button, a[href] {
 }
 button:active:not(:disabled) {
   transform: scale(0.97) !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PERFECT A4 PRINT — hides everything except the document
+   ═══════════════════════════════════════════════════════ */
+
+@media print {
+  /* Hide absolutely everything by default */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Reset body */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    color: black !important;
+    width: 210mm !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Hide scrollbars, nav, action bars, buttons */
+  ::-webkit-scrollbar { display: none !important; }
+
+  /* Hide everything that is NOT the document */
+  body > *:not(#root),
+  #root > *:not([class*="print"]) {
+    display: none !important;
+  }
+
+  /* Hide action bars, sidebars, headers, nav */
+  .no-print,
+  nav, header, aside,
+  [class*="AppShell"],
+  [class*="sidebar"],
+  [class*="action-bar"] {
+    display: none !important;
+  }
+
+  /* The document page itself */
+  .doc-page,
+  .amc-page,
+  .cert-page {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    max-width: 210mm !important;
+    margin: 0 !important;
+    padding: 14mm 16mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    position: relative !important;
+    page-break-after: avoid !important;
+    overflow: visible !important;
+  }
+
+  /* Wrapper that holds the doc page */
+  .doc-page ~ *,
+  .amc-page ~ *,
+  .cert-page ~ * {
+    display: none !important;
+  }
+
+  /* Force A4 page size */
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  /* Prevent page breaks inside the document */
+  .doc-page *,
+  .amc-page *,
+  .cert-page * {
+    page-break-inside: avoid;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   CLEAN A4 PRINT
+   ═══════════════════════════════════════════════════════ */
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide only the action bar and scrollbars */
+  .no-print { display: none !important; }
+  ::-webkit-scrollbar { display: none !important; }
+
+  /* Reset page chrome */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+  }
+
+  /* CRITICAL: undo all dark theme overrides inside print pages */
+  .doc-page, .doc-page *,
+  .amc-page, .amc-page *,
+  .cert-page, .cert-page * {
+    background: white !important;
+    color: #2E2A27 !important;
+    border-color: #D8CFC4 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Restore specific text colors inside documents */
+  .doc-page p, .amc-page p, .cert-page p,
+  .doc-page span, .amc-page span, .cert-page span,
+  .doc-page td, .amc-page td, .cert-page td,
+  .doc-page th, .amc-page th, .cert-page th {
+    color: inherit !important;
+  }
+
+  /* The document wrapper */
+  .doc-page,
+  .amc-page,
+  .cert-page {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 14mm 16mm !important;
+    box-shadow: none !important;
+    background: white !important;
+    overflow: visible !important;
+    position: relative !important;
+  }
+}
+
+/* Ensure inputs don't go dark inside print pages */
+@media print {
+  input, select, textarea {
+    background: white !important;
+    color: #2E2A27 !important;
+    border-color: #D8CFC4 !important;
+  }
+  /* Hide the outer wrapper background */
+  body > #root > * {
+    background: white !important;
+  }
 }

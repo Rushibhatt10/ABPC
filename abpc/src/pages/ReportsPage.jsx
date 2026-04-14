@@ -286,56 +286,70 @@ export default function ReportsPage() {
 <head>
   <title>AB Pest Control - Reports</title>
   <style>
+    @page { size: A4; margin: 0; }
     @media print {
-      body { margin: 0; padding: 20px; font-family: Arial, sans-serif; font-size: 12px; }
-      h1 { font-size: 18px; margin-bottom: 10px; }
-      table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-      th { background-color: #f3f8f4; font-weight: bold; }
-      .no-print { display: none; }
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        color: black !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .no-print { display: none !important; }
+      .print-page {
+        width: 210mm;
+        height: 297mm;
+        padding: 20mm;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+      ::-webkit-scrollbar { display: none !important; }
     }
     body { font-family: Arial, sans-serif; padding: 20px; }
-    h1 { color: #1f7a42; }
+    h1 { color: #1f7a42; font-size: 18px; margin-bottom: 10px; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 12px; }
     th { background-color: #f3f8f4; font-weight: bold; }
     .no-print { margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h1>AB Pest Control - Job Reports</h1>
-  <p>Generated on: ${new Date().toLocaleString("en-IN")}</p>
-  <table>
-    <thead>
-      <tr>
-        <th>Customer</th>
-        <th>Service</th>
-        <th>Employee</th>
-        <th>Date/Time</th>
-        <th>Notes</th>
-        <th>Payment Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${visible.map((r) => {
-        const { job } = getCustomerData(r.jobId) || {};
-        const allDone = r.checklist && Object.values(r.checklist).every(Boolean);
-        return `
-          <tr>
-            <td>${job?.customerName || "N/A"}</td>
-            <td>${job?.serviceType || "N/A"}</td>
-            <td>${r.EmployeeName || "N/A"}</td>
-            <td>${r.timestamp ? new Date(r.timestamp).toLocaleString("en-IN") : "N/A"}</td>
-            <td>${r.notes || "—"}</td>
-            <td>${allDone ? "✓ Complete" : "Pending"}</td>
-          </tr>
-        `;
-      }).join("")}
-    </tbody>
-  </table>
-  <div class="no-print">
-    <button onclick="window.print()" style="margin-top: 20px; padding: 10px 20px; background: #1f7a42; color: white; border: none; border-radius: 5px; cursor: pointer;">Print</button>
-    <button onclick="window.close()" style="margin-left: 10px; padding: 10px 20px; background: #64748b; color: white; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+  <div class="print-page">
+    <h1>AB Pest Control - Job Reports</h1>
+    <p>Generated on: ${new Date().toLocaleString("en-IN")}</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Service</th>
+          <th>Employee</th>
+          <th>Date/Time</th>
+          <th>Notes</th>
+          <th>Payment Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${visible.map((r) => {
+          const { job } = getCustomerData(r.jobId) || {};
+          const allDone = r.checklist && Object.values(r.checklist).every(Boolean);
+          return `
+            <tr>
+              <td>${job?.customerName || "N/A"}</td>
+              <td>${job?.serviceType || "N/A"}</td>
+              <td>${r.EmployeeName || "N/A"}</td>
+              <td>${r.timestamp ? new Date(r.timestamp).toLocaleString("en-IN") : "N/A"}</td>
+              <td>${r.notes || "—"}</td>
+              <td>${allDone ? "✓ Complete" : "Pending"}</td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+    <div class="no-print">
+      <button onclick="window.print()" style="margin-top: 20px; padding: 10px 20px; background: #1f7a42; color: white; border: none; border-radius: 5px; cursor: pointer;">Print</button>
+      <button onclick="window.close()" style="margin-left: 10px; padding: 10px 20px; background: #64748b; color: white; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+    </div>
   </div>
 </body>
 </html>
