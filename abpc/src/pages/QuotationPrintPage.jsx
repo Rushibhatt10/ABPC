@@ -87,7 +87,7 @@ export default function QuotationPrintPage() {
               <div>
                 <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#2E2A27", letterSpacing: "0.02em", lineHeight: 1.2 }}>A.B. Pest Control</p>
                 <p style={{ fontSize: 9, color: "#8B7E74", letterSpacing: "0.18em", textTransform: "uppercase", marginTop: 3 }}>Insecticide Services</p>
-                <p style={{ fontSize: 8.5, color: "#6E6259", marginTop: 3, lineHeight: 1.6 }}>Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 98251 88413</p>
+                <p style={{ fontSize: 8.5, color: "#6E6259", marginTop: 3, lineHeight: 1.6 }}>Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 9374488004 </p>
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ width: 52, height: 52, borderRadius: "50%", border: "1.5px solid #D8CFC4", overflow: "hidden", background: "#FAF7F2", marginLeft: "auto" }}>

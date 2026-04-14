@@ -283,8 +283,6 @@ export default function QuotationsPage() {
                 </Link>
                 <Link
                   to={`/admin/quotations/${q.id}`}
-                  target="_blank"
-                  rel="noreferrer"
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
                 >
                   <FileDown className="w-3 h-3" />

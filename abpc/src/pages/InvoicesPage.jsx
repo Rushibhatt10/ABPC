@@ -249,7 +249,7 @@ export default function InvoicesPage() {
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors">
                   <ExternalLink className="w-3 h-3" /> View
                 </Link>
-                <Link to={`/admin/invoices/${inv.id}`} target="_blank" rel="noreferrer"
+                <Link to={`/admin/invoices/${inv.id}`}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
                   <FileDown className="w-3 h-3" /> PDF
                 </Link>

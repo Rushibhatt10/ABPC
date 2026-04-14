@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { collection, orderBy, query, where } from "firebase/firestore";
 import { firestoreDb } from "../firebase/firestore";
 import { useAuth } from "../context/AuthContext";
@@ -206,16 +206,16 @@ function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy,
               </button>
             )}
             {job.invoiceId && (
-              <a href={`/admin/invoices/${job.invoiceId}`} target="_blank" rel="noreferrer"
+              <Link to={`/admin/invoices/${job.invoiceId}`}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
                 <Receipt className="w-3 h-3" /> View Invoice
-              </a>
+              </Link>
             )}
             {job.status === "completed" && (
-              <a href={`/admin/certificate/${job.id}`} target="_blank" rel="noreferrer"
+              <Link to={`/admin/certificate/${job.id}`}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors">
                 <FileText className="w-3 h-3" /> Certificate
-              </a>
+              </Link>
             )}
             {job.history?.length > 0 && (
               <button onClick={() => setShowHistory(!showHistory)}

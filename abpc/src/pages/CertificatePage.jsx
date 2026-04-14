@@ -93,7 +93,7 @@ export default function CertificatePage() {
                   Shop No 4, Hanuman Char Rasta, Gopipura, Surat
                 </p>
                 <p style={{ fontSize: 8, color: "#6E6259", margin: 0 }}>
-                  +91 98251 88413 · abpestcontrol@gmail.com
+                  +91 9374488004 · abpestcontrol@gmail.com
                 </p>
               </div>
               {/* Logo */}
