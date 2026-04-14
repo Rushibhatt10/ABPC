@@ -59,16 +59,21 @@ export default function AppShell({ children }) {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 group ${
                   isActive
-                    ? "bg-white/20 text-white shadow-sm"
-                    : "text-white/65 hover:text-white hover:bg-white/10"
+                    ? "text-white"
+                    : "text-white/50 hover:text-white hover:bg-white/5"
                 }`
               }
+              style={({ isActive }) => isActive ? {
+                background: "rgba(76, 122, 45, 0.2)",
+                boxShadow: "0 0 12px rgba(76, 122, 45, 0.2)",
+                border: "1px solid rgba(76, 122, 45, 0.3)",
+              } : {}}
             >
               {({ isActive }) => (
                 <>
-                  <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-emerald-300" : ""}`} />
+                  <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-[#4C7A2D]" : ""}`} />
                   <span className="flex-1">{item.label}</span>
-                  {isActive && <ChevronRight className="w-3 h-3 text-emerald-300" />}
+                  {isActive && <ChevronRight className="w-3 h-3 text-[#4C7A2D]" />}
                 </>
               )}
             </NavLink>
@@ -78,7 +83,7 @@ export default function AppShell({ children }) {
 
       {/* Profile */}
       <div className="px-3 py-4 border-t border-white/10">
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/10">
+        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
           <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
             {profile?.avatar || profile?.name?.slice(0, 2).toUpperCase() || "AB"}
           </div>
@@ -104,18 +109,15 @@ export default function AppShell({ children }) {
   return (
     <div className="flex h-screen bg-[var(--bg-soft)] overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-60 flex-shrink-0" style={{ background: "linear-gradient(180deg, #4A3F38 0%, #6B5E55 100%)" }}>
+      <aside className="hidden lg:flex flex-col w-60 flex-shrink-0" style={{ background: "linear-gradient(180deg, #1F3D1F 0%, #0F1F0F 100%)", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
         <SidebarContent />
       </aside>
 
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setSidebarOpen(false)}
-          />
-          <aside className="relative w-64 flex flex-col shadow-2xl" style={{ background: "linear-gradient(180deg, #4A3F38 0%, #6B5E55 100%)" }}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+          <aside className="relative w-64 flex flex-col shadow-2xl" style={{ background: "linear-gradient(180deg, #1F3D1F 0%, #0F1F0F 100%)", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
             <SidebarContent />
           </aside>
         </div>
@@ -124,7 +126,7 @@ export default function AppShell({ children }) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden overflow-x-hidden">
         {/* Top Header */}
-        <header className="flex-shrink-0 h-14 bg-[#FAF7F2] border-b border-[#E6DFD6] flex items-center px-4 lg:px-6 gap-4 z-30">
+        <header className="flex-shrink-0 h-14 flex items-center px-4 lg:px-6 gap-4 z-30" style={{ background: "#121212", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <button
             className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
             onClick={() => setSidebarOpen(true)}

@@ -4,7 +4,7 @@ import { firebaseAuth, googleProvider } from "../firebase/auth";
 import { AUTH_PROFILES, isEmployeeRole, PRICING_ADMIN_NAMES } from "../constants/authProfiles";
 
 const AuthContext = createContext(null);
-const SESSION_KEY = "abpc_worker_session";
+const SESSION_KEY = "abpc_EMPLOYEE_session";
 
 const ALLOWED_ADMIN_EMAILS = new Set([
   "ankbhatt8004@gmail.com",
@@ -13,15 +13,15 @@ const ALLOWED_ADMIN_EMAILS = new Set([
 ]);
 
 const ADMIN_PROFILES = AUTH_PROFILES.filter((p) => !isEmployeeRole(p.key)).map((p) => ({
-  ...p, role: "admin", workerName: p.name,
+  ...p, role: "admin", EMPLOYEEName: p.name,
 }));
 
-const WORKER_PROFILES = AUTH_PROFILES.filter((p) => isEmployeeRole(p.key)).map((p) => ({
-  ...p, role: "worker", workerName: p.EmployeeTag || p.name,
+const EMPLOYEE_PROFILES = AUTH_PROFILES.filter((p) => isEmployeeRole(p.key)).map((p) => ({
+  ...p, role: "EMPLOYEE", EMPLOYEEName: p.EmployeeTag || p.name,
 }));
 
-// Read saved worker key from localStorage
-function getSavedWorkerKey() {
+// Read saved EMPLOYEE key from localStorage
+function getSavedEMPLOYEEKey() {
   try {
     const saved = localStorage.getItem(SESSION_KEY);
     if (saved) return JSON.parse(saved).key || null;
@@ -33,9 +33,9 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Ref always holds the latest pending worker key
-  // Used by onAuthStateChanged to resolve the worker profile after anon sign-in
-  const pendingWorkerKeyRef = useRef(getSavedWorkerKey());
+  // Ref always holds the latest pending EMPLOYEE key
+  // Used by onAuthStateChanged to resolve the EMPLOYEE profile after anon sign-in
+  const pendingEMPLOYEEKeyRef = useRef(getSavedEMPLOYEEKey());
 
   useEffect(() => {
     const unsub = onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
           const adminProfile = ADMIN_PROFILES.find((p) => p.email.toLowerCase() === email);
           if (adminProfile) {
             localStorage.removeItem(SESSION_KEY);
-            pendingWorkerKeyRef.current = null;
+            pendingEMPLOYEEKeyRef.current = null;
             setProfile(adminProfile);
             setLoading(false);
             return;
@@ -58,30 +58,30 @@ export function AuthProvider({ children }) {
         setLoading(false);
 
       } else if (firebaseUser && !firebaseUser.email) {
-        // ── Anonymous user — resolve worker from ref ──
-        const key = pendingWorkerKeyRef.current;
+        // ── Anonymous user — resolve EMPLOYEE from ref ──
+        const key = pendingEMPLOYEEKeyRef.current;
         if (key) {
-          const workerProfile = WORKER_PROFILES.find((p) => p.key === key);
-          if (workerProfile) {
-            setProfile(workerProfile);
+          const EMPLOYEEProfile = EMPLOYEE_PROFILES.find((p) => p.key === key);
+          if (EMPLOYEEProfile) {
+            setProfile(EMPLOYEEProfile);
             setLoading(false);
             return;
           }
         }
-        // Anonymous but no worker key — clear
+        // Anonymous but no EMPLOYEE key — clear
         setProfile(null);
         setLoading(false);
 
       } else {
         // ── No Firebase user ──
-        const key = pendingWorkerKeyRef.current;
+        const key = pendingEMPLOYEEKeyRef.current;
         if (key) {
-          // Saved worker session exists — create anonymous Firebase session
+          // Saved EMPLOYEE session exists — create anonymous Firebase session
           try {
             await signInAnonymously(firebaseAuth);
             // onAuthStateChanged will fire again with the anon user above
           } catch {
-            pendingWorkerKeyRef.current = null;
+            pendingEMPLOYEEKeyRef.current = null;
             localStorage.removeItem(SESSION_KEY);
             setProfile(null);
             setLoading(false);
@@ -107,18 +107,18 @@ export function AuthProvider({ children }) {
     // profile set by onAuthStateChanged
   };
 
-  // ── Worker login: save key → anonymous Firebase session ──
-  const loginWorker = async (key) => {
-    const worker = WORKER_PROFILES.find((p) => p.key === key);
-    if (!worker) throw new Error("Worker not found.");
+  // ── EMPLOYEE login: save key → anonymous Firebase session ──
+  const loginEMPLOYEE = async (key) => {
+    const EMPLOYEE = EMPLOYEE_PROFILES.find((p) => p.key === key);
+    if (!EMPLOYEE) throw new Error("EMPLOYEE not found.");
 
     // Save to ref AND localStorage before triggering Firebase
-    pendingWorkerKeyRef.current = key;
+    pendingEMPLOYEEKeyRef.current = key;
     localStorage.setItem(SESSION_KEY, JSON.stringify({ key }));
 
     if (firebaseAuth.currentUser && !firebaseAuth.currentUser.email) {
       // Already anonymous — just set profile directly
-      setProfile(worker);
+      setProfile(EMPLOYEE);
     } else if (!firebaseAuth.currentUser) {
       // No session — sign in anonymously; onAuthStateChanged will set profile
       await signInAnonymously(firebaseAuth);
@@ -130,15 +130,15 @@ export function AuthProvider({ children }) {
   };
 
   // Legacy alias
-  const loginEmployee = loginWorker;
+  const loginEmployee = loginEMPLOYEE;
   const login = async (keyOrEmail, password) => {
-    const worker = WORKER_PROFILES.find((p) => p.key === keyOrEmail && p.password === password);
-    if (worker) { await loginWorker(worker.key); return; }
+    const EMPLOYEE = EMPLOYEE_PROFILES.find((p) => p.key === keyOrEmail && p.password === password);
+    if (EMPLOYEE) { await loginEMPLOYEE(EMPLOYEE.key); return; }
     await loginAdmin();
   };
 
   const logout = async () => {
-    pendingWorkerKeyRef.current = null;
+    pendingEMPLOYEEKeyRef.current = null;
     localStorage.removeItem(SESSION_KEY);
     setProfile(null);
     try { await signOut(firebaseAuth); } catch { /* ignore */ }
@@ -148,13 +148,13 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!profile,
     profile,
     loading,
-    isWorker: profile?.role === "worker",
-    isEmployee: profile?.role === "worker",   // alias used across pages
+    isEMPLOYEE: profile?.role === "EMPLOYEE",
+    isEmployee: profile?.role === "EMPLOYEE",   // alias used across pages
     isAdmin: profile?.role === "admin",
     isPricingAdmin: PRICING_ADMIN_NAMES.has(String(profile?.name || "")),
     login,
     loginAdmin,
-    loginWorker,
+    loginEMPLOYEE,
     loginEmployee,
     logout,
   }), [profile, loading]);

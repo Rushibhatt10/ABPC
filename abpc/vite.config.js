@@ -19,6 +19,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: () => "",
         followRedirects: true,
+        configure: (proxy) => {
+          proxy.on("proxyRes", (proxyRes) => {
+            proxyRes.headers["access-control-allow-private-network"] = "true";
+          });
+        },
       },
     },
   },

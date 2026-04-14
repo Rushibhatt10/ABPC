@@ -347,8 +347,8 @@ useEffect(() => {
   <div className={`absolute inset-0 opacity-[0.03] pointer-events-none`}
   style={{ backgroundImage:"radial-gradient(circle at 20% 50%, #e85535 0%, transparent 60%), radial-gradient(circle at 80% 30%, #8db34b 0%, transparent 60%)" }} />
 
-  {/* Floating Insects - Only in Hero Section */}
-  <InsectEdgePopups />
+  {/* Floating Insects - Only in Hero Section - DISABLED */}
+  {/* <InsectEdgePopups /> */}
 
   <div className="relative z-10 max-w-5xl mx-auto text-center flex flex-col items-center gap-4 sm:gap-6 md:gap-8">
   <span className="text-xs sm:text-sm uppercase tracking-[0.25em] sm:tracking-[0.35em] font-semibold" style={{ color: "#F04925" }}>Est. 1980 · Surat, Gujarat</span>
@@ -413,11 +413,10 @@ useEffect(() => {
   >
   Protecting your space with professional, eco-friendly pest control services tailored for every environment — from kitchens to warehouses.
   </p>
-  <p className="flex items-center gap-2 text-xs sm:text-sm opacity-60 italic">
+  {/* <p className="flex items-center gap-2 text-xs sm:text-sm opacity-60 italic">
     <Star size={14} />
     Click on the insects to know about them
-   
-  </p>
+  </p> */}
   </div>
 
   </section>
@@ -678,62 +677,9 @@ useEffect(() => {
  </div>
 
  <div className="flex flex-col lg:flex-row gap-8 items-stretch">
- {/* Business Card */}
- <div className={`flex-1 p-6 md:p-10 rounded-[2.5rem] border ${isDark ?"bg-[#0a0a0a] border-white/15" :"bg-white border-black/10"} shadow-2xl flex flex-col gap-8 transition-transform hover:scale-[1.01] duration-500`}>
- <div>
- <h3 className="text-xl md:text-2xl font-medium mb-2">A. B. PEST CONTROL INSECTICIDE SERVICES</h3>
- <div className="flex items-center gap-2 mb-2">
- <span className="text-base font-medium text-[#fbbc04]">5.0</span>
- <div className="flex text-[#fbbc04]">
- {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
- </div>
- <a href="https://www.google.com/maps/place/A.+B.+PEST+CONTROL+INSECTICIDE+SERVICES/@21.1925345,72.8222956,17z/data=!4m8!3m7!1s0x3be04f6c449c20a1:0x41ef4190c1f6c4a!8m2!3d21.1925345!4d72.8222956!9m1!1b1!16s%2Fg%2F11b6_v2q_s" target="_blank" rel="noreferrer" className="text-sm text-blue-500 hover:underline">30 reviews</a>
- </div>
- <p className="text-sm opacity-60 font-medium">Pest control service in Surat, Gujarat</p>
- </div>
-
- {/* Action Buttons */}
- <div className="flex justify-between items-center border-y border-current/10 py-4 gap-2">
- {[
- { icon: <Navigation size={20} />, label:"Directions", href:"https://maps.app.goo.gl/RuymFAmDy4fV91To6" },
- { icon: <Bookmark size={20} />, label:"Save", href:"#" },
- { icon: <Phone size={20} />, label:"Call", href:"tel:+919825188413" }
- ].map((action, idx) => (
- <a key={idx} href={action.href} target="_blank" rel="noreferrer" className="flex-1 flex flex-col items-center gap-2 group">
- <div className="w-10 h-10 rounded-full border border-blue-500/30 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
- {action.icon}
- </div>
- <span className="text-[10px] font-medium uppercase tracking-wider text-blue-500">{action.label}</span>
- </a>
- ))}
- </div>
-
- {/* Info List */}
- <div className="space-y-5">
- <div className="flex items-start gap-4">
- <MapPin size={20} className="text-blue-500 mt-1 shrink-0" />
- <span className="text-sm md:text-base leading-relaxed opacity-80">BJ House, Chauta Bazar Rd, Rudrapura, Surat, Gujarat 395001, India</span>
- </div>
- <div className="flex items-start gap-4 border-t border-current/5 pt-4">
- <Clock size={20} className="text-blue-500 mt-1 shrink-0" />
- <div className="text-sm md:text-base">
- <div className="flex items-center gap-2">
- <span className="font-medium text-green-600">Open</span>
- <span className="opacity-50">• Closes 6 PM</span>
- </div>
- <p className="text-xs opacity-50 mt-1">Hours: 10:00 AM - 6:00 PM</p>
- </div>
- </div>
- <div className="flex items-start gap-4 border-t border-current/5 pt-4">
- <Phone size={20} className="text-blue-500 mt-1 shrink-0" />
- <span className="text-sm md:text-base opacity-80">+91 9825188413</span>
- <span className="text-sm md:text-base opacity-80">+91 9374488004</span>
- </div>
- </div>
- </div>
 
  {/* Map */}
-  <div className="flex-1 h-550px lg:h-auto min-h-500px rounded-[2.5rem] overflow-hidden shadow-2xl border border-current/10 relative group bg-black/5">
+  <div className="flex-1 rounded-[2.5rem] overflow-hidden shadow-2xl border border-current/10 relative group bg-black/5" style={{ minHeight: "500px" }}>
  <iframe
  title="AB Pest Control Location"
  className="absolute inset-0 w-full h-full grayscale-[0.3] contrast-[1.2] group-hover:grayscale-0 transition-all duration-1000 ease-out"
@@ -814,7 +760,7 @@ useEffect(() => {
  </div>
  <div className="text-sm text-white/60 flex flex-col gap-1">
 
-  <a href="tel:+919825188413" className="hover:text-white transition-colors">
+  <a href="tel:+919374488004" className="hover:text-white transition-colors">
     BAKUL BHATT: +91 98251 88413
     </a>
   

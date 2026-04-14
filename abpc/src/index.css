@@ -1,19 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  /* Admin panel — Soft Beige / Warm Taupe theme */
-  --bg-soft: #F5F1E8;
-  --bg-card: #FAF7F2;
-  --brand: #8B7E74;
-  --brand-dark: #6B5E55;
-  --brand-soft: #F0EBE3;
-  --brand-bright: #A89890;
-  --text-main: #2E2A27;
-  --text-muted: #6E6259;
-  --border-light: #E6DFD6;
-  --hover-bg: #EFE7DC;
-  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  --button-ring: rgba(139, 126, 116, 0.2);
+  /* AMOLED Dark Premium SaaS Theme */
+  --bg-soft: #0B0B0B;
+  --bg-card: #121212;
+  --brand: #4C7A2D;
+  --brand-dark: #2F4F2F;
+  --brand-soft: rgba(76, 122, 45, 0.12);
+  --brand-bright: #5E9A38;
+  --text-main: #FFFFFF;
+  --text-muted: #A0A0A0;
+  --border-light: rgba(255, 255, 255, 0.08);
+  --hover-bg: rgba(76, 122, 45, 0.08);
+  --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --button-ring: rgba(76, 122, 45, 0.3);
+  --accent: #E4572E;
 }
 
 * {
@@ -23,8 +24,8 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg-soft);
-  color: var(--text-main);
+  background: #0B0B0B;
+  color: #FFFFFF;
   font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -34,9 +35,10 @@ a {
 
 .app-card {
   border-radius: 1rem;
-  border: 1px solid #E6DFD6;
-  background: #FAF7F2;
-  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   padding: 1rem;
 }
 
@@ -237,17 +239,17 @@ a {
 .field-input {
   width: 100%;
   border-radius: 0.75rem;
-  border: 1px solid #E6DFD6;
-  background: #FAF7F2;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   padding: 0.75rem 0.85rem;
   font-size: 0.95rem;
-  color: #2E2A27;
+  color: #FFFFFF;
   outline: none;
 }
 
 .field-input:focus {
-  border-color: #8B7E74;
-  box-shadow: 0 0 0 3px rgba(139, 126, 116, 0.15);
+  border-color: #4C7A2D;
+  box-shadow: 0 0 0 3px rgba(76, 122, 45, 0.2);
 }
 
 .primary-btn,
@@ -335,27 +337,36 @@ a {
 
 .primary-btn {
   width: 100%;
-  border: 1px solid rgba(107, 94, 85, 0.2);
+  border: 1px solid rgba(76, 122, 45, 0.3);
   border-radius: 0.95rem;
-  background: linear-gradient(135deg, #6B5E55 0%, #8B7E74 52%, #A89890 100%);
+  background: linear-gradient(135deg, #2F4F2F 0%, #4C7A2D 100%);
   color: #fff;
   font-size: 0.95rem;
   font-weight: 800;
   letter-spacing: 0.01em;
   padding: 0.8rem 1rem;
-  box-shadow: 0 8px 20px rgba(139, 126, 116, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 20px rgba(76, 122, 45, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.primary-btn:hover:not(:disabled) {
+  box-shadow: 0 0 30px rgba(76, 122, 45, 0.4);
 }
 
 .secondary-btn {
   width: 100%;
   border-radius: 0.95rem;
-  border: 1px solid rgba(139, 126, 116, 0.25);
-  background: linear-gradient(180deg, #FAF7F2, #F0EBE3);
-  color: #6B5E55;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  color: #FFFFFF;
   font-size: 0.92rem;
-  font-weight: 800;
+  font-weight: 700;
   padding: 0.74rem 0.95rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.secondary-btn:hover:not(:disabled) {
+  border-color: rgba(76, 122, 45, 0.5);
+  background: rgba(76, 122, 45, 0.08);
 }
 
 .ghost-btn {
@@ -634,4 +645,189 @@ a {
     padding: 10mm;
     box-sizing: border-box;
   }
+}
+
+/* ═══════════════════════════════════════════════════════
+   GLOBAL DARK THEME OVERRIDES — Admin Panel
+   All pages inherit these automatically
+   ═══════════════════════════════════════════════════════ */
+
+/* Cards / containers */
+.bg-white {
+  background: rgba(255, 255, 255, 0.04) !important;
+  backdrop-filter: blur(10px);
+}
+.bg-slate-50,
+.bg-slate-100 {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Borders */
+.border-slate-100,
+.border-slate-200,
+.border-slate-300 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.divide-slate-100 > * + * {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Text */
+.text-slate-900,
+.text-slate-800 {
+  color: #FFFFFF !important;
+}
+.text-slate-700,
+.text-slate-600 {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+.text-slate-500,
+.text-slate-400 {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+.text-slate-300 {
+  color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Inputs / selects / textareas */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #FFFFFF !important;
+}
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #4C7A2D !important;
+  box-shadow: 0 0 0 3px rgba(76, 122, 45, 0.2) !important;
+  outline: none !important;
+}
+select option {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+/* Buttons — make all transparent/glass by default */
+button:not([class*="bg-"]):not([class*="text-white"]) {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Primary action buttons (green) */
+.bg-\[var\(--brand\)\],
+[class*="bg-[var(--brand)]"] {
+  background: linear-gradient(135deg, #2F4F2F, #4C7A2D) !important;
+  box-shadow: 0 0 16px rgba(76, 122, 45, 0.3) !important;
+}
+.bg-\[var\(--brand\)\]:hover,
+[class*="bg-[var(--brand)]"]:hover {
+  box-shadow: 0 0 24px rgba(76, 122, 45, 0.5) !important;
+}
+
+/* Colored action buttons — make glass */
+.bg-emerald-50  { background: rgba(76, 122, 45, 0.12) !important; }
+.bg-blue-50     { background: rgba(59, 130, 246, 0.1) !important; }
+.bg-amber-50    { background: rgba(228, 87, 46, 0.1) !important; }
+.bg-rose-50     { background: rgba(239, 68, 68, 0.1) !important; }
+.bg-violet-50   { background: rgba(139, 92, 246, 0.1) !important; }
+.bg-green-50    { background: rgba(34, 197, 94, 0.1) !important; }
+.bg-slate-800   { background: rgba(255, 255, 255, 0.08) !important; }
+.bg-slate-700   { background: rgba(255, 255, 255, 0.1) !important; }
+
+/* Colored borders */
+.border-emerald-200 { border-color: rgba(76, 122, 45, 0.3) !important; }
+.border-blue-200    { border-color: rgba(59, 130, 246, 0.25) !important; }
+.border-amber-200   { border-color: rgba(228, 87, 46, 0.3) !important; }
+.border-rose-200    { border-color: rgba(239, 68, 68, 0.25) !important; }
+.border-violet-200  { border-color: rgba(139, 92, 246, 0.25) !important; }
+.border-green-200   { border-color: rgba(34, 197, 94, 0.25) !important; }
+
+/* Colored text — keep readable on dark */
+.text-emerald-700 { color: #6DBF4A !important; }
+.text-emerald-600 { color: #5EA83E !important; }
+.text-blue-700    { color: #60A5FA !important; }
+.text-amber-700   { color: #E4572E !important; }
+.text-amber-600   { color: #E4572E !important; }
+.text-rose-700    { color: #F87171 !important; }
+.text-violet-700  { color: #A78BFA !important; }
+.text-green-700   { color: #4ADE80 !important; }
+
+/* Status pills */
+.bg-emerald-100 { background: rgba(76, 122, 45, 0.15) !important; }
+.bg-amber-100   { background: rgba(228, 87, 46, 0.15) !important; }
+.bg-blue-100    { background: rgba(59, 130, 246, 0.15) !important; }
+.bg-rose-100    { background: rgba(239, 68, 68, 0.15) !important; }
+.bg-violet-100  { background: rgba(139, 92, 246, 0.15) !important; }
+.bg-green-100   { background: rgba(34, 197, 94, 0.15) !important; }
+
+/* Hover states */
+.hover\:bg-slate-50:hover  { background: rgba(255, 255, 255, 0.05) !important; }
+.hover\:bg-slate-100:hover { background: rgba(255, 255, 255, 0.07) !important; }
+.hover\:bg-emerald-100:hover { background: rgba(76, 122, 45, 0.2) !important; }
+.hover\:bg-blue-100:hover    { background: rgba(59, 130, 246, 0.15) !important; }
+.hover\:bg-amber-100:hover   { background: rgba(228, 87, 46, 0.15) !important; }
+.hover\:bg-rose-100:hover    { background: rgba(239, 68, 68, 0.15) !important; }
+.hover\:bg-green-100:hover   { background: rgba(34, 197, 94, 0.15) !important; }
+
+/* Brand soft background */
+.bg-\[var\(--brand-soft\)\] {
+  background: rgba(76, 122, 45, 0.12) !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* ═══════════════════════════════════════════════════════
+   BUTTON GLOW ON HOVER — each button glows its own color
+   ═══════════════════════════════════════════════════════ */
+
+/* Green brand buttons */
+button[class*="bg-[var(--brand)]"]:hover,
+a[class*="bg-[var(--brand)]"]:hover,
+button[class*="bg-violet-600"]:hover { box-shadow: 0 0 20px rgba(76, 122, 45, 0.5) !important; }
+
+/* Violet / purple */
+button[class*="bg-violet"]:hover,
+a[class*="bg-violet"]:hover { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5) !important; }
+
+/* Blue */
+button[class*="bg-blue"]:hover,
+a[class*="bg-blue"]:hover { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5) !important; }
+
+/* Emerald / green */
+button[class*="bg-emerald"]:hover,
+a[class*="bg-emerald"]:hover { box-shadow: 0 0 20px rgba(76, 122, 45, 0.5) !important; }
+
+/* Amber / orange */
+button[class*="bg-amber"]:hover,
+a[class*="bg-amber"]:hover { box-shadow: 0 0 20px rgba(228, 87, 46, 0.5) !important; }
+
+/* Rose / red */
+button[class*="bg-rose"]:hover,
+a[class*="bg-rose"]:hover { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5) !important; }
+
+/* Green (WhatsApp) */
+button[class*="bg-green"]:hover,
+a[class*="bg-green"]:hover { box-shadow: 0 0 20px rgba(34, 197, 94, 0.5) !important; }
+
+/* Slate dark */
+button[class*="bg-slate-800"]:hover,
+button[class*="bg-slate-700"]:hover { box-shadow: 0 0 20px rgba(255, 255, 255, 0.1) !important; }
+
+/* All interactive buttons — smooth transition */
+button, a[href] {
+  transition: box-shadow 0.25s ease, transform 0.2s ease, background 0.2s ease !important;
+}
+button:active:not(:disabled) {
+  transform: scale(0.97) !important;
 }

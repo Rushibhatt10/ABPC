@@ -283,7 +283,7 @@ function AdminDashboard({ profile }) {
 
       {/* ── HERO HEADER ── */}
       <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl"
-        style={{ background: "linear-gradient(135deg, #4A3F38 0%, #6B5E55 60%, #8B7E74 100%)" }}>
+        style={{ background: "linear-gradient(135deg, #1F3D1F 0%, #2F4F2F 60%, #4C7A2D 100%)", border: "1px solid rgba(76,122,45,0.3)" }}>
         <div className="absolute inset-0 opacity-10"
           style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         <div className="relative px-5 sm:px-8 py-6 sm:py-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -302,21 +302,22 @@ function AdminDashboard({ profile }) {
       {/* ── STAT CARDS ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
-          { label: "Total Revenue",   value: formatCurrency(stats.totalRevenue),  sub: "All time collected",                          icon: TrendingUp, bg: "bg-emerald-50", border: "border-emerald-100", iconBg: "bg-emerald-500", text: "text-emerald-700" },
-          { label: "Pending Amount",  value: formatCurrency(stats.pendingAmount), sub: `${stats.pendingCount} invoice${stats.pendingCount !== 1 ? "s" : ""}`, icon: Clock,      bg: "bg-amber-50",   border: "border-amber-100",   iconBg: "bg-amber-500",   text: "text-amber-700"   },
-          { label: "Today's Jobs",    value: stats.todayJobs,                     sub: "Scheduled today",                             icon: Calendar,   bg: "bg-blue-50",    border: "border-blue-100",    iconBg: "bg-blue-500",    text: "text-blue-700"    },
-          { label: "Total Customers", value: customers.length,                    sub: "In CRM",                                      icon: Users,      bg: "bg-violet-50",  border: "border-violet-100",  iconBg: "bg-violet-500",  text: "text-violet-700"  },
+          { label: "Total Revenue",   value: formatCurrency(stats.totalRevenue),  sub: "All time collected",                          icon: TrendingUp, bg: "border-[rgba(76,122,45,0.3)]",   iconBg: "bg-[#4C7A2D]",   text: "text-[#4C7A2D]" },
+          { label: "Pending Amount",  value: formatCurrency(stats.pendingAmount), sub: `${stats.pendingCount} invoice${stats.pendingCount !== 1 ? "s" : ""}`, icon: Clock,      bg: "border-[rgba(228,87,46,0.3)]",  iconBg: "bg-[#E4572E]",   text: "text-[#E4572E]"  },
+          { label: "Today's Jobs",    value: stats.todayJobs,                     sub: "Scheduled today",                             icon: Calendar,   bg: "border-[rgba(255,255,255,0.1)]", iconBg: "bg-white/10",    text: "text-white"      },
+          { label: "Total Customers", value: customers.length,                    sub: "In CRM",                                      icon: Users,      bg: "border-[rgba(255,255,255,0.1)]", iconBg: "bg-white/10",    text: "text-white"      },
         ].map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className={`rounded-2xl border ${s.border} ${s.bg} p-4 sm:p-5 flex flex-col gap-3`}>
+            <div key={s.label} className={`rounded-2xl border ${s.bg} p-4 sm:p-5 flex flex-col gap-3 transition-all duration-200 hover:scale-[1.02]`}
+              style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)" }}>
               <div className={`w-9 h-9 rounded-xl ${s.iconBg} flex items-center justify-center shadow-sm`}>
                 <Icon className="w-[18px] h-[18px] text-white" />
               </div>
               <div>
-                <p className="text-xl sm:text-2xl font-black text-slate-900 leading-none">{s.value}</p>
+                <p className="text-xl sm:text-2xl font-black text-white leading-none">{s.value}</p>
                 <p className={`text-xs font-bold mt-1 ${s.text}`}>{s.label}</p>
-                {s.sub && <p className="text-[11px] text-slate-400 mt-0.5">{s.sub}</p>}
+                {s.sub && <p className="text-[11px] text-white/40 mt-0.5">{s.sub}</p>}
               </div>
             </div>
           );
@@ -325,17 +326,20 @@ function AdminDashboard({ profile }) {
 
       {/* ── QUICK ACTIONS ── */}
       <div>
-        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Quick Actions</p>
+        <p className="text-xs font-black text-white/40 uppercase tracking-widest mb-3">Quick Actions</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {quickLinks.map((q) => {
             const Icon = q.icon;
             return (
               <Link key={q.to} to={q.to}
-                className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 flex flex-col items-center gap-3 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 active:scale-95">
+                className="group relative overflow-hidden rounded-2xl p-4 flex flex-col items-center gap-3 hover:scale-[1.02] transition-all duration-200 active:scale-95"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(10px)" }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(76,122,45,0.4)"}
+                onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"}>
                 <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${q.gradient} flex items-center justify-center shadow-md`}>
                   <Icon className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-xs font-bold text-slate-600 text-center group-hover:text-slate-900 transition-colors leading-tight">{q.label}</span>
+                <span className="text-xs font-bold text-white/70 text-center group-hover:text-white transition-colors leading-tight">{q.label}</span>
                 <ArrowRight className="absolute bottom-3 right-3 w-3 h-3 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all" />
               </Link>
             );
@@ -344,13 +348,13 @@ function AdminDashboard({ profile }) {
       </div>
 
       {/* ── WEBSITE ENQUIRIES ── */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+      <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(10px)" }}>
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
-              <MessageSquare className="w-3.5 h-3.5 text-violet-600" />
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(76,122,45,0.2)" }}>
+              <MessageSquare className="w-3.5 h-3.5 text-[#4C7A2D]" />
             </div>
-            <h2 className="font-bold text-slate-800 text-sm">Website Enquiries</h2>
+            <h2 className="font-bold text-white text-sm">Website Enquiries</h2>
             {unreadMessages > 0 && (
               <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold">{unreadMessages}</span>
             )}
@@ -358,45 +362,50 @@ function AdminDashboard({ profile }) {
         </div>
         {messages.length === 0 ? (
           <div className="py-10 text-center">
-            <MessageSquare className="w-8 h-8 text-slate-200 mx-auto mb-2" />
-            <p className="text-sm text-slate-400">No enquiries yet</p>
+            <MessageSquare className="w-8 h-8 mx-auto mb-2" style={{ color: "rgba(255,255,255,0.15)" }} />
+            <p className="text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>No enquiries yet</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
             {[...messages].reverse().map((msg) => (
-              <div key={msg.id} className={`px-5 py-4 hover:bg-slate-50 transition-colors ${!msg.read ? "bg-amber-50/40" : ""}`}>
+              <div key={msg.id} className="px-5 py-4 transition-colors"
+                style={{ background: msg.read ? "transparent" : "rgba(228,87,46,0.06)" }}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                      <span className="font-bold text-sm text-slate-900">{msg.full_name}</span>
-                      {!msg.read && <span className="px-1.5 py-0.5 rounded-full bg-amber-400 text-white text-[10px] font-bold">NEW</span>}
-                      <span className="text-[11px] text-slate-400 ml-auto">
-                        {msg.createdAt ? new Date(msg.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : ""}
+                      <span className="font-bold text-sm text-white">{msg.full_name}</span>
+                      {!msg.read && <span className="px-1.5 py-0.5 rounded-full bg-[#E4572E] text-white text-[10px] font-bold">NEW</span>}
+                      <span className="text-[11px] ml-auto flex items-center gap-1" style={{ color: "rgba(255,255,255,0.35)" }}>
+                        📅 {msg.createdAt ? new Date(msg.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
                       </span>
                     </div>
                     <div className="flex items-center gap-3 mb-2 flex-wrap">
                       {msg.phone_number && (
-                        <a href={`tel:${msg.phone_number}`} className="flex items-center gap-1 text-xs text-[var(--brand)] hover:underline">
+                        <a href={`tel:${msg.phone_number}`} className="flex items-center gap-1 text-xs hover:underline" style={{ color: "#4C7A2D" }}>
                           <Phone className="w-3 h-3" /> {msg.phone_number}
                         </a>
                       )}
                       {msg.email && (
-                        <a href={`mailto:${msg.email}`} className="flex items-center gap-1 text-xs text-slate-500 hover:underline">
+                        <a href={`mailto:${msg.email}`} className="flex items-center gap-1 text-xs hover:underline" style={{ color: "rgba(255,255,255,0.4)" }}>
                           <Mail className="w-3 h-3" /> {msg.email}
                         </a>
                       )}
                     </div>
-                    <p className="text-sm text-slate-600 leading-relaxed">{msg.message}</p>
+                    <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>{msg.message}</p>
                   </div>
                   <div className="flex flex-col gap-1.5 shrink-0">
                     {!msg.read && (
                       <button onClick={() => updateRecord("messages", msg.id, { read: true })}
-                        className="px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold hover:bg-emerald-200 transition-colors whitespace-nowrap">
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                        style={{ background: "rgba(76,122,45,0.2)", color: "#6DBF4A", border: "1px solid rgba(76,122,45,0.3)" }}>
                         Mark read
                       </button>
                     )}
                     <button onClick={() => deleteRecord("messages", msg.id)}
-                      className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors self-end">
+                      className="p-1.5 rounded-lg transition-colors self-end"
+                      style={{ color: "rgba(255,255,255,0.2)" }}
+                      onMouseEnter={e => e.currentTarget.style.color = "#F87171"}
+                      onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.2)"}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>

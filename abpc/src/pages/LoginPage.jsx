@@ -1,12 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
-import { Shield, HardHat, Zap } from "lucide-react";
+import { Shield, HardHat } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import Logo from "../components/Logo";
 
-const Employee_PASSWORD_MAP = {
+const EMPLOYEE_PASSWORD_MAP = {
   "nakul123":   "nakul",
   "divyesh123": "divyesh",
   "sagar123":   "sagar",
+};
+
+const glass = {
+  background: "rgba(255,255,255,0.04)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  backdropFilter: "blur(16px)",
 };
 
 export default function LoginPage() {
@@ -18,155 +25,179 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (isAuthenticated && !loading) {
-      navigate("/admin", { replace: true });
-    }
+    if (isAuthenticated && !loading) navigate("/admin", { replace: true });
   }, [isAuthenticated, loading, navigate]);
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="flex flex-col items-center gap-2">
-        <div className="w-8 h-8 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
-        <div className="text-slate-500 text-xs font-medium uppercase tracking-widest">Verifying...</div>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0B0B0B" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid rgba(76,122,45,0.2)", borderTopColor: "#4C7A2D", animation: "spin 0.8s linear infinite" }} />
+        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase" }}>Verifying…</p>
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
   if (isAuthenticated) return <Navigate to="/admin" replace />;
 
-  const switchTab = (t) => { 
-    setTab(t); 
-    setError(""); 
-    setPin("");
-  };
+  const switchTab = (t) => { setTab(t); setError(""); setPin(""); };
 
   const handleGoogleSignIn = async () => {
-    setError("");
-    setBusy(true);
-    try {
-      await loginAdmin();
-    } catch (err) {
+    setError(""); setBusy(true);
+    try { await loginAdmin(); }
+    catch (err) {
       const msg = err.message || "";
-      if (msg.includes("popup-closed") || msg.includes("cancelled") || msg.includes("popup_closed")) {
-        setError("Sign-in cancelled.");
-      } else if (msg.includes("not authorized")) {
-        setError("This account is not authorized as an admin.");
-      } else {
-        setError("Sign-in failed. Please try again.");
-      }
-    } finally {
-      setBusy(false);
-    }
+      setError(
+        msg.includes("popup-closed") || msg.includes("cancelled") ? "Sign-in cancelled." :
+        msg.includes("not authorized") ? "This account is not authorized." :
+        "Sign-in failed. Please try again."
+      );
+    } finally { setBusy(false); }
   };
 
-  const handleWorkerSubmit = async (e) => {
+  const handleEmployeeSubmit = async (e) => {
     e.preventDefault();
     if (!pin.trim()) return;
     setError("");
-    const key = Employee_PASSWORD_MAP[pin.trim()];
-    if (!key) { 
-      setError("Incorrect PIN. Please try again."); 
-      return; 
-    }
+    const key = EMPLOYEE_PASSWORD_MAP[pin.trim()];
+    if (!key) { setError("Incorrect PIN. Please try again."); return; }
     setBusy(true);
-    try {
-      await loginEmployee(key);
-    } catch (err) {
-      setError(err.message || "Login failed.");
-      setBusy(false);
-    }
+    try { await loginEmployee(key); }
+    catch (err) { setError(err.message || "Login failed."); setBusy(false); }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4 font-sans">
-      <div className="w-full max-w-md">
-        
-        {/* Simple Brand Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-emerald-600 rounded-xl shadow-lg mb-4">
-            <Zap className="w-6 h-6 text-white" />
+    <div style={{ minHeight: "100vh", background: "#0B0B0B", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: "'Inter', sans-serif", position: "relative", overflow: "hidden" }}>
+
+      {/* Background glow */}
+      <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translateX(-50%)", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(76,122,45,0.12) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+      <div style={{ width: "100%", maxWidth: 400, position: "relative", zIndex: 1 }}>
+
+        {/* Logo */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 32 }}>
+          <div style={{ width: 88, height: 88, borderRadius: "50%", overflow: "hidden", marginBottom: 20, border: "2px solid rgba(76,122,45,0.4)", boxShadow: "0 0 30px rgba(76,122,45,0.25), 0 0 60px rgba(76,122,45,0.1)" }}>
+            <img src="/cropped_circle_image.png" alt="AB Pest Control" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
-          <h1 className="text-2xl font-black text-slate-800 tracking-tight">AB PEST CONTROL</h1>
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Operating System</p>
+          <p style={{ fontFamily: '"Bebas Neue", Impact, sans-serif', fontSize: "1.8rem", color: "#8AA844", letterSpacing: "0.06em", lineHeight: 1, margin: 0 }}>
+            A.B. PEST CONTROL
+          </p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: "0.6rem", color: "#E4572E", letterSpacing: "0.4em", marginTop: 4, textTransform: "uppercase" }}>
+            INSECTICIDE SERVICES
+          </p>
+          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 10, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 600 }}>
+            Operating System
+          </p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-          
+        {/* Card */}
+        <div style={{ ...glass, borderRadius: 20, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.5)" }}>
+
           {/* Tabs */}
-          <div className="flex border-b border-slate-100">
-            <button
-              onClick={() => switchTab("admin")}
-              className={`flex-1 py-4 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-colors ${
-                tab === "admin" ? "bg-white text-emerald-600 border-b-2 border-emerald-600" : "bg-slate-50 text-slate-400 hover:text-slate-600"
-              }`}
-            >
-              <Shield className="w-4 h-4" /> Admin
-            </button>
-            <button
-              onClick={() => switchTab("worker")}
-              className={`flex-1 py-4 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-colors ${
-                tab === "worker" ? "bg-white text-emerald-600 border-b-2 border-emerald-600" : "bg-slate-50 text-slate-400 hover:text-slate-600"
-              }`}
-            >
-              <HardHat className="w-4 h-4" /> Worker
-            </button>
+          <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            {[
+              { key: "admin",    label: "Admin",    Icon: Shield },
+              { key: "employee", label: "Employee", Icon: HardHat },
+            ].map(({ key, label, Icon }) => (
+              <button key={key} onClick={() => switchTab(key)}
+                style={{
+                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  padding: "14px 0", fontSize: 11, fontWeight: 800, letterSpacing: "0.12em",
+                  textTransform: "uppercase", border: "none", cursor: "pointer", transition: "all 0.2s",
+                  color: tab === key ? "#4C7A2D" : "rgba(255,255,255,0.3)",
+                  background: tab === key ? "rgba(76,122,45,0.08)" : "transparent",
+                  borderBottom: tab === key ? "2px solid #4C7A2D" : "2px solid transparent",
+                }}>
+                <Icon size={14} /> {label}
+              </button>
+            ))}
           </div>
 
-          <div className="p-8">
+          <div style={{ padding: 28 }}>
+
             {error && (
-              <div className="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-700 text-xs font-bold rounded-xl animate-in fade-in slide-in-from-top-1">
+              <div style={{ marginBottom: 20, padding: "12px 16px", borderRadius: 12, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#F87171", fontSize: 13, fontWeight: 600 }}>
                 {error}
               </div>
             )}
 
+            {/* Admin — Google */}
             {tab === "admin" && (
-              <div className="space-y-6">
-                <p className="text-sm text-slate-500 text-center leading-relaxed">
-                  Admin portal is accessed via authorized Google accounts only.
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", textAlign: "center", lineHeight: 1.6, margin: 0 }}>
+                  Admin access is secured via authorized Google accounts only.
                 </p>
-                <button
-                  onClick={handleGoogleSignIn}
-                  disabled={busy}
-                  className="w-full flex items-center justify-center gap-3 py-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm transition-all shadow-sm active:scale-95 disabled:opacity-50"
-                >
-                  <svg width="18" height="18" viewBox="0 0 18 18">
-                    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
-                    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" />
-                    <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" />
-                    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
+
+                <button onClick={handleGoogleSignIn} disabled={busy}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+                    padding: "14px 20px", borderRadius: 14, cursor: busy ? "not-allowed" : "pointer",
+                    background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
+                    color: "#FFFFFF", fontSize: 14, fontWeight: 700, transition: "all 0.2s",
+                    opacity: busy ? 0.6 : 1,
+                  }}
+                  onMouseEnter={e => { if (!busy) { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.borderColor = "rgba(76,122,45,0.4)"; }}}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}>
+
+                  {/* Google G logo — proper colored version */}
+                  <svg width="20" height="20" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                   </svg>
-                  {busy ? "Signing in..." : "Continue with Google"}
+
+                  {busy ? "Signing in…" : "Continue with Google"}
                 </button>
               </div>
             )}
 
-            {tab === "worker" && (
-              <form onSubmit={handleWorkerSubmit} className="space-y-6">
+            {/* Employee — PIN */}
+            {tab === "employee" && (
+              <form onSubmit={handleEmployeeSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Worker PIN</label>
+                  <label style={{ display: "block", fontSize: 10, fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>
+                    Employee PIN
+                  </label>
                   <input
                     type="password"
                     value={pin}
-                    onChange={(e) => setPin(e.target.value)}
+                    onChange={e => setPin(e.target.value)}
                     placeholder="••••••••"
                     required
                     autoFocus
-                    className="w-full px-4 py-4 rounded-xl border border-slate-200 focus:border-emerald-500 focus:outline-none text-center text-xl font-black tracking-widest transition-all bg-slate-50 focus:bg-white"
+                    style={{
+                      width: "100%", padding: "14px 16px", borderRadius: 14, fontSize: 20,
+                      fontWeight: 900, letterSpacing: "0.3em", textAlign: "center",
+                      background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+                      color: "#FFFFFF", outline: "none", boxSizing: "border-box", transition: "border-color 0.2s",
+                    }}
+                    onFocus={e => e.target.style.borderColor = "#4C7A2D"}
+                    onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
                   />
+                  <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: 8 }}>
+                    Each employee has a unique PIN
+                  </p>
                 </div>
-                <button
-                  type="submit"
-                  disabled={busy || !pin.trim()}
-                  className="w-full py-4 rounded-xl bg-slate-800 text-white font-black text-xs uppercase tracking-widest hover:bg-slate-700 transition-all shadow-lg active:scale-95 disabled:opacity-50"
-                >
-                  {busy ? "Verifying..." : "Sign In"}
+
+                <button type="submit" disabled={busy || !pin.trim()}
+                  style={{
+                    width: "100%", padding: "14px 20px", borderRadius: 14, border: "none",
+                    background: busy || !pin.trim() ? "rgba(76,122,45,0.3)" : "linear-gradient(135deg, #2F4F2F, #4C7A2D)",
+                    color: "#FFFFFF", fontSize: 13, fontWeight: 800, letterSpacing: "0.12em",
+                    textTransform: "uppercase", cursor: busy || !pin.trim() ? "not-allowed" : "pointer",
+                    boxShadow: busy || !pin.trim() ? "none" : "0 0 20px rgba(76,122,45,0.3)",
+                    transition: "all 0.2s",
+                  }}>
+                  {busy ? "Verifying…" : "Sign In"}
                 </button>
               </form>
             )}
+
           </div>
         </div>
 
-        <p className="text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-8">
+        <p style={{ textAlign: "center", color: "rgba(255,255,255,0.15)", fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", marginTop: 24 }}>
           AB Pest Control © {new Date().getFullYear()}
         </p>
       </div>

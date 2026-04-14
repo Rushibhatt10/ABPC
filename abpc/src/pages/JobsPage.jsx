@@ -456,7 +456,7 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
           </div>
 
           <div className="bg-[var(--brand-soft)] rounded-xl p-3">
-            <p className="text-xs font-bold text-[var(--brand-dark)] mb-1">Assigned to all workers</p>
+            <p className="text-xs font-bold text-[var(--brand-dark)] mb-1">Assigned to all EMPLOYEEs</p>
             <p className="text-sm text-[var(--brand)]">{EmployeeS.join(", ")}</p>
           </div>
 
