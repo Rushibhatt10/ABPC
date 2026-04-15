@@ -1,7 +1,10 @@
 /**
  * Geo-Location utilities
- * Uses OpenStreetMap Nominatim (free, no API key)
- * Uses browser GPS (no manual lat/lng needed)
+ * - Photon (komoot) — primary geocoder, faster & better for Indian addresses
+ * - Nominatim (OSM) — fallback geocoder
+ * - Google Maps URL parser — extract lat/lng from any Google Maps link
+ * - Browser GPS — no cached results
+ * All completely free, no API key required.
  */
 
 /** Get employee's live GPS location — no cached results */
@@ -21,65 +24,142 @@ export function getCurrentLocation() {
         };
         reject(new Error(messages[err.code] || "Failed to get location."));
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 } // maximumAge: 0 = no cache
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   });
 }
 
 /**
- * Geocode a text address → { lat, lng } using OpenStreetMap Nominatim.
- * Searches in India by default for better accuracy.
- * Smart fallback: tries progressively shorter queries if full address fails.
+ * Parse a Google Maps URL and extract lat/lng.
+ * Supports all common Google Maps URL formats.
+ * Returns { lat, lng } or null if not a valid Maps link.
+ */
+export function parseGoogleMapsUrl(input) {
+  if (!input || typeof input !== "string") return null;
+  const s = input.trim();
+
+  // Format: https://www.google.com/maps/place/.../@23.12345,72.54321,15z
+  const atMatch = s.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  if (atMatch) {
+    const lat = parseFloat(atMatch[1]);
+    const lng = parseFloat(atMatch[2]);
+    if (isValidLatLng(lat, lng)) return { lat, lng };
+  }
+
+  // Format: https://maps.google.com/?q=23.12345,72.54321
+  // Format: https://www.google.com/maps?q=23.12345,72.54321
+  const qMatch = s.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  if (qMatch) {
+    const lat = parseFloat(qMatch[1]);
+    const lng = parseFloat(qMatch[2]);
+    if (isValidLatLng(lat, lng)) return { lat, lng };
+  }
+
+  // Format: plain "lat,lng" coordinate string  e.g. "23.0225, 72.5714"
+  const plainCoord = s.match(/^(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)$/);
+  if (plainCoord) {
+    const lat = parseFloat(plainCoord[1]);
+    const lng = parseFloat(plainCoord[2]);
+    if (isValidLatLng(lat, lng)) return { lat, lng };
+  }
+
+  return null;
+}
+
+function isValidLatLng(lat, lng) {
+  return !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+/**
+ * Search addresses using Photon (komoot) — fast, free, no API key.
+ * Biased towards India for better local results.
+ * Returns array of { lat, lng, displayName, shortName }
+ */
+export async function searchPhoton(query, limit = 6) {
+  if (!query?.trim() || query.trim().length < 3) return [];
+  // Bias search towards India (center of India approx)
+  const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query.trim())}&limit=${limit}&lang=en&lat=20.5937&lon=78.9629&zoom=6`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return (data.features || []).map((f) => {
+    const p = f.properties || {};
+    const coords = f.geometry?.coordinates || [];
+    const lng = coords[0];
+    const lat = coords[1];
+    if (!lat || !lng) return null;
+    const parts = [p.name, p.street, p.city || p.county, p.state].filter(Boolean);
+    const shortName = parts.slice(0, 3).join(", ");
+    const displayName = [p.name, p.street, p.city || p.county, p.state, p.country]
+      .filter(Boolean).join(", ");
+    return { lat, lng, displayName, shortName };
+  }).filter(Boolean);
+}
+
+/**
+ * Nominatim (OSM) search — fallback with smart address splitting.
+ * Returns array of { lat, lng, displayName, shortName }
+ */
+export async function searchNominatim(query, limit = 6) {
+  if (!query?.trim() || query.trim().length < 3) return [];
+  const withIndia = /india|gujarat|maharashtra|rajasthan|delhi|mumbai|ahmedabad|surat|vadodara|rajkot|gandhinagar/i.test(query)
+    ? query.trim() : `${query.trim()}, India`;
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(withIndia)}&format=json&limit=${limit}&addressdetails=1&countrycodes=in`;
+  const res = await fetch(url, {
+    headers: { "Accept-Language": "en" },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.map((r) => {
+    const a = r.address || {};
+    const shortName = [a.road || a.neighbourhood || a.suburb, a.city || a.town || a.village, a.state]
+      .filter(Boolean).join(", ");
+    return {
+      lat: parseFloat(r.lat),
+      lng: parseFloat(r.lon),
+      displayName: r.display_name,
+      shortName,
+    };
+  });
+}
+
+/**
+ * Geocode address → { lat, lng, displayName }
+ * Tries Photon first, falls back to Nominatim.
  */
 export async function geocodeAddress(address) {
   if (!address || address.trim().length < 5) throw new Error("Address too short to geocode.");
 
-  // Build a list of queries to try, from most specific to least
-  // Nominatim can't find flat numbers — skip them, use society/area/city
-  const parts = address.split(",").map(s => s.trim()).filter(Boolean);
+  // Try Photon first
+  try {
+    const results = await searchPhoton(address, 1);
+    if (results.length > 0) return results[0];
+  } catch { /* fall through */ }
 
-  // Strategy: skip the first part (flat/house no) if there are 3+ parts
-  // because flat numbers confuse Nominatim
-  const queries = [];
-
+  // Fallback to Nominatim with progressive trimming
+  const parts = address.split(",").map((s) => s.trim()).filter(Boolean);
+  const queries = [address];
   if (parts.length >= 3) {
-    // Try without flat number first (society + area + city + pin)
     queries.push(parts.slice(1).join(", "));
-    // Then try area + city only
     if (parts.length >= 4) queries.push(parts.slice(2).join(", "));
-    // Then try just city
-    if (parts.length >= 4) queries.push(parts[parts.length - 2] + ", " + parts[parts.length - 1]);
   }
-  // Always try the full address too
-  queries.unshift(address);
 
   for (const q of queries) {
-    const withIndia = /india|gujarat|maharashtra|rajasthan|delhi|mumbai|ahmedabad|surat|vadodara|rajkot/i.test(q)
-      ? q : `${q}, India`;
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(withIndia)}&format=json&limit=1&countrycodes=in`;
     try {
-      const res = await fetch(url, { headers: { "Accept-Language": "en", "User-Agent": "ABPC-CRM/1.0" } });
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (data && data.length > 0) {
-        return {
-          lat: parseFloat(data[0].lat),
-          lng: parseFloat(data[0].lon),
-          displayName: data[0].display_name,
-        };
-      }
+      const results = await searchNominatim(q, 1);
+      if (results.length > 0) return results[0];
     } catch { continue; }
   }
 
-  throw new Error(`Could not find location for: "${address}". Try adding the city name or a nearby landmark.`);
+  throw new Error(`Could not find location for: "${address}". Try a landmark or area name.`);
 }
 
 /**
- * Haversine formula — calculate distance between two lat/lng points.
- * Returns distance in kilometers.
+ * Haversine formula — distance between two lat/lng points in kilometers.
  */
 export function haversineDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371; // Earth radius in km
+  const R = 6371;
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
   const a =
