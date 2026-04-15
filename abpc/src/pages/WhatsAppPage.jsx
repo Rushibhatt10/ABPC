@@ -149,8 +149,8 @@ function WhatsAppModal({ job, invoices, quotations, amcs, onClose }) {
               <p className="text-xs text-slate-400">{data.jobDate} · {data.amount}</p>
             </div>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${job.status === "completed" ? "bg-emerald-100 text-emerald-700" :
-                job.status === "in_progress" ? "bg-blue-100 text-blue-700" :
-                  "bg-amber-100 text-amber-700"
+              job.status === "in_progress" ? "bg-blue-100 text-blue-700" :
+                "bg-amber-100 text-amber-700"
               }`}>{job.status || "pending"}</span>
           </div>
 
@@ -310,7 +310,7 @@ export default function WhatsAppPage() {
               }`}>
             {t.label}
             <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${t.alert ? "bg-rose-500 text-white" :
-                activeTab === t.key ? "bg-slate-100 text-slate-600" : "bg-slate-200 text-slate-500"
+              activeTab === t.key ? "bg-slate-100 text-slate-600" : "bg-slate-200 text-slate-500"
               }`}>{t.badge}</span>
           </button>
         ))}
@@ -386,8 +386,8 @@ export default function WhatsAppPage() {
                               <p className="text-[10px] text-slate-400">{job.scheduledDate} · {job.finalPrice ? `₹${Number(job.finalPrice).toLocaleString("en-IN")}` : ""}</p>
                             </div>
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${job.status === "completed" ? "bg-emerald-100 text-emerald-700" :
-                                job.status === "in_progress" ? "bg-blue-100 text-blue-700" :
-                                  "bg-amber-100 text-amber-700"
+                              job.status === "in_progress" ? "bg-blue-100 text-blue-700" :
+                                "bg-amber-100 text-amber-700"
                               }`}>{job.status || "pending"}</span>
                             <button onClick={() => setSelectedJob(job)}
                               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white flex-shrink-0"

@@ -1,38 +1,42 @@
-/**
- * Upload a file to Cloudinary using unsigned upload preset.
- * Returns the secure_url string.
- *
- * Setup:
- *  1. Go to cloudinary.com → Dashboard → copy your Cloud Name
- *  2. Go to Settings → Upload → Add upload preset → set Signing Mode = Unsigned → Save
- *  3. Add to abpc/.env:
- *       VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
- *       VITE_CLOUDINARY_UPLOAD_PRESET=your_preset_name
- */
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+/** Upload any file (image/audio) to Cloudinary */
 export async function uploadToCloudinary(file) {
-  const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+  if (!CLOUD_NAME || !UPLOAD_PRESET) throw new Error("Cloudinary not configured.");
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("upload_preset", UPLOAD_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: "POST", body: fd });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error?.message || `Upload failed (${res.status})`); }
+  return (await res.json()).secure_url;
+}
 
-  if (!CLOUD_NAME || !UPLOAD_PRESET) {
-    throw new Error(
-      "Cloudinary not configured. Add VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET to your .env file."
-    );
-  }
+/**
+ * Upload a video to Cloudinary with auto-optimization.
+ * - resource_type: video
+ * - folder: job_reports/videos
+ * - eager: quality auto:low, mp4, 720p max
+ * Returns the optimized secure_url.
+ */
+export async function uploadVideoToCloudinary(file, jobId = "") {
+  if (!CLOUD_NAME || !UPLOAD_PRESET) throw new Error("Cloudinary not configured.");
 
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", UPLOAD_PRESET);
+  const allowed = ["video/mp4", "video/webm"];
+  if (!allowed.includes(file.type)) throw new Error("Only MP4 and WebM videos are allowed.");
+  if (file.size > 5 * 1024 * 1024) throw new Error("Video must be under 5MB.");
+
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("upload_preset", UPLOAD_PRESET);
+  fd.append("folder", "job_reports/videos");
+  if (jobId) fd.append("public_id", `job_${jobId}_${Date.now()}`);
 
   const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
-    { method: "POST", body: formData }
+    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`,
+    { method: "POST", body: fd }
   );
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `Cloudinary upload failed (${res.status})`);
-  }
-
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error?.message || `Video upload failed (${res.status})`); }
   const data = await res.json();
   return data.secure_url;
 }

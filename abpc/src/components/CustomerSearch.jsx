@@ -157,15 +157,20 @@ export default function CustomerSearch({ customers = [], value, onChange, onCust
   // Selected state — show read-only card
   if (value) {
     return (
-      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--brand-soft)] border border-emerald-200">
-        <div className="w-9 h-9 rounded-xl bg-[var(--brand)] flex items-center justify-center text-white text-xs font-black flex-shrink-0">
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl"
+        style={{ background: "rgba(76,122,45,0.12)", border: "1px solid rgba(76,122,45,0.3)" }}>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-black flex-shrink-0"
+          style={{ background: "#4C7A2D" }}>
           {value.name?.slice(0, 2).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-slate-900 text-sm truncate">{value.name}</p>
-          <p className="text-xs text-slate-500 truncate">{value.phone} · {value.address}</p>
+          <p className="font-bold text-white text-sm truncate">{value.name}</p>
+          <p className="text-xs truncate" style={{ color: "rgba(255,255,255,0.5)" }}>{value.phone} · {value.address}</p>
         </div>
-        <button type="button" onClick={clear} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors flex-shrink-0" title="Change customer">
+        <button type="button" onClick={clear} className="p-1.5 rounded-lg flex-shrink-0 transition-colors"
+          style={{ color: "rgba(255,255,255,0.4)" }}
+          onMouseEnter={e => e.currentTarget.style.color = "#F87171"}
+          onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.4)"}>
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -186,18 +191,20 @@ export default function CustomerSearch({ customers = [], value, onChange, onCust
             onFocus={() => setOpen(true)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white"
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff" }}
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl focus:outline-none text-sm"
           />
         </div>
 
         {/* Dropdown */}
         {open && (
-          <div className="absolute z-50 w-full mt-1 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden">
+          <div className="absolute z-[999] w-full mt-1 rounded-xl shadow-2xl overflow-hidden"
+            style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.12)", top: "100%" }}>
             {results.length === 0 && query.trim() && (
-              <div className="px-4 py-3 text-sm text-slate-400">No customers found for "{query}"</div>
+              <div className="px-4 py-3 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>No customers found for "{query}"</div>
             )}
             {results.length === 0 && !query.trim() && (
-              <div className="px-4 py-3 text-sm text-slate-400">Start typing to search...</div>
+              <div className="px-4 py-3 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Start typing to search…</div>
             )}
             {results.map((c, i) => (
               <button
@@ -205,18 +212,21 @@ export default function CustomerSearch({ customers = [], value, onChange, onCust
                 type="button"
                 onMouseDown={() => select(c)}
                 onMouseEnter={() => setActiveIdx(i)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-slate-100 last:border-0 ${
-                  activeIdx === i ? "bg-[var(--brand-soft)]" : "hover:bg-slate-50"
-                }`}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                style={{
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  background: activeIdx === i ? "rgba(76,122,45,0.15)" : "transparent",
+                }}
               >
-                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 text-xs font-black flex-shrink-0">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0"
+                  style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>
                   {c.name?.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-900 text-sm truncate">{c.name}</p>
-                  <p className="text-xs text-slate-400 truncate">{c.phone} · {c.address}</p>
+                  <p className="font-semibold text-sm truncate text-white">{c.name}</p>
+                  <p className="text-xs truncate" style={{ color: "rgba(255,255,255,0.4)" }}>{c.phone} · {c.address}</p>
                 </div>
-                {activeIdx === i && <Check className="w-4 h-4 text-[var(--brand)] flex-shrink-0" />}
+                {activeIdx === i && <Check className="w-4 h-4 flex-shrink-0" style={{ color: "#6DBF4A" }} />}
               </button>
             ))}
 
@@ -225,14 +235,14 @@ export default function CustomerSearch({ customers = [], value, onChange, onCust
               type="button"
               onMouseDown={() => { setOpen(false); setShowAddModal(true); }}
               onMouseEnter={() => setActiveIdx(results.length)}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-                activeIdx === results.length ? "bg-emerald-50" : "hover:bg-emerald-50"
-              }`}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+              style={{ background: activeIdx === results.length ? "rgba(76,122,45,0.15)" : "transparent" }}
             >
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                <Plus className="w-4 h-4 text-emerald-600" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: "rgba(76,122,45,0.2)" }}>
+                <Plus className="w-4 h-4" style={{ color: "#6DBF4A" }} />
               </div>
-              <span className="text-sm font-bold text-emerald-700">+ Add New Customer</span>
+              <span className="text-sm font-bold" style={{ color: "#6DBF4A" }}>+ Add New Customer</span>
             </button>
           </div>
         )}

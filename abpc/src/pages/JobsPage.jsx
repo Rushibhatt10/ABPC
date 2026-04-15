@@ -10,6 +10,10 @@ import MapLink from "../components/MapLink";
 import { getUnitLabel } from "../utils/pricing";
 import ServicePicker from "../components/ServicePicker";
 import JobReportModal from "../components/JobReportModal";
+import JobVideoReportModal from "../components/JobVideoReportModal";
+import JobReportsAdminView from "../components/JobReportsAdminView";
+import SetJobLocation from "../components/SetJobLocation";
+import AttendanceCheckIn from "../components/AttendanceCheckIn";
 import { TREATMENT_GROUPS, TREATMENT_TEMPLATES, buildSubJobs, getJobsByTreatment } from "../constants/treatmentJobs";
 import CustomerSearch from "../components/CustomerSearch";
 import "../components/ServiceCalculator.css";
@@ -17,7 +21,7 @@ import {
   Briefcase, Plus, X, CheckCircle2, Clock,
   User, Calendar, MapPin, ChevronDown, ChevronUp,
   RefreshCw, History, Search, Link2, UploadCloud, FileText, Receipt,
-  Users, ChevronRight, ArrowLeft,
+  Users, ChevronRight, ArrowLeft, Video, BarChart2,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -68,10 +72,14 @@ function warrantyStatus(job) {
   return isUnderWarranty(job) ? "active" : "expired";
 }
 
-function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy, onJobUpdated, onGenerateInvoice }) {
+function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy, onJobUpdated, onGenerateInvoice, onOpenReport, onOpenVideoReport, onOpenAdminReports, onSetLocation, onOpenCheckIn }) {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [showReport, setShowReport] = useState(false);
+  // Modal state lifted to parent — use callbacks instead
+  const setShowReport = () => onOpenReport?.(job);
+  const setShowVideoReport = () => onOpenVideoReport?.(job);
+  const setShowAdminReports = () => onOpenAdminReports?.(job);
+  const setShowSetLocation = () => onSetLocation?.(job);
   const jobSubJobs = subJobs.filter((s) => s.jobId === job.id);
   const completedCount = jobSubJobs.filter((s) => s.status === "done").length;
   const jobAddress = job.address || job.customerAddress || "";
@@ -223,21 +231,69 @@ function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy,
                 <History className="w-3 h-3" /> History ({job.history.length})
               </button>
             )}
+            {/* Admin: View all employee reports — visible for in_progress AND completed jobs */}
+            {(job.status === "completed" || job.status === "in_progress") && (
+              <button onClick={() => setShowAdminReports(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+                style={{ background: "rgba(76,122,45,0.12)", border: "1px solid rgba(76,122,45,0.25)", color: "#6DBF4A" }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(76,122,45,0.4)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                <BarChart2 className="w-3 h-3" /> Reports
+              </button>
+            )}
+            {/* Set GPS coordinates for attendance validation */}
+            <button onClick={() => setShowSetLocation()}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+              style={job.jobLat && job.jobLng
+                ? { background: "rgba(66,133,244,0.1)", border: "1px solid rgba(66,133,244,0.25)", color: "#60A5FA" }
+                : { background: "rgba(228,87,46,0.1)", border: "1px solid rgba(228,87,46,0.25)", color: "#E4572E" }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(66,133,244,0.3)"}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+              <MapPin className="w-3 h-3" />
+              {job.jobLat && job.jobLng ? "Location Set ✓" : "Set Location"}
+            </button>
           </div>
         )}
-        {/* Employee: Add Report button when job completed */}
-        {isEmployee && job.status === "completed" && (
-          <div className="flex gap-2 mt-3">
-            {!job.reportImage && !job.reportAudio && !job.reportNote ? (
-              <button onClick={() => setShowReport(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
-                <FileText className="w-3 h-3" /> Add Report
+        {/* Employee: Report button — shows as soon as any subtask is done (not waiting for full completion) */}
+        {isEmployee && (
+          <div className="flex gap-2 mt-3 flex-wrap">
+            {/* Check In button — always visible for non-completed jobs */}
+            {job.status !== "completed" && (
+              <button onClick={() => onOpenCheckIn?.(job)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+                style={{ background: "rgba(76,122,45,0.15)", border: "1px solid rgba(76,122,45,0.35)", color: "#6DBF4A" }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(76,122,45,0.45)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                <MapPin className="w-3 h-3" /> Check In
               </button>
-            ) : (
-              <button onClick={() => setShowReport(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
-                <FileText className="w-3 h-3" /> View Report
-              </button>
+            )}
+            {completedCount > 0 && (
+              <>
+                {!job.reportImage && !job.reportAudio && !job.reportNote ? (
+                  <button onClick={() => onOpenReport?.(job)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
+                    <FileText className="w-3 h-3" /> Add Report
+                  </button>
+                ) : (
+                  <button onClick={() => onOpenReport?.(job)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
+                    <FileText className="w-3 h-3" /> View Report
+                  </button>
+                )}
+                <button onClick={() => onOpenVideoReport?.(job)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+                  style={{ background: "rgba(76,122,45,0.15)", border: "1px solid rgba(76,122,45,0.3)", color: "#6DBF4A" }}
+                  onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 16px rgba(76,122,45,0.5)"}
+                  onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                  <Video className="w-3 h-3" /> Video Report
+                </button>
+                {completedCount < jobSubJobs.length && (
+                  <span className="flex items-center px-2 py-1 rounded-xl text-[10px] font-semibold"
+                    style={{ background: "rgba(228,87,46,0.12)", color: "#E4572E", border: "1px solid rgba(228,87,46,0.2)" }}>
+                    {completedCount}/{jobSubJobs.length} tasks done
+                  </span>
+                )}
+              </>
             )}
           </div>
         )}
@@ -288,13 +344,9 @@ function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy,
       )}
 
       {/* Report Modal */}
-      {showReport && (
-        <JobReportModal
-          job={job}
-          onClose={() => setShowReport(false)}
-          onSaved={() => { setShowReport(false); onJobUpdated?.(); }}
-        />
-      )}
+      {/* Video Report Modal */}
+      {/* Admin Reports View */}
+      {/* All modals are rendered at JobsPage level to avoid overflow clipping */}
     </div>
   );
 }
@@ -305,13 +357,19 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
   );
   const [form, setForm] = useState({ scheduledDate: getTodayISO(), status: "pending", notes: "" });
 
-  // Unified treatment + pricing state
   const [treatmentKey, setTreatmentKey] = useState("");
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [unit, setUnit] = useState("unit");
 
   const UNITS = [{ value: "sqft", label: "SqFt" }, { value: "sqmt", label: "SqMt" }, { value: "unit", label: "Unit" }, { value: "piece", label: "Per Piece" }];
+
+  // Extra jobs — each has its own treatmentKey, price, quantity, unit
+  const [extraJobs, setExtraJobs] = useState([]);
+
+  const addExtraJob = () => setExtraJobs(p => [...p, { treatmentKey: "", price: "", quantity: "1", unit: "unit" }]);
+  const updateExtra = (i, key, val) => setExtraJobs(p => p.map((j, idx) => idx === i ? { ...j, [key]: val } : j));
+  const removeExtra = (i) => setExtraJobs(p => p.filter((_, idx) => idx !== i));
 
   const selectedTemplate = treatmentKey ? TREATMENT_TEMPLATES[treatmentKey] : null;
   const previewJobs = treatmentKey ? getJobsByTreatment(treatmentKey) : [];
@@ -320,8 +378,13 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!selectedCustomer) { alert("Please select a customer."); return; }
-    if (!treatmentKey) { alert("Please select a treatment."); return; }
-    if (!price || parseFloat(price) <= 0) { alert("Please enter a price."); return; }
+    if (!treatmentKey) { alert("Please select a treatment for Job 1."); return; }
+    if (!price || parseFloat(price) <= 0) { alert("Please enter a price for Job 1."); return; }
+    // Validate extra jobs
+    for (let i = 0; i < extraJobs.length; i++) {
+      if (!extraJobs[i].treatmentKey) { alert(`Please select a treatment for Job ${i + 2}.`); return; }
+      if (!extraJobs[i].price || parseFloat(extraJobs[i].price) <= 0) { alert(`Please enter a price for Job ${i + 2}.`); return; }
+    }
 
     onSave({
       customerId: selectedCustomer.id || "",
@@ -345,15 +408,75 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
       treatmentKey,
       treatmentLabel: selectedTemplate?.label || "",
       createdAt: new Date().toISOString(),
+      _extraJobs: extraJobs.filter(j => j.treatmentKey && parseFloat(j.price) > 0),
     });
   };
+
+  // Reusable treatment picker block
+  const TreatmentBlock = ({ tKey, tPrice, tQty, tUnit, onTKey, onPrice, onQty, onUnit, label }) => {
+    const tmpl = tKey ? TREATMENT_TEMPLATES[tKey] : null;
+    const blockTotal = (parseFloat(tPrice) || 0) * (parseFloat(tQty) || 0);
+    return (
+      <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 space-y-3">
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
+        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+          {TREATMENT_GROUPS.map((grp) => (
+            <div key={grp.group}>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{grp.group}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {grp.items.map((key) => (
+                  <button key={key} type="button"
+                    onClick={() => { onTKey(key); onPrice(""); onQty("1"); onUnit("unit"); }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                      tKey === key
+                        ? "bg-[var(--brand)] text-white border-[var(--brand)]"
+                        : "bg-white text-slate-600 border-slate-200 hover:border-[var(--brand)]"
+                    }`}>
+                    {TREATMENT_TEMPLATES[key].label.replace(/^[^—]+— /, "")}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        {tKey && (
+          <>
+            <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200">
+              <select value={tUnit} onChange={e => onUnit(e.target.value)}
+                className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none bg-white">
+                {UNITS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+              </select>
+              <input type="number" min="0" step="1" value={tQty}
+                onChange={e => onQty(e.target.value)} placeholder="Qty"
+                className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+              <input type="number" min="0" step="1" value={tPrice}
+                onChange={e => onPrice(e.target.value)} placeholder="Price ₹"
+                className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+            </div>
+            <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[var(--brand-soft)] border border-emerald-200">
+              <div>
+                <p className="text-xs font-bold text-slate-700">{tmpl?.label}</p>
+                <p className="text-[10px] text-slate-500">{tQty} {tUnit} × ₹{tPrice || 0}</p>
+              </div>
+              <p className="font-black text-[var(--brand)] text-sm">₹{blockTotal.toLocaleString("en-IN")}</p>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  const grandTotal = total + extraJobs.reduce((s, j) => s + (parseFloat(j.price) || 0) * (parseFloat(j.quantity) || 0), 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-full sm:max-w-lg mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
           <h2 className="font-bold text-slate-900">
-            {reworkSource ? <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 text-violet-600" />New Rework Job</span> : "Create New Job"}
+            {reworkSource
+              ? <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 text-violet-600" />New Rework Job</span>
+              : <span className="flex items-center gap-2"><Plus className="w-4 h-4 text-[var(--brand)]" />Create Jobs {extraJobs.length > 0 && <span className="px-2 py-0.5 rounded-full bg-[var(--brand)] text-white text-[10px] font-black">{1 + extraJobs.length}</span>}</span>
+            }
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"><X className="w-4 h-4" /></button>
         </div>
@@ -372,72 +495,69 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
             <CustomerSearch customers={customers} value={selectedCustomer} onChange={setSelectedCustomer} />
           </div>
 
-          {/* Unified Treatment + Pricing */}
+          {/* Job 1 */}
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Treatment & Pricing *</label>
-            <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 space-y-3">
-
-              {/* Treatment groups */}
-              <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
-                {TREATMENT_GROUPS.map((grp) => (
-                  <div key={grp.group}>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{grp.group}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {grp.items.map((key) => (
-                        <button key={key} type="button"
-                          onClick={() => { setTreatmentKey(key); setPrice(""); setQuantity("1"); setUnit("unit"); }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                            treatmentKey === key
-                              ? "bg-[var(--brand)] text-white border-[var(--brand)]"
-                              : "bg-white text-slate-600 border-slate-200 hover:border-[var(--brand)]"
-                          }`}>
-                          {TREATMENT_TEMPLATES[key].label.replace(/^[^—]+— /, "")}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+              Job 1 — Treatment & Pricing *
+            </label>
+            <TreatmentBlock
+              label="Job 1"
+              tKey={treatmentKey} tPrice={price} tQty={quantity} tUnit={unit}
+              onTKey={setTreatmentKey} onPrice={setPrice} onQty={setQuantity} onUnit={setUnit}
+            />
+            {previewJobs.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {previewJobs.map((j, i) => (
+                  <span key={i} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${i < 2 ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                    {i + 1}. {j}
+                  </span>
                 ))}
               </div>
-
-              {/* Price + Unit + Qty — shown after treatment selected */}
-              {treatmentKey && (
-                <>
-                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200">
-                    <select value={unit} onChange={(e) => setUnit(e.target.value)}
-                      className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none bg-white">
-                      {UNITS.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
-                    </select>
-                    <input type="number" min="0" step="1" value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)} placeholder="Qty"
-                      className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-                    <input type="number" min="0" step="1" value={price}
-                      onChange={(e) => setPrice(e.target.value)} placeholder="Price ₹"
-                      className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-                  </div>
-
-                  {/* Summary */}
-                  <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[var(--brand-soft)] border border-emerald-200">
-                    <div>
-                      <p className="text-xs font-bold text-slate-700">{selectedTemplate?.label}</p>
-                      <p className="text-[10px] text-slate-500">{quantity} {unit} × ₹{price || 0}</p>
-                    </div>
-                    <p className="font-black text-[var(--brand)] text-sm">₹{total.toLocaleString("en-IN")}</p>
-                  </div>
-
-                  {/* Task preview */}
-                  {previewJobs.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {previewJobs.map((j, i) => (
-                        <span key={i} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${i < 2 ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
-                          {i + 1}. {j}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+            )}
           </div>
+
+          {/* Extra jobs */}
+          {extraJobs.map((ej, i) => (
+            <div key={i}>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Job {i + 2} — Treatment & Pricing *
+                </label>
+                <button type="button" onClick={() => removeExtra(i)}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-rose-500 hover:bg-rose-50 transition-colors">
+                  <X className="w-3 h-3" /> Remove
+                </button>
+              </div>
+              <TreatmentBlock
+                label={`Job ${i + 2}`}
+                tKey={ej.treatmentKey} tPrice={ej.price} tQty={ej.quantity} tUnit={ej.unit}
+                onTKey={v => updateExtra(i, "treatmentKey", v)}
+                onPrice={v => updateExtra(i, "price", v)}
+                onQty={v => updateExtra(i, "quantity", v)}
+                onUnit={v => updateExtra(i, "unit", v)}
+              />
+            </div>
+          ))}
+
+          {/* Add another job button */}
+          {!reworkSource && (
+            <button type="button" onClick={addExtraJob}
+              className="w-full py-2.5 rounded-xl border-2 border-dashed text-sm font-bold transition-all flex items-center justify-center gap-2"
+              style={{ borderColor: "rgba(76,122,45,0.3)", color: "#4C7A2D" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "#4C7A2D"; e.currentTarget.style.background = "rgba(76,122,45,0.04)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(76,122,45,0.3)"; e.currentTarget.style.background = "transparent"; }}>
+              <Plus className="w-4 h-4" /> Add Another Job
+            </button>
+          )}
+
+          {/* Grand total */}
+          {extraJobs.length > 0 && grandTotal > 0 && (
+            <div className="flex items-center justify-between px-4 py-3 rounded-xl"
+              style={{ background: "rgba(76,122,45,0.08)", border: "1px solid rgba(76,122,45,0.2)" }}>
+              <p className="text-sm font-bold text-slate-700">{1 + extraJobs.length} Jobs · Grand Total</p>
+              <p className="font-black text-[var(--brand)] text-lg">₹{grandTotal.toLocaleString("en-IN")}</p>
+            </div>
+          )}
 
           {/* Scheduled Date */}
           <div>
@@ -463,7 +583,7 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
             <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] disabled:opacity-60">
-              {saving ? "Creating..." : "Create Job"}
+              {saving ? "Creating..." : `Create ${1 + extraJobs.length} Job${extraJobs.length > 0 ? "s" : ""}`}
             </button>
           </div>
         </form>
@@ -473,7 +593,7 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
 }
 
 /** Customer Jobs Panel — shows all jobs for a selected customer */
-function CustomerJobsPanel({ customer, jobs, subJobs, isEmployee, onMarkSubDone, onRaiseRework, onGenerateInvoice, busy, onBack }) {
+function CustomerJobsPanel({ customer, jobs, subJobs, isEmployee, onMarkSubDone, onRaiseRework, onGenerateInvoice, busy, onBack, onOpenReport, onOpenVideoReport, onOpenAdminReports, onSetLocation }) {
   const customerJobs = useMemo(() =>
     jobs.filter((j) => j.customerId === customer.id || j.customerName === customer.name)
       .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
@@ -544,7 +664,8 @@ function CustomerJobsPanel({ customer, jobs, subJobs, isEmployee, onMarkSubDone,
           {filtered.map(job => (
             <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={isEmployee}
               onMarkSubDone={onMarkSubDone} onRaiseRework={onRaiseRework}
-              onGenerateInvoice={onGenerateInvoice} busy={busy} onJobUpdated={() => {}} />
+              onGenerateInvoice={onGenerateInvoice} busy={busy} onJobUpdated={() => {}}
+              onOpenReport={onOpenReport} onOpenVideoReport={onOpenVideoReport} onOpenAdminReports={onOpenAdminReports} onSetLocation={onSetLocation} />
           ))}
         </div>
       )}
@@ -570,6 +691,13 @@ export default function JobsPage() {
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [viewMode, setViewMode] = useState("jobs"); // "jobs" | "customers"
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+
+  // Top-level modal state — renders above everything, no overflow clipping
+  const [reportJob, setReportJob] = useState(null);
+  const [videoReportJob, setVideoReportJob] = useState(null);
+  const [adminReportsJob, setAdminReportsJob] = useState(null);
+  const [setLocationJob, setSetLocationJob] = useState(null);
+  const [checkInJob, setCheckInJob] = useState(null);
 
   // Auto-open rework modal when navigated from ComplaintsPage
   useEffect(() => {
@@ -622,19 +750,67 @@ export default function JobsPage() {
   const handleCreate = async (form) => {
     setSaving(true);
     try {
-      const payload = {
+      const basePayload = {
         ...form,
         assignedTo: EmployeeS,
         jobType: reworkSource ? "Rework" : "Original",
         parentJobId: reworkSource ? reworkSource.id : null,
         history: [{ event: reworkSource ? "Rework job created" : "Job created", at: new Date().toISOString() }],
       };
-      const jobId = await createRecord("jobs", payload);
+      // Remove internal _extraJobs key before saving
+      const { _extraJobs, ...primaryPayload } = basePayload;
+
+      const jobId = await createRecord("jobs", primaryPayload);
       const subJobsToCreate = buildSubJobs(jobId, form.treatmentKey || "");
       await Promise.all(subJobsToCreate.map((sj) => createRecord("subJobs", sj)));
+
+      // Create extra jobs for the same customer
+      if (_extraJobs?.length > 0) {
+        for (const extra of _extraJobs) {
+          const extraTemplate = TREATMENT_TEMPLATES[extra.treatmentKey];
+          const extraTotal = (parseFloat(extra.price) || 0) * (parseFloat(extra.quantity) || 1);
+          const extraPayload = {
+            customerId: primaryPayload.customerId,
+            customerName: primaryPayload.customerName,
+            customerPhone: primaryPayload.customerPhone,
+            address: primaryPayload.address,
+            scheduledDate: primaryPayload.scheduledDate,
+            notes: primaryPayload.notes,
+            status: "pending",
+            assignedTo: EmployeeS,
+            jobType: "Original",
+            parentJobId: null,
+            serviceId: extra.treatmentKey,
+            serviceName: extraTemplate?.label || extra.treatmentKey,
+            serviceType: extraTemplate?.label || extra.treatmentKey,
+            category: extraTemplate?.category || "",
+            unit: extra.unit,
+            quantity: parseFloat(extra.quantity) || 1,
+            basePrice: parseFloat(extra.price) || 0,
+            adjustedPrice: parseFloat(extra.price) || 0,
+            finalPrice: extraTotal,
+            totalAmount: extraTotal,
+            warranty: "",
+            warrantyType: "none",
+            warrantyDays: 0,
+            treatmentKey: extra.treatmentKey,
+            treatmentLabel: extraTemplate?.label || "",
+            createdAt: new Date().toISOString(),
+            history: [{ event: "Job created", at: new Date().toISOString() }],
+          };
+          const extraJobId = await createRecord("jobs", extraPayload);
+          const extraSubJobs = buildSubJobs(extraJobId, extra.treatmentKey);
+          await Promise.all(extraSubJobs.map((sj) => createRecord("subJobs", sj)));
+        }
+      }
+
       setShowModal(false);
       setReworkSource(null);
-      showMsg("success", reworkSource ? "Rework job created and linked to original." : "Job created and assigned to all Employees.");
+      const total = 1 + (_extraJobs?.length || 0);
+      showMsg("success", reworkSource
+        ? "Rework job created and linked to original."
+        : `${total} job${total > 1 ? "s" : ""} created and assigned to all Employees.`
+      );
     } catch (e) {
       showMsg("error", e.message);
     } finally {
@@ -847,6 +1023,10 @@ export default function JobsPage() {
             onGenerateInvoice={handleGenerateInvoice}
             busy={busy}
             onBack={() => setSelectedCustomer(null)}
+            onOpenReport={setReportJob}
+            onOpenVideoReport={setVideoReportJob}
+            onOpenAdminReports={setAdminReportsJob}
+            onSetLocation={setSetLocationJob}
           />
         ) : (
           <div className="space-y-3">
@@ -922,7 +1102,7 @@ export default function JobsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filtered.map((job) => (
             <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={isEmployee}
-              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} />
+              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenCheckIn={setCheckInJob} />
           ))}
         </div>
       ) : (
@@ -930,13 +1110,13 @@ export default function JobsPage() {
           {jobChains.map(({ original, reworks }) => (
             <div key={original.id}>
               <JobCard job={original} subJobs={subJobs} isEmployee={false}
-                onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} />
+                onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} />
               {reworks.length > 0 && (
                 <div className="ml-6 mt-2 space-y-2 border-l-2 border-violet-200 pl-4">
                   <p className="text-xs font-bold text-violet-500 uppercase tracking-wider mb-2">Rework Jobs ({reworks.length})</p>
                   {reworks.map((rw) => (
                     <JobCard key={rw.id} job={rw} subJobs={subJobs} isEmployee={false}
-                      onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} />
+                      onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} />
                   ))}
                 </div>
               )}
@@ -944,7 +1124,7 @@ export default function JobsPage() {
           ))}
           {filtered.filter(j => j.parentJobId && !jobChains.find(c => c.original.id === j.parentJobId)).map((job) => (
             <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={false}
-              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} />
+              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} />
           ))}
         </div>
       )}
@@ -955,6 +1135,36 @@ export default function JobsPage() {
         <CreateJobModal customers={customers} onClose={() => { setShowModal(false); setReworkSource(null); }}
           onSave={handleCreate} saving={saving} reworkSource={reworkSource} />
       )}
+
+      {/* ── TOP-LEVEL MODALS — rendered outside job cards, no overflow clipping ── */}
+      {reportJob && (
+        <JobReportModal
+          job={reportJob}
+          onClose={() => setReportJob(null)}
+          onSaved={() => { setReportJob(null); }}
+        />
+      )}
+      {videoReportJob && (
+        <JobVideoReportModal job={videoReportJob} onClose={() => setVideoReportJob(null)} />
+      )}
+      {adminReportsJob && (
+        <JobReportsAdminView job={adminReportsJob} onClose={() => setAdminReportsJob(null)} />
+      )}
+      {setLocationJob && (
+        <SetJobLocation
+          job={setLocationJob}
+          onClose={() => setSetLocationJob(null)}
+          onSaved={() => setSetLocationJob(null)}
+        />
+      )}
+      {checkInJob && (
+        <AttendanceCheckIn
+          job={checkInJob}
+          onClose={() => setCheckInJob(null)}
+          onCheckedIn={() => { setCheckInJob(null); showMsg("success", "હાજરી નોંધાઈ ✅"); }}
+        />
+      )}
     </div>
   );
 }
+
