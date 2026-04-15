@@ -11,7 +11,7 @@ import {
 // ── Message templates ──────────────────────────────────────────────────────
 function buildMessage(type, data) {
   const { name, service, amount, invoiceNo, estimateNo, amcExpiry, invoiceId, quotationId, jobId } = data;
-  const sig = "\n\n— AB Pest Control\n📞 +91 98251 88413";
+  const sig = "\n\n— AB Pest Control\n📞 +91 93744 88004";
   const base = typeof window !== "undefined" ? window.location.origin : "";
 
   switch (type) {
@@ -422,7 +422,7 @@ export default function WhatsAppPage() {
             <div className="space-y-2">
               {pendingInvoices.map(inv => {
                 const num = getWhatsAppNumber(inv.customerPhone);
-                const text = `Hello ${inv.customerName}, this is a reminder that your payment of ${formatCurrency(inv.balance)} for invoice ${inv.invoiceNumber} from AB Pest Control is pending. Please complete the payment at your earliest convenience.\n\n— AB Pest Control\n📞 +91 98251 88413`;
+                const text = `Hello ${inv.customerName}, this is a reminder that your payment of ${formatCurrency(inv.balance)} for invoice ${inv.invoiceNumber} from AB Pest Control is pending. Please complete the payment at your earliest convenience.\n\n— AB Pest Control\n📞 +91 93744 88004`;
                 return (
                   <div key={inv.id} className="bg-white rounded-2xl border border-slate-200 px-4 py-3.5 flex items-center gap-3">
                     <div className="flex-1 min-w-0">

@@ -12,8 +12,9 @@ import ServicePicker from "../components/ServicePicker";
 import JobReportModal from "../components/JobReportModal";
 import JobVideoReportModal from "../components/JobVideoReportModal";
 import JobReportsAdminView from "../components/JobReportsAdminView";
-import SetJobLocation from "../components/SetJobLocation";
 import AttendanceCheckIn from "../components/AttendanceCheckIn";
+import AttendanceAdminView from "../components/AttendanceAdminView";
+import SetJobLocation from "../components/SetJobLocation";
 import { TREATMENT_GROUPS, TREATMENT_TEMPLATES, buildSubJobs, getJobsByTreatment } from "../constants/treatmentJobs";
 import CustomerSearch from "../components/CustomerSearch";
 import "../components/ServiceCalculator.css";
@@ -72,15 +73,39 @@ function warrantyStatus(job) {
   return isUnderWarranty(job) ? "active" : "expired";
 }
 
-function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy, onJobUpdated, onGenerateInvoice, onOpenReport, onOpenVideoReport, onOpenAdminReports, onSetLocation, onOpenCheckIn }) {
+function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy, onJobUpdated, onGenerateInvoice, onOpenReport, onOpenVideoReport, onOpenAdminReports, onOpenCheckIn, onSetLocation, onOpenAttendance }) {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const { profile } = useAuth();
+  const employeeName = profile?.workerName || profile?.name || "";
+
+  // Real-time check: has this employee already checked in for this job?
+  const [checkedIn, setCheckedIn] = useState(false);
+  const [checkInTime, setCheckInTime] = useState(null);
+  useEffect(() => {
+    if (!isEmployee || !job.id || !employeeName) return;
+    const q = query(
+      collection(firestoreDb, "attendance"),
+      where("jobId", "==", job.id),
+      where("employeeName", "==", employeeName)
+    );
+    return subscribeQuery(q, (records) => {
+      if (records.length > 0) {
+        setCheckedIn(true);
+        setCheckInTime(records[0].timestamp);
+      } else {
+        setCheckedIn(false);
+        setCheckInTime(null);
+      }
+    });
+  }, [isEmployee, job.id, employeeName]);
+
   // Modal state lifted to parent — use callbacks instead
   const setShowReport = () => onOpenReport?.(job);
   const setShowVideoReport = () => onOpenVideoReport?.(job);
   const setShowAdminReports = () => onOpenAdminReports?.(job);
   const setShowSetLocation = () => onSetLocation?.(job);
-  const jobSubJobs = subJobs.filter((s) => s.jobId === job.id);
+  const jobSubJobs = subJobs.filter((s) => s.jobId === job.id).sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
   const completedCount = jobSubJobs.filter((s) => s.status === "done").length;
   const jobAddress = job.address || job.customerAddress || "";
   const isRework = job.jobType === "Rework";
@@ -252,13 +277,22 @@ function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy,
               <MapPin className="w-3 h-3" />
               {job.jobLat && job.jobLng ? "Location Set ✓" : "Set Location"}
             </button>
+            {/* Admin: View live attendance */}
+            <button onClick={() => onOpenAttendance?.(job)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+              style={{ background: "rgba(228,87,46,0.1)", border: "1px solid rgba(228,87,46,0.25)", color: "#E4572E" }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(228,87,46,0.3)"}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+              <Users className="w-3 h-3" /> Attendance
+            </button>
           </div>
         )}
-        {/* Employee: Report button — shows as soon as any subtask is done (not waiting for full completion) */}
+            {/* Employee: actions gated behind check-in */}
         {isEmployee && (
           <div className="flex gap-2 mt-3 flex-wrap">
-            {/* Check In button — always visible for non-completed jobs */}
-            {job.status !== "completed" && (
+
+            {/* Not checked in yet */}
+            {!checkedIn && job.status !== "completed" && (
               <button onClick={() => onOpenCheckIn?.(job)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
                 style={{ background: "rgba(76,122,45,0.15)", border: "1px solid rgba(76,122,45,0.35)", color: "#6DBF4A" }}
@@ -267,7 +301,58 @@ function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy,
                 <MapPin className="w-3 h-3" /> Check In
               </button>
             )}
-            {completedCount > 0 && (
+
+            {/* Checked in badge + unlocked work */}
+            {checkedIn && job.status !== "completed" && (
+              <>
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
+                  style={{ background: "rgba(76,122,45,0.12)", border: "1px solid rgba(76,122,45,0.3)", color: "#6DBF4A" }}>
+                  <CheckCircle2 className="w-3 h-3" />
+                  Checked In
+                  {checkInTime && (
+                    <span className="ml-1 font-normal" style={{ opacity: 0.6 }}>
+                      {new Date(checkInTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                </span>
+                {completedCount > 0 ? (
+                  <>
+                    {!job.reportImage && !job.reportAudio && !job.reportNote ? (
+                      <button onClick={() => onOpenReport?.(job)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
+                        <FileText className="w-3 h-3" /> Add Report
+                      </button>
+                    ) : (
+                      <button onClick={() => onOpenReport?.(job)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
+                        <FileText className="w-3 h-3" /> View Report
+                      </button>
+                    )}
+                    <button onClick={() => onOpenVideoReport?.(job)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+                      style={{ background: "rgba(76,122,45,0.15)", border: "1px solid rgba(76,122,45,0.3)", color: "#6DBF4A" }}
+                      onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 16px rgba(76,122,45,0.5)"}
+                      onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                      <Video className="w-3 h-3" /> Video Report
+                    </button>
+                    {completedCount < jobSubJobs.length && (
+                      <span className="flex items-center px-2 py-1 rounded-xl text-[10px] font-semibold"
+                        style={{ background: "rgba(228,87,46,0.12)", color: "#E4572E", border: "1px solid rgba(228,87,46,0.2)" }}>
+                        {completedCount}/{jobSubJobs.length} tasks done
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="flex items-center px-2 py-1 rounded-xl text-[10px] font-semibold"
+                    style={{ background: "rgba(76,122,45,0.08)", color: "rgba(109,191,74,0.7)", border: "1px solid rgba(76,122,45,0.15)" }}>
+                    Expand tasks below to start
+                  </span>
+                )}
+              </>
+            )}
+
+            {/* Completed job */}
+            {job.status === "completed" && (
               <>
                 {!job.reportImage && !job.reportAudio && !job.reportNote ? (
                   <button onClick={() => onOpenReport?.(job)}
@@ -287,14 +372,9 @@ function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy,
                   onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
                   <Video className="w-3 h-3" /> Video Report
                 </button>
-                {completedCount < jobSubJobs.length && (
-                  <span className="flex items-center px-2 py-1 rounded-xl text-[10px] font-semibold"
-                    style={{ background: "rgba(228,87,46,0.12)", color: "#E4572E", border: "1px solid rgba(228,87,46,0.2)" }}>
-                    {completedCount}/{jobSubJobs.length} tasks done
-                  </span>
-                )}
               </>
             )}
+
           </div>
         )}
       </div>
@@ -593,7 +673,7 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
 }
 
 /** Customer Jobs Panel — shows all jobs for a selected customer */
-function CustomerJobsPanel({ customer, jobs, subJobs, isEmployee, onMarkSubDone, onRaiseRework, onGenerateInvoice, busy, onBack, onOpenReport, onOpenVideoReport, onOpenAdminReports, onSetLocation }) {
+function CustomerJobsPanel({ customer, jobs, subJobs, isEmployee, onMarkSubDone, onRaiseRework, onGenerateInvoice, busy, onBack, onOpenReport, onOpenVideoReport, onOpenAdminReports, onSetLocation, onOpenAttendance }) {
   const customerJobs = useMemo(() =>
     jobs.filter((j) => j.customerId === customer.id || j.customerName === customer.name)
       .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
@@ -665,7 +745,7 @@ function CustomerJobsPanel({ customer, jobs, subJobs, isEmployee, onMarkSubDone,
             <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={isEmployee}
               onMarkSubDone={onMarkSubDone} onRaiseRework={onRaiseRework}
               onGenerateInvoice={onGenerateInvoice} busy={busy} onJobUpdated={() => {}}
-              onOpenReport={onOpenReport} onOpenVideoReport={onOpenVideoReport} onOpenAdminReports={onOpenAdminReports} onSetLocation={onSetLocation} />
+              onOpenReport={onOpenReport} onOpenVideoReport={onOpenVideoReport} onOpenAdminReports={onOpenAdminReports} onSetLocation={onSetLocation} onOpenAttendance={onOpenAttendance} />
           ))}
         </div>
       )}
@@ -696,8 +776,9 @@ export default function JobsPage() {
   const [reportJob, setReportJob] = useState(null);
   const [videoReportJob, setVideoReportJob] = useState(null);
   const [adminReportsJob, setAdminReportsJob] = useState(null);
-  const [setLocationJob, setSetLocationJob] = useState(null);
-  const [checkInJob, setCheckInJob] = useState(null);
+  const [checkInJob, setCheckInJob] = useState(null);       // employee attendance check-in
+  const [attendanceJob, setAttendanceJob] = useState(null); // admin attendance view
+  const [setLocationJob, setSetLocationJob] = useState(null); // admin set job location
 
   // Auto-open rework modal when navigated from ComplaintsPage
   useEffect(() => {
@@ -1027,6 +1108,7 @@ export default function JobsPage() {
             onOpenVideoReport={setVideoReportJob}
             onOpenAdminReports={setAdminReportsJob}
             onSetLocation={setSetLocationJob}
+            onOpenAttendance={setAttendanceJob}
           />
         ) : (
           <div className="space-y-3">
@@ -1102,7 +1184,7 @@ export default function JobsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filtered.map((job) => (
             <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={isEmployee}
-              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenCheckIn={setCheckInJob} />
+              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onOpenCheckIn={setCheckInJob} />
           ))}
         </div>
       ) : (
@@ -1110,13 +1192,13 @@ export default function JobsPage() {
           {jobChains.map(({ original, reworks }) => (
             <div key={original.id}>
               <JobCard job={original} subJobs={subJobs} isEmployee={false}
-                onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} />
+                onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob} />
               {reworks.length > 0 && (
                 <div className="ml-6 mt-2 space-y-2 border-l-2 border-violet-200 pl-4">
                   <p className="text-xs font-bold text-violet-500 uppercase tracking-wider mb-2">Rework Jobs ({reworks.length})</p>
                   {reworks.map((rw) => (
                     <JobCard key={rw.id} job={rw} subJobs={subJobs} isEmployee={false}
-                      onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} />
+                      onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob} />
                   ))}
                 </div>
               )}
@@ -1124,7 +1206,7 @@ export default function JobsPage() {
           ))}
           {filtered.filter(j => j.parentJobId && !jobChains.find(c => c.original.id === j.parentJobId)).map((job) => (
             <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={false}
-              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} />
+              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob} />
           ))}
         </div>
       )}
@@ -1150,21 +1232,28 @@ export default function JobsPage() {
       {adminReportsJob && (
         <JobReportsAdminView job={adminReportsJob} onClose={() => setAdminReportsJob(null)} />
       )}
-      {setLocationJob && (
-        <SetJobLocation
-          job={setLocationJob}
-          onClose={() => setSetLocationJob(null)}
-          onSaved={() => setSetLocationJob(null)}
-        />
-      )}
+      {/* Attendance check-in — employee side */}
       {checkInJob && (
         <AttendanceCheckIn
           job={checkInJob}
           onClose={() => setCheckInJob(null)}
-          onCheckedIn={() => { setCheckInJob(null); showMsg("success", "હાજરી નોંધાઈ ✅"); }}
+          onCheckedIn={() => { setCheckInJob(null); showMsg("success", "Attendance marked ✓"); }}
+        />
+      )}
+      {/* Attendance admin view */}
+      {attendanceJob && (
+        <AttendanceAdminView job={attendanceJob} onClose={() => setAttendanceJob(null)} />
+      )}
+      {/* Set job location — admin */}
+      {setLocationJob && (
+        <SetJobLocation
+          job={setLocationJob}
+          onClose={() => setSetLocationJob(null)}
+          onSaved={() => { setSetLocationJob(null); showMsg("success", "Job location saved ✓"); }}
         />
       )}
     </div>
   );
 }
+
 

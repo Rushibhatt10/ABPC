@@ -1,17 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { createRecord, deleteRecord, subscribeCollection, updateRecord } from "../utils/firestoreHelpers";
-import { formatDateDisplay, getTodayISO } from "../utils/format";
-import { CalendarClock, Plus, X, Trash2, Search, AlertCircle, CheckCircle2, Clock, FileText } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import {
+  createRecord, deleteRecord, subscribeCollection,
+  updateRecord, nextDocumentNumber,
+} from "../utils/firestoreHelpers";
+import { formatCurrency, formatDateDisplay, getTodayISO } from "../utils/format";
+import {
+  CalendarClock, Plus, X, Trash2, Search, AlertCircle,
+  Clock, FileText, Receipt, CheckCircle2, RefreshCw,
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import ServicePicker from "../components/ServicePicker";
 import CustomerSearch from "../components/CustomerSearch";
 
+// Duration → visits mapping (1 visit per month)
 const DURATIONS = [
-  { label: "1 Month", months: 1 },
-  { label: "3 Months (Quarterly)", months: 3 },
-  { label: "6 Months (Half yearly", months: 6 },
-  { label: "12 Months (Annual)", months: 12 },
+  { label: "1 Month",           months: 1,  visits: 1,  visitLabel: "1 visit" },
+  { label: "3 Months",          months: 3,  visits: 3,  visitLabel: "3 visits" },
+  { label: "6 Months",          months: 6,  visits: 6,  visitLabel: "6 visits" },
+  { label: "12 Months (Annual)", months: 12, visits: 12, visitLabel: "12 visits" },
 ];
 
 function addMonths(dateStr, months) {
@@ -32,6 +39,7 @@ export default function AMCPage() {
   const [amcs, setAmcs] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [invoicingId, setInvoicingId] = useState("");
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [deletingId, setDeletingId] = useState("");
@@ -40,6 +48,7 @@ export default function AMCPage() {
     durationMonths: 12,
     startDate: getTodayISO(),
     services: [],
+    totalAmount: "",
     notes: "",
   });
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -57,36 +66,41 @@ export default function AMCPage() {
     setTimeout(() => setMsg({ type: "", text: "" }), 4000);
   };
 
-  const customer = selectedCustomer;
-
   const endDate = useMemo(
     () => (form.startDate ? addMonths(form.startDate, form.durationMonths) : ""),
     [form.startDate, form.durationMonths]
   );
 
-  const handleServiceAdd = (item) => {
-    setForm((p) => ({ ...p, services: [...p.services, item] }));
-  };
+  const selectedDuration = DURATIONS.find(d => d.months === form.durationMonths) || DURATIONS[3];
+  const totalAmt = parseFloat(form.totalAmount) || 0;
+  const advanceAmt = Math.round(totalAmt * 0.5);
+  const balanceAmt = totalAmt - advanceAmt;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!customer) { showMsg("error", "Select a customer."); return; }
+    if (!selectedCustomer) { showMsg("error", "Select a customer."); return; }
     if (form.services.length === 0) { showMsg("error", "Add at least one service."); return; }
+    if (!totalAmt || totalAmt <= 0) { showMsg("error", "Enter total AMC amount."); return; }
     setBusy(true);
     try {
       await createRecord("amc", {
-        customerId: customer.id,
-        customerName: customer.name,
-        customerPhone: customer.phone,
-        customerAddress: customer.address,
+        customerId: selectedCustomer.id,
+        customerName: selectedCustomer.name,
+        customerPhone: selectedCustomer.phone,
+        customerAddress: selectedCustomer.address,
         durationMonths: form.durationMonths,
+        visits: selectedDuration.visits,
         startDate: form.startDate,
         endDate,
         services: form.services,
+        totalAmount: totalAmt,
+        advanceAmount: advanceAmt,
+        balanceAmount: balanceAmt,
         notes: form.notes,
         status: "Active",
+        invoiceId: null,
       });
-      setForm({ durationMonths: 12, startDate: getTodayISO(), services: [], notes: "" });
+      setForm({ durationMonths: 12, startDate: getTodayISO(), services: [], totalAmount: "", notes: "" });
       setSelectedCustomer(null);
       setShowForm(false);
       showMsg("success", "AMC created successfully.");
@@ -110,6 +124,58 @@ export default function AMCPage() {
     }
   };
 
+  // Generate invoice from AMC — advance amount (50%)
+  const handleGenerateInvoice = async (amc) => {
+    setInvoicingId(amc.id);
+    try {
+      const invoiceNumber = await nextDocumentNumber("INV");
+      const total = Number(amc.totalAmount || 0);
+      const advance = Number(amc.advanceAmount || Math.round(total * 0.5));
+      const balance = total - advance;
+
+      const dur = DURATIONS.find(d => d.months === amc.durationMonths) || DURATIONS[3];
+      const serviceNames = amc.services?.map(s => s.itemName).join(", ") || "AMC Services";
+
+      const items = [{
+        itemName: `AMC — ${serviceNames} (${dur.label} · ${dur.visitLabel})`,
+        quantity: 1,
+        price: total,
+        discount: 0,
+        warranty: "",
+        finalAmount: total,
+      }];
+
+      const invoiceId = await createRecord("invoices", {
+        invoiceNumber,
+        amcId: amc.id,
+        date: getTodayISO(),
+        customerId: amc.customerId || "",
+        customerName: amc.customerName || "",
+        customerPhone: amc.customerPhone || "",
+        customerAddress: amc.customerAddress || "",
+        items,
+        subtotal: total,
+        discountTotal: 0,
+        total,
+        received: advance,   // 50% advance pre-filled
+        balance,
+        paymentMode: "UPI",
+        warranty: "",
+        terms: `AMC Terms: 50% advance paid. Balance ₹${balance.toLocaleString("en-IN")} due on completion of first visit. ${dur.visitLabel} included over ${dur.label}.`,
+        status: "Partial",
+        fromAMC: true,
+      });
+
+      // Link invoice back to AMC
+      await updateRecord("amc", amc.id, { invoiceId });
+      showMsg("success", `Invoice ${invoiceNumber} created with 50% advance.`);
+    } catch (err) {
+      showMsg("error", err.message);
+    } finally {
+      setInvoicingId("");
+    }
+  };
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return [...amcs].reverse().filter((a) =>
@@ -120,7 +186,6 @@ export default function AMCPage() {
     );
   }, [amcs, search]);
 
-  // Expiry alerts: AMCs expiring within 30 days
   const expiringSoon = useMemo(
     () => amcs.filter((a) => a.status === "Active" && daysUntil(a.endDate) <= 30 && daysUntil(a.endDate) >= 0),
     [amcs]
@@ -145,21 +210,16 @@ export default function AMCPage() {
           <h1 className="text-xl sm:text-2xl font-black text-slate-900">AMC Management</h1>
           <p className="text-slate-500 mt-0.5">{amcs.length} contracts · {expiringSoon.length} expiring soon</p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm w-full sm:w-auto min-h-[44px] active:scale-95 sm:ml-auto"
-        >
-          <Plus className="w-4 h-4" />
-          New AMC
+        <button onClick={() => setShowForm(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm w-full sm:w-auto min-h-[44px] active:scale-95 sm:ml-auto">
+          <Plus className="w-4 h-4" /> New AMC
         </button>
       </div>
 
       {msg.text && (
         <div className={`px-4 py-3 rounded-xl text-sm font-medium border ${
           msg.type === "success" ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-rose-50 border-rose-200 text-rose-700"
-        }`}>
-          {msg.text}
-        </div>
+        }`}>{msg.text}</div>
       )}
 
       {/* Expiry alerts */}
@@ -188,12 +248,9 @@ export default function AMCPage() {
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+        <input value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by customer name, phone, address..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white"
-        />
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white" />
       </div>
 
       {/* AMC list */}
@@ -208,8 +265,16 @@ export default function AMCPage() {
             const days = daysUntil(amc.endDate);
             const isExpired = days < 0;
             const isExpiringSoon = days >= 0 && days <= 30;
+            const dur = DURATIONS.find(d => d.months === amc.durationMonths) || DURATIONS[3];
+            const total = Number(amc.totalAmount || 0);
+            const advance = Number(amc.advanceAmount || Math.round(total * 0.5));
+            const balance = Number(amc.balanceAmount ?? (total - advance));
+
             return (
-              <div key={amc.id} className={`bg-white rounded-2xl border p-4 sm:p-5 ${isExpired ? "border-rose-200" : isExpiringSoon ? "border-amber-200" : "border-slate-200"}`}>
+              <div key={amc.id} className={`bg-white rounded-2xl border p-4 sm:p-5 ${
+                isExpired ? "border-rose-200" : isExpiringSoon ? "border-amber-200" : "border-slate-200"
+              }`}>
+                {/* Top row */}
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div>
                     <p className="font-bold text-slate-900">{amc.customerName}</p>
@@ -223,23 +288,45 @@ export default function AMCPage() {
                     }`}>
                       {isExpired ? "Expired" : isExpiringSoon ? `${days}d left` : "Active"}
                     </span>
-                    <button
-                      onClick={() => handleDelete(amc)}
-                      disabled={deletingId === amc.id}
-                      className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
-                    >
+                    <button onClick={() => handleDelete(amc)} disabled={deletingId === amc.id}
+                      className="p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 text-xs text-slate-500 mb-3">
-                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {amc.durationMonths} months</span>
+                {/* Duration + dates */}
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mb-3">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> {dur.label}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold">
+                    {dur.visitLabel}
+                  </span>
                   <span>{formatDateDisplay(amc.startDate)} → {formatDateDisplay(amc.endDate)}</span>
                 </div>
 
+                {/* Payment breakdown */}
+                {total > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="rounded-xl p-2.5 text-center bg-slate-50 border border-slate-100">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</p>
+                      <p className="text-sm font-black text-slate-800 mt-0.5">{formatCurrency(total)}</p>
+                    </div>
+                    <div className="rounded-xl p-2.5 text-center bg-emerald-50 border border-emerald-100">
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Advance (50%)</p>
+                      <p className="text-sm font-black text-emerald-700 mt-0.5">{formatCurrency(advance)}</p>
+                    </div>
+                    <div className="rounded-xl p-2.5 text-center bg-amber-50 border border-amber-100">
+                      <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Balance</p>
+                      <p className="text-sm font-black text-amber-700 mt-0.5">{formatCurrency(balance)}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Services */}
                 {amc.services?.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1.5 mb-3">
                     {amc.services.map((s, i) => (
                       <span key={i} className="px-2 py-0.5 rounded-full bg-[var(--brand-soft)] text-[var(--brand)] text-xs font-semibold">
                         {s.itemName}
@@ -249,14 +336,34 @@ export default function AMCPage() {
                 )}
 
                 {amc.notes && (
-                  <p className="text-xs text-slate-500 mt-2 italic">{amc.notes}</p>
+                  <p className="text-xs text-slate-500 mb-3 italic">{amc.notes}</p>
                 )}
 
-                <div className="flex gap-2 mt-3">
+                {/* Action buttons */}
+                <div className="flex flex-wrap gap-2">
                   <button onClick={() => navigate(`/admin/amc/${amc.id}`)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--brand-soft)] border border-[var(--brand)] text-xs font-semibold text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors">
                     <FileText className="w-3 h-3" /> View Agreement
                   </button>
+
+                  {/* Invoice button */}
+                  {!amc.invoiceId ? (
+                    <button
+                      onClick={() => handleGenerateInvoice(amc)}
+                      disabled={invoicingId === amc.id || !total}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all disabled:opacity-50"
+                      style={{ background: "rgba(228,87,46,0.1)", border: "1px solid rgba(228,87,46,0.25)", color: "#E4572E" }}
+                      onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 12px rgba(228,87,46,0.3)"}
+                      onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                      <Receipt className="w-3 h-3" />
+                      {invoicingId === amc.id ? "Creating…" : !total ? "Set amount first" : "Generate Invoice"}
+                    </button>
+                  ) : (
+                    <Link to={`/admin/invoices/${amc.invoiceId}`}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
+                      <CheckCircle2 className="w-3 h-3" /> View Invoice
+                    </Link>
+                  )}
                 </div>
               </div>
             );
@@ -275,32 +382,29 @@ export default function AMCPage() {
               </button>
             </div>
             <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+
               {/* Customer */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Customer *</label>
-                <CustomerSearch
-                  customers={customers}
-                  value={selectedCustomer}
-                  onChange={setSelectedCustomer}
-                />
+                <CustomerSearch customers={customers} value={selectedCustomer} onChange={setSelectedCustomer} />
               </div>
 
               {/* Duration */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Duration</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Duration & Visits</label>
                 <div className="grid grid-cols-2 gap-2">
                   {DURATIONS.map((d) => (
-                    <button
-                      key={d.months}
-                      type="button"
+                    <button key={d.months} type="button"
                       onClick={() => setForm((p) => ({ ...p, durationMonths: d.months }))}
-                      className={`px-3 py-2.5 rounded-xl border text-sm font-semibold transition-all ${
+                      className={`px-3 py-3 rounded-xl border text-left transition-all ${
                         form.durationMonths === d.months
                           ? "bg-[var(--brand)] text-white border-[var(--brand)]"
                           : "border-slate-200 text-slate-600 hover:border-[var(--brand)]"
-                      }`}
-                    >
-                      {d.label}
+                      }`}>
+                      <p className="text-sm font-bold">{d.label}</p>
+                      <p className={`text-[10px] mt-0.5 ${form.durationMonths === d.months ? "text-white/70" : "text-slate-400"}`}>
+                        {d.visitLabel} · 50% advance
+                      </p>
                     </button>
                   ))}
                 </div>
@@ -309,21 +413,45 @@ export default function AMCPage() {
               {/* Start Date */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Start Date</label>
-                <input
-                  type="date"
-                  value={form.startDate}
+                <input type="date" value={form.startDate}
                   onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm min-h-[42px]"
-                />
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm min-h-[42px]" />
                 {endDate && (
                   <p className="text-xs text-slate-500 mt-1">End date: <strong>{formatDateDisplay(endDate)}</strong></p>
                 )}
               </div>
 
+              {/* Total Amount */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Total AMC Amount (₹) *</label>
+                <input type="number" min="0" step="1" value={form.totalAmount}
+                  onChange={(e) => setForm((p) => ({ ...p, totalAmount: e.target.value }))}
+                  placeholder="Enter total contract amount"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm min-h-[42px]" />
+
+                {/* Live payment breakdown */}
+                {totalAmt > 0 && (
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <div className="rounded-xl p-2.5 text-center bg-slate-50 border border-slate-100">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Total</p>
+                      <p className="text-sm font-black text-slate-800">{formatCurrency(totalAmt)}</p>
+                    </div>
+                    <div className="rounded-xl p-2.5 text-center bg-emerald-50 border border-emerald-100">
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase">Advance 50%</p>
+                      <p className="text-sm font-black text-emerald-700">{formatCurrency(advanceAmt)}</p>
+                    </div>
+                    <div className="rounded-xl p-2.5 text-center bg-amber-50 border border-amber-100">
+                      <p className="text-[10px] font-bold text-amber-600 uppercase">Balance</p>
+                      <p className="text-sm font-black text-amber-700">{formatCurrency(balanceAmt)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Services */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Services Covered</label>
-                <ServicePicker onAdd={handleServiceAdd} addLabel="Add Service" />
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Services Covered *</label>
+                <ServicePicker onAdd={(item) => setForm((p) => ({ ...p, services: [...p.services, item] }))} addLabel="Add Service" />
                 {form.services.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {form.services.map((s, i) => (
@@ -341,18 +469,18 @@ export default function AMCPage() {
               {/* Notes */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Notes</label>
-                <textarea
-                  value={form.notes}
-                  onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
-                  rows={2}
-                  placeholder="Any special conditions..."
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none min-h-[42px]"
-                />
+                <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
+                  rows={2} placeholder="Any special conditions..."
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none min-h-[42px]" />
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
-                <button type="submit" disabled={busy} className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] disabled:opacity-60">
+                <button type="button" onClick={() => setShowForm(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+                  Cancel
+                </button>
+                <button type="submit" disabled={busy}
+                  className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] disabled:opacity-60">
                   {busy ? "Creating..." : "Create AMC"}
                 </button>
               </div>

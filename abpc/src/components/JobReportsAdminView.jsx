@@ -45,7 +45,7 @@ export default function JobReportsAdminView({ job, onClose }) {
 
     const videoLinks = reports.filter(r => r.videoUrl).map((r, i) => `Video ${i + 1}: ${r.videoUrl}`).join("\n");
 
-    return `Hello ${job.customerName} 👋,\n\nYour service has been successfully completed ✅\n\n📋 *Job Details:*\n• Job ID: ${job.id?.slice(-6).toUpperCase()}\n• Service: ${job.treatmentLabel || job.serviceType || "Pest Control"}\n• Date: ${date}\n• Amount: ${formatCurrency(job.finalPrice || job.totalAmount || 0)}\n\n🧾 *Work Summary:*\n${workSummary}${videoLinks ? `\n\n🎥 *Service Videos:*\n${videoLinks}` : ""}\n\nIf you have any questions, feel free to contact us.\n\nThank you for choosing AB Pest Control 🙏\n\n— AB Pest Control\n📞 +91 98251 88413`;
+    return `Hello ${job.customerName} 👋,\n\nYour service has been successfully completed ✅\n\n📋 *Job Details:*\n• Job ID: ${job.id?.slice(-6).toUpperCase()}\n• Service: ${job.treatmentLabel || job.serviceType || "Pest Control"}\n• Date: ${date}\n• Amount: ${formatCurrency(job.finalPrice || job.totalAmount || 0)}\n\n🧾 *Work Summary:*\n${workSummary}${videoLinks ? `\n\n🎥 *Service Videos:*\n${videoLinks}` : ""}\n\nIf you have any questions, feel free to contact us.\n\nThank you for choosing AB Pest Control 🙏\n\n— AB Pest Control\n📞 +91 93744 88004`;
   };
 
   const handleSendWhatsApp = () => {

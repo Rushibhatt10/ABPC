@@ -7,20 +7,49 @@ import { Users, Plus, Search, Phone, MapPin, Edit2, Trash2, X, ChevronRight, Hom
 const propertyTypes = ["Residential", "Commercial", "Industrial"];
 const propertyIcons = { Residential: Home, Commercial: Building2, Industrial: Factory };
 
+/** Build a single address string from structured parts for geocoding */
+function buildAddress({ flatNo, society, area, city, pin }) {
+  return [flatNo, society, area, city, pin].filter(Boolean).join(", ");
+}
+
+/** Parse existing flat address string back into parts (best-effort for edit) */
+function parseAddressParts(address = "") {
+  const parts = address.split(",").map(s => s.trim());
+  return {
+    flatNo:  parts[0] || "",
+    society: parts[1] || "",
+    area:    parts[2] || "",
+    city:    parts[3] || "",
+    pin:     parts[4] || "",
+  };
+}
+
 function CustomerModal({ customer, onClose, onSave, saving }) {
+  const parsed = parseAddressParts(customer?.address || "");
   const [form, setForm] = useState({
-    name: customer?.name || "",
-    phone: customer?.phone || "",
-    address: customer?.address || "",
+    name:         customer?.name || "",
+    phone:        customer?.phone || "",
     propertyType: customer?.propertyType || "Residential",
-    email: customer?.email || "",
-    notes: customer?.notes || "",
+    email:        customer?.email || "",
+    notes:        customer?.notes || "",
+    // structured address parts
+    flatNo:  parsed.flatNo,
+    society: parsed.society,
+    area:    parsed.area,
+    city:    parsed.city,
+    pin:     parsed.pin,
   });
+
+  const f = (key) => (e) => setForm(p => ({ ...p, [key]: e.target.value }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(form);
+    const address = buildAddress(form);
+    if (!address) { alert("Please fill at least Society/Area and City."); return; }
+    onSave({ ...form, address });
   };
+
+  const inputCls = "w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm min-h-[42px]";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -32,76 +61,93 @@ function CustomerModal({ customer, onClose, onSave, saving }) {
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+          {/* Name */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Full Name *</label>
-            <input
-              value={form.name}
-              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-              required
-              placeholder="Customer full name"
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm min-h-[42px]"
-            />
+            <input value={form.name} onChange={f("name")} required placeholder="Customer full name" className={inputCls} />
           </div>
+          {/* Phone */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Phone *</label>
-            <input
-              value={form.phone}
-              onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-              required
-              placeholder="10-digit mobile number"
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm min-h-[42px]"
-            />
+            <input value={form.phone} onChange={f("phone")} required placeholder="10-digit mobile number" className={inputCls} />
           </div>
+          {/* Email */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email</label>
-            <input
-              value={form.email}
-              onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-              placeholder="Email address"
-              type="email"
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm min-h-[42px]"
-            />
+            <input value={form.email} onChange={f("email")} placeholder="Email address" type="email" className={inputCls} />
           </div>
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Address *</label>
-            <textarea
-              value={form.address}
-              onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
-              required
-              placeholder="Full property address"
-              rows={2}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none min-h-[42px]"
-            />
+
+          {/* ── Structured Address ── */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Address *</label>
+            <p className="text-[10px] text-slate-400 -mt-1">Fill what you know — society/area + city is enough for GPS to work.</p>
+
+            {/* Row 1: Flat/House No */}
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-400 mb-1">Flat / House No.</label>
+              <input value={form.flatNo} onChange={f("flatNo")} placeholder="e.g. B-204, House No. 12"
+                className={inputCls} />
+            </div>
+
+            {/* Row 2: Society / Building */}
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-400 mb-1">Society / Building Name *</label>
+              <input value={form.society} onChange={f("society")} placeholder="e.g. Shyam Residency, Green Park Society"
+                className={inputCls} />
+            </div>
+
+            {/* Row 3: Area / Landmark */}
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-400 mb-1">Area / Landmark *</label>
+              <input value={form.area} onChange={f("area")} placeholder="e.g. Satellite, Near Iscon Cross Road"
+                className={inputCls} />
+            </div>
+
+            {/* Row 4: City + PIN side by side */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-400 mb-1">City *</label>
+                <input value={form.city} onChange={f("city")} placeholder="e.g. Ahmedabad"
+                  className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-400 mb-1">PIN Code</label>
+                <input value={form.pin} onChange={f("pin")} placeholder="e.g. 380015" maxLength={6}
+                  className={inputCls} />
+              </div>
+            </div>
+
+            {/* Live preview */}
+            {buildAddress(form) && (
+              <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
+                <MapPin className="w-3.5 h-3.5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-emerald-700 leading-relaxed">{buildAddress(form)}</p>
+              </div>
+            )}
           </div>
+
+          {/* Property Type */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Property Type</label>
             <div className="grid grid-cols-3 gap-2">
               {propertyTypes.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setForm((p) => ({ ...p, propertyType: t }))}
+                <button key={t} type="button" onClick={() => setForm(p => ({ ...p, propertyType: t }))}
                   className={`py-2 rounded-xl text-xs font-bold border-2 transition-all ${
                     form.propertyType === t
                       ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]"
                       : "border-slate-200 text-slate-500 hover:border-slate-300"
-                  }`}
-                >
-                  {t}
-                </button>
+                  }`}>{t}</button>
               ))}
             </div>
           </div>
+
+          {/* Notes */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Notes</label>
-            <textarea
-              value={form.notes}
-              onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
-              placeholder="Any additional notes..."
-              rows={2}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none min-h-[42px]"
-            />
+            <textarea value={form.notes} onChange={f("notes")} placeholder="Any additional notes..." rows={2}
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none min-h-[42px]" />
           </div>
+
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">
               Cancel

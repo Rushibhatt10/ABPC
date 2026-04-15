@@ -197,7 +197,7 @@ export default function AMCPrintPage() {
                   Insecticide Services
                 </p>
                 <p style={{ fontSize: 8.5, color: "#6E6259", marginTop: 3, lineHeight: 1.6 }}>
-                  Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 98251 88413
+                  Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 93744 88004
                 </p>
               </div>
               <div style={{ textAlign: "right" }}>
