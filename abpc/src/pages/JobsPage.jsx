@@ -15,6 +15,7 @@ import JobReportsAdminView from "../components/JobReportsAdminView";
 import AttendanceCheckIn from "../components/AttendanceCheckIn";
 import AttendanceAdminView from "../components/AttendanceAdminView";
 import SetJobLocation from "../components/SetJobLocation";
+import PaymentModeModal from "../components/PaymentModeModal";
 import { TREATMENT_GROUPS, TREATMENT_TEMPLATES, buildSubJobs, getJobsByTreatment } from "../constants/treatmentJobs";
 import CustomerSearch from "../components/CustomerSearch";
 import "../components/ServiceCalculator.css";
@@ -779,6 +780,7 @@ export default function JobsPage() {
   const [checkInJob, setCheckInJob] = useState(null);       // employee attendance check-in
   const [attendanceJob, setAttendanceJob] = useState(null); // admin attendance view
   const [setLocationJob, setSetLocationJob] = useState(null); // admin set job location
+  const [paymentModeJob, setPaymentModeJob] = useState(null); // job waiting for payment mode
 
   // Auto-open rework modal when navigated from ComplaintsPage
   useEffect(() => {
@@ -904,7 +906,15 @@ export default function JobsPage() {
     setShowModal(true);
   };
 
-  const handleGenerateInvoice = async (job) => {
+  const handleGenerateInvoice = (job) => {
+    // Open payment mode picker first
+    setPaymentModeJob(job);
+  };
+
+  const handleGenerateInvoiceWithMode = async (paymentMode) => {
+    const job = paymentModeJob;
+    setPaymentModeJob(null);
+    if (!job) return;
     setBusy(true);
     showMsg("success", "Creating invoice…");
     try {
@@ -933,16 +943,15 @@ export default function JobsPage() {
         total,
         received: 0,
         balance: total,
-        paymentMode: "UPI",
+        paymentMode,
         warranty: job.warranty || "",
         terms: "Terms: 1) Payment due on completion. 2) Taxes extra if applicable.",
         status: "Pending",
         fromJob: true,
       });
 
-      // Link invoice back to job
       await updateRecord("jobs", job.id, { invoiceId });
-      showMsg("success", `Invoice ${invoiceNumber} created.`);
+      showMsg("success", `Invoice ${invoiceNumber} created · ${paymentMode}.`);
     } catch (e) {
       showMsg("error", e.message);
     } finally {
@@ -1250,6 +1259,14 @@ export default function JobsPage() {
           job={setLocationJob}
           onClose={() => setSetLocationJob(null)}
           onSaved={() => { setSetLocationJob(null); showMsg("success", "Job location saved ✓"); }}
+        />
+      )}
+      {/* Payment mode picker — before generating invoice */}
+      {paymentModeJob && (
+        <PaymentModeModal
+          title={`Invoice for ${paymentModeJob.customerName}`}
+          onClose={() => setPaymentModeJob(null)}
+          onConfirm={handleGenerateInvoiceWithMode}
         />
       )}
     </div>

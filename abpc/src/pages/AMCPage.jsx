@@ -12,6 +12,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import ServicePicker from "../components/ServicePicker";
 import CustomerSearch from "../components/CustomerSearch";
+import PaymentModeModal from "../components/PaymentModeModal";
 
 // Duration → visits mapping (1 visit per month)
 const DURATIONS = [
@@ -40,6 +41,7 @@ export default function AMCPage() {
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [invoicingId, setInvoicingId] = useState("");
+  const [paymentModeAmc, setPaymentModeAmc] = useState(null); // AMC waiting for payment mode
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [deletingId, setDeletingId] = useState("");
@@ -124,8 +126,17 @@ export default function AMCPage() {
     }
   };
 
-  // Generate invoice from AMC — advance amount (50%)
-  const handleGenerateInvoice = async (amc) => {
+  // Step 1: open payment mode picker
+  const handleGenerateInvoice = (amc) => {
+    if (!Number(amc.totalAmount)) { showMsg("error", "Set AMC amount first."); return; }
+    setPaymentModeAmc(amc);
+  };
+
+  // Step 2: create invoice with chosen mode
+  const handleGenerateInvoiceWithMode = async (paymentMode) => {
+    const amc = paymentModeAmc;
+    setPaymentModeAmc(null);
+    if (!amc) return;
     setInvoicingId(amc.id);
     try {
       const invoiceNumber = await nextDocumentNumber("INV");
@@ -157,18 +168,17 @@ export default function AMCPage() {
         subtotal: total,
         discountTotal: 0,
         total,
-        received: advance,   // 50% advance pre-filled
+        received: advance,
         balance,
-        paymentMode: "UPI",
+        paymentMode,
         warranty: "",
         terms: `AMC Terms: 50% advance paid. Balance ₹${balance.toLocaleString("en-IN")} due on completion of first visit. ${dur.visitLabel} included over ${dur.label}.`,
         status: "Partial",
         fromAMC: true,
       });
 
-      // Link invoice back to AMC
       await updateRecord("amc", amc.id, { invoiceId });
-      showMsg("success", `Invoice ${invoiceNumber} created with 50% advance.`);
+      showMsg("success", `Invoice ${invoiceNumber} created · ${paymentMode}.`);
     } catch (err) {
       showMsg("error", err.message);
     } finally {
@@ -487,6 +497,15 @@ export default function AMCPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Payment mode picker — before generating invoice */}
+      {paymentModeAmc && (
+        <PaymentModeModal
+          title={`Invoice for ${paymentModeAmc.customerName}`}
+          onClose={() => setPaymentModeAmc(null)}
+          onConfirm={handleGenerateInvoiceWithMode}
+        />
       )}
     </div>
   );
