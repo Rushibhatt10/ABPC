@@ -132,6 +132,19 @@ function EmployeeDashboard({ profile }) {
     return filteredJobs.filter((j) => String(j.scheduledDate) === today || !j.scheduledDate);
   }, [filteredJobs]);
 
+  const tomorrowISO = useMemo(() => {
+    const d = new Date(); d.setDate(d.getDate() + 1);
+    return d.toISOString().split("T")[0];
+  }, []);
+
+  const [dayFilter, setDayFilter] = useState("today"); // "today" | "tomorrow" | "all"
+
+  const displayJobs = useMemo(() => {
+    if (dayFilter === "today") return filteredJobs.filter(j => String(j.scheduledDate) === getTodayISO() || !j.scheduledDate);
+    if (dayFilter === "tomorrow") return filteredJobs.filter(j => String(j.scheduledDate) === tomorrowISO);
+    return filteredJobs;
+  }, [filteredJobs, dayFilter, tomorrowISO]);
+
   const showMsg = (type, text) => {
     setMsg({ type, text });
     setTimeout(() => setMsg({ type: "", text: "" }), 4000);
@@ -183,57 +196,41 @@ function EmployeeDashboard({ profile }) {
           className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white" />
       </div>
 
+      {/* Day filter */}
+      <div className="flex gap-2">
+        {[
+          { key: "today",    label: "આજ" },
+          { key: "tomorrow", label: "કાલ" },
+          { key: "all",      label: "બધા" },
+        ].map(t => (
+          <button key={t.key} onClick={() => setDayFilter(t.key)}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              dayFilter === t.key ? "bg-[var(--brand)] text-white" : "bg-white border border-slate-200 text-slate-600"
+            }`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       <div>
-        <h2 className="text-base font-bold text-slate-800 mb-3">આજના જોબ્સ</h2>
-        {todayJobs.length === 0 ? (
+        <h2 className="text-base font-bold text-slate-800 mb-3">
+          {dayFilter === "today" ? "આજના જોબ્સ" : dayFilter === "tomorrow" ? "કાલના જોબ્સ" : "બધા જોબ્સ"}
+        </h2>
+        {displayJobs.length === 0 ? (
           <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
             <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
-            <p className="font-semibold text-slate-700">આજ માટે કોઈ જોબ નથી</p>
-            <p className="text-sm text-slate-400 mt-1">લેટર ચેક કરો અથવા બધા જોબ્સ જુઓ</p>
+            <p className="font-semibold text-slate-700">કોઈ જોબ મળ્યો નહીં</p>
+            <p className="text-sm text-slate-400 mt-1">બીજો ટૅબ ટ્રાય કરો</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {todayJobs.map((job) => (
-              <EmployeeJobCard
-                key={job.id}
-                job={job}
-                onComplete={handleComplete}
-                saving={saving}
-              />
+            {displayJobs.map((job) => (
+              <EmployeeJobCard key={job.id} job={job} onComplete={handleComplete} saving={saving} />
             ))}
           </div>
         )}
       </div>
 
-      <div>
-        <h2 className="text-base font-bold text-slate-800 mb-3">બધા અસાઇન્ડ જોબ્સ</h2>
-        <div className="space-y-3">
-          {filteredJobs.length === 0 ? (
-            <p className="text-sm text-slate-500">હજુ કોઈ જોબ અસાઇન નથી.</p>
-          ) : (
-            filteredJobs.map((job) => (
-              <div key={job.id} className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <p className="font-semibold text-slate-800 text-sm">{job.customerName}</p>
-                    {job.jobType === "Rework" && (
-                      <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-700">
-                        <RefreshCw className="w-2.5 h-2.5" /> Rework
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-500">{job.serviceType} · {formatDateDisplay(job.scheduledDate)}</p>
-                </div>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                  job.status === "completed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-                }`}>
-                  {job.status === "completed" ? "કમ્પ્લીટ" : "પેન્ડિંગ"}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
     </div>
   );
 }

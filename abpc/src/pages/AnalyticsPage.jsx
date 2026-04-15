@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { subscribeCollection } from "../utils/firestoreHelpers";
-import { formatCurrency, formatDateDisplay } from "../utils/format";
-import { BarChart3, TrendingUp, Users, Briefcase, IndianRupee, CheckCircle2, Clock, Award } from "lucide-react";
+import { formatCurrency, formatDateDisplay, getTodayISO } from "../utils/format";
+import { BarChart3, TrendingUp, Users, Briefcase, IndianRupee, CheckCircle2, Clock, Award, Calendar } from "lucide-react";
 import { EmployeeS } from "../constants/authProfiles";
 
 function MiniBar({ value, max, color = "bg-[var(--brand)]" }) {
@@ -21,6 +21,32 @@ export default function AnalyticsPage() {
   const [invoices, setInvoices] = useState([]);
   const [reports, setReports] = useState([]);
 
+  // Date range filter — default: last 30 days
+  const today = getTodayISO();
+  const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const [dateFrom, setDateFrom] = useState(thirtyDaysAgo.toISOString().split("T")[0]);
+  const [dateTo, setDateTo] = useState(today);
+  const [rangeLabel, setRangeLabel] = useState("30d");
+
+  const RANGES = [
+    { label: "7d",   days: 7 },
+    { label: "30d",  days: 30 },
+    { label: "90d",  days: 90 },
+    { label: "1yr",  days: 365 },
+    { label: "All",  days: null },
+  ];
+
+  const applyRange = (days) => {
+    if (days === null) {
+      setDateFrom("2020-01-01");
+      setDateTo(today);
+    } else {
+      const from = new Date(); from.setDate(from.getDate() - days);
+      setDateFrom(from.toISOString().split("T")[0]);
+      setDateTo(today);
+    }
+  };
+
   useEffect(() => {
     const unsubs = [
       subscribeCollection("customers", setCustomers),
@@ -31,38 +57,50 @@ export default function AnalyticsPage() {
     return () => unsubs.forEach((u) => u());
   }, []);
 
-  const stats = useMemo(() => {
-    const totalRevenue = invoices.reduce((s, i) => s + Number(i.received || 0), 0);
-    const pendingRevenue = invoices.reduce((s, i) => s + Number(i.balance || 0), 0);
-    const completedJobs = jobs.filter((j) => j.status === "completed").length;
-    const pendingJobs = jobs.filter((j) => j.status !== "completed").length;
-    const paidInvoices = invoices.filter((i) => Number(i.balance || 0) === 0).length;
-    const collectionRate = invoices.length > 0 ? Math.round((paidInvoices / invoices.length) * 100) : 0;
+  // Filter invoices and jobs by date range
+  const filteredInvoices = useMemo(() =>
+    invoices.filter(i => {
+      const d = String(i.date || "");
+      return d >= dateFrom && d <= dateTo;
+    }), [invoices, dateFrom, dateTo]);
 
+  const filteredJobs = useMemo(() =>
+    jobs.filter(j => {
+      const d = String(j.scheduledDate || j.createdAt?.toDate?.()?.toISOString?.()?.split("T")[0] || "");
+      return d >= dateFrom && d <= dateTo;
+    }), [jobs, dateFrom, dateTo]);
+
+  const stats = useMemo(() => {
+    const totalRevenue = filteredInvoices.reduce((s, i) => s + Number(i.received || 0), 0);
+    const pendingRevenue = filteredInvoices.reduce((s, i) => s + Number(i.balance || 0), 0);
+    const completedJobs = filteredJobs.filter((j) => j.status === "completed").length;
+    const pendingJobs = filteredJobs.filter((j) => j.status !== "completed").length;
+    const paidInvoices = filteredInvoices.filter((i) => Number(i.balance || 0) === 0).length;
+    const collectionRate = filteredInvoices.length > 0 ? Math.round((paidInvoices / filteredInvoices.length) * 100) : 0;
     return { totalRevenue, pendingRevenue, completedJobs, pendingJobs, paidInvoices, collectionRate };
-  }, [invoices, jobs]);
+  }, [filteredInvoices, filteredJobs]);
 
   // Employee performance
   const EmployeeStats = useMemo(() => {
     return EmployeeS.map((w) => {
-      const EmployeeJobs = jobs.filter((j) => Array.isArray(j.assignedTo) ? j.assignedTo.includes(w) : j.assignedTo === w);
+      const EmployeeJobs = filteredJobs.filter((j) => Array.isArray(j.assignedTo) ? j.assignedTo.includes(w) : j.assignedTo === w);
       const completed = EmployeeJobs.filter((j) => j.status === "completed").length;
       const EmployeeReports = reports.filter((r) => r.EmployeeName === w).length;
       return { name: w, total: EmployeeJobs.length, completed, reports: EmployeeReports };
     });
-  }, [jobs, reports]);
+  }, [filteredJobs, reports]);
 
   const maxEmployeeJobs = Math.max(...EmployeeStats.map((w) => w.total), 1);
 
   // Service breakdown
   const serviceBreakdown = useMemo(() => {
     const map = new Map();
-    jobs.forEach((j) => {
+    filteredJobs.forEach((j) => {
       const key = j.serviceType || j.serviceName || "Other";
       map.set(key, (map.get(key) || 0) + 1);
     });
     return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
-  }, [jobs]);
+  }, [filteredJobs]);
 
   const maxServiceCount = Math.max(...serviceBreakdown.map((s) => s[1]), 1);
 
@@ -74,13 +112,13 @@ export default function AnalyticsPage() {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const label = d.toLocaleString("en-IN", { month: "short" });
-      const revenue = invoices
+      const revenue = filteredInvoices
         .filter((inv) => String(inv.date || "").startsWith(key))
         .reduce((s, inv) => s + Number(inv.received || 0), 0);
       months.push({ key, label, revenue });
     }
     return months;
-  }, [invoices]);
+  }, [filteredInvoices]);
 
   const maxMonthRevenue = Math.max(...monthlyRevenue.map((m) => m.revenue), 1);
 
@@ -97,9 +135,31 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-black text-slate-900">Analytics</h1>
-        <p className="text-slate-500 mt-0.5">Business performance overview</p>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900">Analytics</h1>
+          <p className="text-slate-500 mt-0.5">Business performance overview</p>
+        </div>
+        {/* Date range controls */}
+        <div className="sm:ml-auto flex flex-wrap items-center gap-2">
+          {RANGES.map(r => (
+            <button key={r.label} onClick={() => { applyRange(r.days); setRangeLabel(r.label); }}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+              style={rangeLabel === r.label
+                ? { background: "var(--brand)", color: "#fff" }
+                : { background: "rgba(0,0,0,0.04)", border: "1px solid #e2e8f0", color: "#64748b" }}>
+              {r.label}
+            </button>
+          ))}
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setRangeLabel("custom"); }}
+              className="px-2 py-1.5 rounded-xl border border-slate-200 text-xs focus:border-[var(--brand)] focus:outline-none" />
+            <span className="text-slate-400 text-xs">→</span>
+            <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setRangeLabel("custom"); }}
+              className="px-2 py-1.5 rounded-xl border border-slate-200 text-xs focus:border-[var(--brand)] focus:outline-none" />
+          </div>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -192,10 +252,10 @@ export default function AnalyticsPage() {
           <div className="space-y-3">
             {[
               { label: "Total Customers", value: customers.length, icon: Users },
-              { label: "Total Jobs", value: jobs.length, icon: Briefcase },
+              { label: "Jobs in Range", value: filteredJobs.length, icon: Briefcase },
               { label: "Completed Jobs", value: stats.completedJobs, icon: CheckCircle2 },
               { label: "Pending Jobs", value: stats.pendingJobs, icon: Clock },
-              { label: "Total Invoices", value: invoices.length, icon: IndianRupee },
+              { label: "Invoices in Range", value: filteredInvoices.length, icon: IndianRupee },
               { label: "Collection Rate", value: `${stats.collectionRate}%`, icon: TrendingUp },
             ].map((s) => {
               const Icon = s.icon;

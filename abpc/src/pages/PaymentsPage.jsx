@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { subscribeCollection, updateRecord } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getWhatsAppNumber } from "../utils/format";
-import { TrendingUp, CheckCircle2, Clock, MessageSquare, Search } from "lucide-react";
+import { TrendingUp, CheckCircle2, Clock, MessageSquare, Search, IndianRupee, X } from "lucide-react";
 
 const glass = {
   background: "rgba(255,255,255,0.04)",
@@ -10,12 +10,110 @@ const glass = {
   backdropFilter: "blur(10px)",
 };
 
+/** Small modal to record a partial or full payment */
+function RecordPaymentModal({ invoice, onClose, onSaved }) {
+  const [amount, setAmount] = useState(String(invoice.balance || ""));
+  const [mode, setMode] = useState(invoice.paymentMode || "UPI");
+  const [saving, setSaving] = useState(false);
+  const MODES = ["Cash", "UPI", "Cheque", "Bank Transfer", "Card"];
+
+  const handleSave = async () => {
+    const paid = parseFloat(amount);
+    if (!paid || paid <= 0) { alert("Enter a valid amount."); return; }
+    setSaving(true);
+    try {
+      const newReceived = Number(invoice.received || 0) + paid;
+      const newBalance = Math.max(0, Number(invoice.total || 0) - newReceived);
+      await updateRecord("invoices", invoice.id, {
+        received: newReceived,
+        balance: newBalance,
+        paymentMode: mode,
+        status: newBalance === 0 ? "Paid" : "Partial",
+      });
+      onSaved();
+    } catch (e) { alert(e.message); setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)" }}>
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          <div>
+            <p className="font-bold text-white text-sm">Record Payment</p>
+            <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>{invoice.customerName} · {invoice.invoiceNumber}</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg" style={{ color: "rgba(255,255,255,0.4)" }}><X className="w-4 h-4" /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            {[
+              { label: "Total", value: formatCurrency(invoice.total), color: "rgba(255,255,255,0.7)" },
+              { label: "Received", value: formatCurrency(invoice.received), color: "#6DBF4A" },
+              { label: "Balance", value: formatCurrency(invoice.balance), color: "#E4572E" },
+            ].map(s => (
+              <div key={s.label} className="rounded-xl p-2.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <p className="font-black text-sm" style={{ color: s.color }}>{s.value}</p>
+                <p className="mt-0.5 font-semibold" style={{ color: "rgba(255,255,255,0.3)" }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>Amount Received (₹)</label>
+            <input type="number" min="1" max={invoice.balance} value={amount}
+              onChange={e => setAmount(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl text-sm text-white"
+              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }} />
+            <div className="flex gap-2 mt-2">
+              {[25, 50, 75, 100].map(pct => (
+                <button key={pct} type="button"
+                  onClick={() => setAmount(String(Math.round(Number(invoice.balance) * pct / 100)))}
+                  className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(76,122,45,0.15)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}>
+                  {pct}%
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: "rgba(255,255,255,0.4)" }}>Payment Mode</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {MODES.map(m => (
+                <button key={m} type="button" onClick={() => setMode(m)}
+                  className="py-2 rounded-xl text-xs font-semibold transition-all"
+                  style={mode === m
+                    ? { background: "rgba(76,122,45,0.2)", border: "1px solid rgba(76,122,45,0.4)", color: "#6DBF4A" }
+                    : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}>
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)" }}>Cancel</button>
+            <button onClick={handleSave} disabled={saving}
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg,#1F3D1F,#4C7A2D)", boxShadow: "0 0 16px rgba(76,122,45,0.3)" }}>
+              {saving ? "Saving…" : "Record Payment"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PaymentsPage() {
   const { isEmployee } = useAuth();
   const [invoices, setInvoices] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [msg, setMsg] = useState({ type: "", text: "" });
+  const [recordInvoice, setRecordInvoice] = useState(null); // invoice for partial payment modal
 
   useEffect(() => subscribeCollection("invoices", setInvoices), []);
 
@@ -164,7 +262,12 @@ export default function PaymentsPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-center gap-2">
                         {Number(inv.balance) > 0 && (<>
-                          <button onClick={() => markPaid(inv)} title="Mark Paid"
+                          <button onClick={() => setRecordInvoice(inv)} title="Record Payment"
+                            className="p-1.5 rounded-lg transition-colors"
+                            style={{ background: "rgba(228,87,46,0.15)", color: "#E4572E" }}>
+                            <IndianRupee className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => markPaid(inv)} title="Mark Fully Paid"
                             className="p-1.5 rounded-lg transition-colors"
                             style={{ background: "rgba(76,122,45,0.15)", color: "#6DBF4A" }}>
                             <CheckCircle2 className="w-3.5 h-3.5" />
@@ -183,6 +286,13 @@ export default function PaymentsPage() {
             </table>
           </div>
         </div>
+      )}
+      {recordInvoice && (
+        <RecordPaymentModal
+          invoice={recordInvoice}
+          onClose={() => setRecordInvoice(null)}
+          onSaved={() => { setRecordInvoice(null); showMsg("success", "Payment recorded."); }}
+        />
       )}
     </div>
   );

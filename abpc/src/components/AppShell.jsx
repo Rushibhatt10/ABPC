@@ -1,24 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Briefcase, FileText, BarChart3,
   Receipt, MessageSquare, TrendingUp, Settings,
-  Bell, LogOut, Menu, X, ChevronRight, Shield, CalendarClock, Award,
+  Bell, LogOut, Menu, X, ChevronRight, Shield, CalendarClock, AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { subscribeCollection } from "../utils/firestoreHelpers";
 import Logo from "./Logo";
 
+function daysUntil(dateStr) {
+  const diff = new Date(dateStr) - new Date();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
 const adminNav = [
-  { label: "Dashboard", to: "/admin", icon: LayoutDashboard, end: true },
-  { label: "Customers", to: "/admin/customers", icon: Users },
-  { label: "Jobs", to: "/admin/jobs", icon: Briefcase },
-  { label: "Invoices", to: "/admin/invoices", icon: Receipt },
-  { label: "Quotations", to: "/admin/quotations", icon: FileText },
-  { label: "AMC", to: "/admin/amc", icon: CalendarClock },
-  { label: "Payments", to: "/admin/payments", icon: TrendingUp },
-  { label: "WhatsApp", to: "/admin/whatsapp", icon: MessageSquare },
-  { label: "Analytics", to: "/admin/analytics", icon: BarChart3 },
-  { label: "Settings", to: "/admin/settings", icon: Settings },
+  { label: "Dashboard",   to: "/admin",             icon: LayoutDashboard, end: true },
+  { label: "Customers",   to: "/admin/customers",   icon: Users },
+  { label: "Jobs",        to: "/admin/jobs",         icon: Briefcase },
+  { label: "Invoices",    to: "/admin/invoices",     icon: Receipt },
+  { label: "Quotations",  to: "/admin/quotations",   icon: FileText },
+  { label: "AMC",         to: "/admin/amc",          icon: CalendarClock },
+  { label: "Payments",    to: "/admin/payments",     icon: TrendingUp },
+  { label: "WhatsApp",    to: "/admin/whatsapp",     icon: MessageSquare },
+  { label: "Analytics",   to: "/admin/analytics",    icon: BarChart3 },
+  { label: "Settings",    to: "/admin/settings",     icon: Settings },
 ];
 
 const EmployeeNav = [
@@ -31,6 +37,21 @@ export default function AppShell({ children }) {
   const { profile, logout, isEmployee, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Live badge counts — admin only
+  const [complaints, setComplaints] = useState([]);
+  const [amcs, setAmcs] = useState([]);
+  useEffect(() => {
+    if (isEmployee) return;
+    const unsubs = [
+      subscribeCollection("complaints", setComplaints),
+      subscribeCollection("amc", setAmcs),
+    ];
+    return () => unsubs.forEach(u => u());
+  }, [isEmployee]);
+
+  const openComplaints = complaints.filter(c => c.status !== "Resolved").length;
+  const expiringAmcs = amcs.filter(a => a.status === "Active" && daysUntil(a.endDate) <= 30 && daysUntil(a.endDate) >= 0).length;
 
   const navItems = isEmployee ? EmployeeNav : adminNav;
 
@@ -50,6 +71,11 @@ export default function AppShell({ children }) {
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
+          const badge = !isEmployee && (
+            (item.to === "/admin/complaints" && openComplaints > 0) ? openComplaints :
+            (item.to === "/admin/amc" && expiringAmcs > 0) ? expiringAmcs :
+            null
+          );
           return (
             <NavLink
               key={item.to}
@@ -73,7 +99,13 @@ export default function AppShell({ children }) {
                 <>
                   <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-[#4C7A2D]" : ""}`} />
                   <span className="flex-1">{item.label}</span>
-                  {isActive && <ChevronRight className="w-3 h-3 text-[#4C7A2D]" />}
+                  {badge && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none"
+                      style={{ background: item.to === "/admin/amc" ? "rgba(245,158,11,0.9)" : "rgba(239,68,68,0.9)", color: "#fff" }}>
+                      {badge}
+                    </span>
+                  )}
+                  {isActive && !badge && <ChevronRight className="w-3 h-3 text-[#4C7A2D]" />}
                 </>
               )}
             </NavLink>

@@ -7,7 +7,7 @@ import {
 import { formatCurrency, formatDateDisplay, getTodayISO } from "../utils/format";
 import {
   CalendarClock, Plus, X, Trash2, Search, AlertCircle,
-  Clock, FileText, Receipt, CheckCircle2, RefreshCw,
+  Clock, FileText, Receipt, CheckCircle2, RefreshCw, MapPin,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ServicePicker from "../components/ServicePicker";
@@ -33,6 +33,75 @@ function daysUntil(dateStr) {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
+/** Inline visit log panel — shown below AMC card actions */
+function VisitLogPanel({ amc, dur, onLog, onClose }) {
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  const visits = amc.visitLog || [];
+  const remaining = Math.max(0, dur.visits - visits.length);
+
+  const handleLog = async () => {
+    if (!date) return;
+    setSaving(true);
+    await onLog(amc, date, notes.trim());
+    setNotes("");
+    setSaving(false);
+  };
+
+  return (
+    <div className="mt-3 rounded-2xl border border-blue-100 bg-blue-50 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">
+          Visit Log · {visits.length}/{dur.visits} done · {remaining} remaining
+        </p>
+        <button onClick={onClose} className="p-1 rounded-lg text-blue-400 hover:text-blue-600">
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Past visits */}
+      {visits.length > 0 && (
+        <div className="space-y-1.5">
+          {visits.map((v, i) => (
+            <div key={i} className="flex items-start gap-2 px-3 py-2 rounded-xl bg-white border border-blue-100">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-slate-700">{formatDateDisplay(v.date)}</p>
+                {v.notes && <p className="text-xs text-slate-500 mt-0.5">{v.notes}</p>}
+              </div>
+              <span className="text-[10px] text-slate-400 flex-shrink-0">Visit {i + 1}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Log new visit */}
+      {remaining > 0 && (
+        <div className="flex gap-2 items-end">
+          <div className="flex-1 space-y-1.5">
+            <input type="date" value={date} onChange={e => setDate(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-blue-200 text-xs focus:border-blue-400 focus:outline-none bg-white" />
+            <input value={notes} onChange={e => setNotes(e.target.value)}
+              placeholder="Visit notes (optional)"
+              className="w-full px-3 py-2 rounded-xl border border-blue-200 text-xs focus:border-blue-400 focus:outline-none bg-white" />
+          </div>
+          <button onClick={handleLog} disabled={saving || !date}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-50 flex-shrink-0"
+            style={{ background: "linear-gradient(135deg,#1F3D1F,#4C7A2D)" }}>
+            {saving ? "…" : "Log Visit"}
+          </button>
+        </div>
+      )}
+      {remaining === 0 && (
+        <p className="text-xs text-emerald-700 font-semibold text-center py-1">
+          ✓ All {dur.visits} visits completed
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function AMCPage() {
   const { isEmployee } = useAuth();
   const navigate = useNavigate();
@@ -41,7 +110,8 @@ export default function AMCPage() {
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [invoicingId, setInvoicingId] = useState("");
-  const [paymentModeAmc, setPaymentModeAmc] = useState(null); // AMC waiting for payment mode
+  const [paymentModeAmc, setPaymentModeAmc] = useState(null);
+  const [visitLogAmc, setVisitLogAmc] = useState(null); // AMC whose visit log is open
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [deletingId, setDeletingId] = useState("");
@@ -123,6 +193,18 @@ export default function AMCPage() {
       showMsg("error", err.message);
     } finally {
       setDeletingId("");
+    }
+  };
+
+  // Log a visit against an AMC
+  const logVisit = async (amc, visitDate, visitNotes) => {
+    const existing = amc.visitLog || [];
+    const updated = [...existing, { date: visitDate, notes: visitNotes, loggedAt: new Date().toISOString() }];
+    try {
+      await updateRecord("amc", amc.id, { visitLog: updated });
+      showMsg("success", `Visit logged for ${formatDateDisplay(visitDate)}.`);
+    } catch (err) {
+      showMsg("error", err.message);
     }
   };
 
@@ -356,6 +438,14 @@ export default function AMCPage() {
                     <FileText className="w-3 h-3" /> View Agreement
                   </button>
 
+                  {/* Visit log toggle */}
+                  <button onClick={() => setVisitLogAmc(visitLogAmc?.id === amc.id ? null : amc)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+                    style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.25)", color: "#60A5FA" }}>
+                    <MapPin className="w-3 h-3" />
+                    Visits ({(amc.visitLog || []).length}/{dur.visits})
+                  </button>
+
                   {/* Invoice button */}
                   {!amc.invoiceId ? (
                     <button
@@ -375,6 +465,11 @@ export default function AMCPage() {
                     </Link>
                   )}
                 </div>
+
+                {/* Visit log panel */}
+                {visitLogAmc?.id === amc.id && (
+                  <VisitLogPanel amc={amc} dur={dur} onLog={logVisit} onClose={() => setVisitLogAmc(null)} />
+                )}
               </div>
             );
           })}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, subscribeCollection, updateRecord } from "../utils/firestoreHelpers";
-import { formatDateDisplay, toDateObject, daysBetween } from "../utils/format";
+import { formatDateDisplay, toDateObject, daysBetween, getWhatsAppNumber } from "../utils/format";
 import { warrantyStatus } from "../utils/warranty";
 import {
   AlertTriangle, CheckCircle2, Clock, MessageSquare,
@@ -154,6 +154,14 @@ export default function ComplaintsPage() {
     }
     navigate("/admin/jobs", { state: { reworkJobId: complaint.linkedJobId } });
     updateRecord("complaints", complaint.id, { status: "In Progress" }).catch(() => {});
+  };
+
+  const notifyCustomer = (complaint) => {
+    const phone = complaint.job?.customerPhone || "";
+    const num = getWhatsAppNumber(phone);
+    if (!num) { showMsg("error", "No phone number on linked job."); return; }
+    const text = `Hello ${complaint.customerName || ""},\n\nYour ${complaint.complaintType?.toLowerCase() || "complaint"} regarding *${complaint.serviceType || "our service"}* has been resolved ✅.\n\nThank you for your patience. Please feel free to reach out if you need any further assistance.\n\n— AB Pest Control\n📞 +91 93744 88004`;
+    window.open(`https://wa.me/${num}?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   if (isEmployee) {
@@ -317,6 +325,16 @@ export default function ComplaintsPage() {
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-50 border border-violet-200 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition-colors"
                     >
                       <RefreshCw className="w-3 h-3" /> Continue Existing Job
+                    </button>
+                  )}
+                  {c.status === "Resolved" && (
+                    <button
+                      onClick={() => notifyCustomer(c)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors"
+                      style={{ background: "rgba(37,211,102,0.1)", border: "1px solid rgba(37,211,102,0.25)", color: "#25D366" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(37,211,102,0.18)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "rgba(37,211,102,0.1)"}>
+                      <MessageSquare className="w-3 h-3" /> Notify Customer
                     </button>
                   )}
                 </div>
