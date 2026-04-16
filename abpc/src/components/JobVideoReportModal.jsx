@@ -47,7 +47,7 @@ export default function JobVideoReportModal({ job, onClose }) {
     if (!file) return;
     setErr("");
     if (!["video/mp4", "video/webm"].includes(file.type)) { setErr("Only MP4 or WebM allowed."); return; }
-    if (file.size > 5 * 1024 * 1024) { setErr("Video must be under 5MB."); return; }
+    if (file.size > 20 * 1024 * 1024) { setErr("Video must be under 20MB."); return; }
     setVideoFile(file);
     setVideoPreview(URL.createObjectURL(file));
   };
@@ -167,7 +167,7 @@ export default function JobVideoReportModal({ job, onClose }) {
                     onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(76,122,45,0.4)"}
                     onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}>
                     <Video className="w-6 h-6" />
-                    <span className="text-xs font-semibold">Upload Video (MP4/WebM, max 5MB)</span>
+                    <span className="text-xs font-semibold">Upload Video (MP4/WebM, max 20MB)</span>
                   </button>
                 )}
                 <input ref={videoInputRef} type="file" accept="video/mp4,video/webm" className="hidden" onChange={handleVideoSelect} />

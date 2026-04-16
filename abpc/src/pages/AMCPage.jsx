@@ -14,12 +14,13 @@ import ServicePicker from "../components/ServicePicker";
 import CustomerSearch from "../components/CustomerSearch";
 import PaymentModeModal from "../components/PaymentModeModal";
 
-// Duration → visits mapping (1 visit per month)
+// Duration → visits mapping
+// Quarterly = 12 months, 4 visits, one every 3 months
 const DURATIONS = [
-  { label: "1 Month",           months: 1,  visits: 1,  visitLabel: "1 visit" },
-  { label: "3 Months",          months: 3,  visits: 3,  visitLabel: "3 visits" },
-  { label: "6 Months",          months: 6,  visits: 6,  visitLabel: "6 visits" },
-  { label: "12 Months (Annual)", months: 12, visits: 12, visitLabel: "12 visits" },
+  { label: "1 Month",              months: 1,  visits: 1,  visitLabel: "1 visit",                    visitGapMonths: 1  },
+  { label: "3 Months (Quarterly)", months: 3,  visits: 1,  visitLabel: "1 visit",                    visitGapMonths: 3  },
+  { label: "6 Months (Half-Yearly)", months: 6, visits: 2, visitLabel: "2 visits (every 3 months)",  visitGapMonths: 3  },
+  { label: "12 Months (Annual)",   months: 12, visits: 4,  visitLabel: "4 visits (every 3 months)",  visitGapMonths: 3  },
 ];
 
 function addMonths(dateStr, months) {
