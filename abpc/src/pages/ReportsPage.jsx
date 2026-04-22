@@ -388,7 +388,7 @@ export default function ReportsPage() {
           {isEmployee && (
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-(--brand) text-white text-sm font-bold hover:bg-(--brand-dark) transition-colors shadow-sm"
             >
               <Plus className="w-4 h-4" />
               નવો રિપોર્ટ સબમિટ કરો
@@ -416,7 +416,7 @@ export default function ReportsPage() {
             <select
               value={filterJob}
               onChange={(e) => setFilterJob(e.target.value)}
-              className="px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
+              className="px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-(--brand) focus:outline-none text-sm"
             >
               <option value="">All Jobs</option>
               {jobs.map((j) => (
@@ -426,7 +426,7 @@ export default function ReportsPage() {
             <select
               value={filterEmployee}
               onChange={(e) => setFilterEmployee(e.target.value)}
-              className="px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
+              className="px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-(--brand) focus:outline-none text-sm"
             >
               <option value="">All Employees</option>
               {EmployeeS.map((w) => <option key={w} value={w}>{w}</option>)}
@@ -453,7 +453,7 @@ export default function ReportsPage() {
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-[var(--brand-soft)] flex items-center justify-center text-[var(--brand)] text-xs font-black">
+                      <div className="w-8 h-8 rounded-lg bg-(--brand-soft) flex items-center justify-center text-(--brand) text-xs font-black">
                         {r.EmployeeName?.slice(0, 2).toUpperCase()}
                       </div>
                       <div>
@@ -522,7 +522,7 @@ export default function ReportsPage() {
                   if (!rw) return null;
                   if (rw.isRework) return (
                     <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-violet-50 border border-violet-200 rounded-xl">
-                      <RefreshCw className="w-3.5 h-3.5 text-violet-600 flex-shrink-0" />
+                      <RefreshCw className="w-3.5 h-3.5 text-violet-600 shrink-0" />
                       <div className="min-w-0">
                         <span className="text-xs font-bold text-violet-700">Rework Job</span>
                         <span className="text-xs text-violet-500 ml-1.5">· Original Job ID:</span>
@@ -627,7 +627,7 @@ export default function ReportsPage() {
                   value={form.jobId}
                   onChange={(e) => setForm((p) => ({ ...p, jobId: e.target.value }))}
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-(--brand) focus:outline-none text-sm"
                 >
                   <option value="">જોબ સિલેક્ટ કરો</option>
                   {jobs.map((j) => (
@@ -643,7 +643,7 @@ export default function ReportsPage() {
                   onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
                   placeholder="કરેલ કામ વિશે ડિટેઇલ લખો..."
                   rows={3}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-(--brand) focus:outline-none text-sm resize-none"
                 />
               </div>
 
@@ -657,7 +657,7 @@ export default function ReportsPage() {
                   accept="image/*"
                   multiple
                   onChange={handleImageSelect}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[var(--brand-soft)] file:text-[var(--brand)] file:text-xs file:font-bold file:cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-(--brand-soft) file:text-(--brand) file:text-xs file:font-bold file:cursor-pointer"
                 />
                 {form.images.length > 0 && (
                   <div className="grid grid-cols-3 gap-2 mt-3">
@@ -728,7 +728,7 @@ export default function ReportsPage() {
                   )}
                   {voiceRec.state === "error" && (
                     <div className="flex items-center gap-2 text-rose-600 text-sm">
-                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <AlertCircle className="w-4 h-4 shrink-0" />
                       <span>{voiceRec.errorMsg}</span>
                     </div>
                   )}
@@ -760,7 +760,7 @@ export default function ReportsPage() {
                 <button 
                   type="submit" 
                   disabled={busy || !form.jobId}
-                  className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 rounded-xl bg-(--brand) text-white text-sm font-bold hover:bg-(--brand-dark) disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {busy ? (
                     <>

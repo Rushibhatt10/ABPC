@@ -114,8 +114,8 @@ function TreatmentBlock({ tKey, tPrice, tQty, tUnit, onTKey, onPrice, onQty, onU
                   onClick={() => { onTKey(key); onPrice(""); onQty("1"); onUnit("unit"); }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                     tKey === key
-                      ? "bg-var(--brand) text-white border-var(--brand)"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-var(--brand)"
+                      ? "bg-(--brand) text-white border-(--brand)"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-(--brand)"
                   }`}
                 >
                   {TREATMENT_TEMPLATES[key].label.replace(/^[^â€”]+â€” /, "")}
@@ -131,7 +131,7 @@ function TreatmentBlock({ tKey, tPrice, tQty, tUnit, onTKey, onPrice, onQty, onU
             <select
               value={tUnit}
               onChange={(e) => onUnit(e.target.value)}
-              className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none bg-white"
+              className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-(--brand) focus:outline-none bg-white"
             >
               {JOB_FORM_UNITS.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
             </select>
@@ -142,7 +142,7 @@ function TreatmentBlock({ tKey, tPrice, tQty, tUnit, onTKey, onPrice, onQty, onU
               value={tQty}
               onChange={(e) => onQty(e.target.value)}
               placeholder="Qty"
-              className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none"
+              className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-(--brand) focus:outline-none"
             />
             <input
               type="number"
@@ -151,7 +151,7 @@ function TreatmentBlock({ tKey, tPrice, tQty, tUnit, onTKey, onPrice, onQty, onU
               value={tPrice}
               onChange={(e) => onPrice(e.target.value)}
               placeholder="Price â‚¹"
-              className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none"
+              className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-(--brand) focus:outline-none"
             />
           </div>
           <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-(--brand-soft) border border-emerald-200">
@@ -297,7 +297,7 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
               </button>
             </div>
             <div className="w-full bg-slate-100 rounded-full h-1.5">
-              <div className="bg-var(--brand) h-1.5 rounded-full transition-all"
+              <div className="bg-(--brand) h-1.5 rounded-full transition-all"
                 style={{ width: `${jobSubJobs.length ? (completedCount / jobSubJobs.length) * 100 : 0}%` }} />
             </div>
           </div>
@@ -479,8 +479,8 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
             <div key={sj.id} className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 {sj.status === "done"
-                  ? <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-0" />
-                  : <Clock className="w-4 h-4 text-amber-400 flex-0" />}
+                  ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  : <Clock className="w-4 h-4 text-amber-400 shrink-0" />}
                 <div>
                   <p className="text-sm font-semibold text-slate-700">{sj.title}</p>
                   {sj.completedBy && <p className="text-xs text-slate-400">by {sj.completedBy}</p>}
@@ -488,7 +488,7 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
               </div>
               {sj.status !== "done" && (
                 <button onClick={() => onMarkSubDone(sj)} disabled={busy}
-                  className="px-3 py-1 rounded-lg bg-var(--brand) text-white text-xs font-bold hover:bg-var(--brand-dark) disabled:opacity-60">
+                  className="px-3 py-1 rounded-lg bg-(--brand) text-white text-xs font-bold hover:bg-(--brand-dark) disabled:opacity-60">
                   થઈ ગ્યું ✓
                 </button>
               )}
@@ -504,7 +504,7 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
           <div className="space-y-1.5">
             {job.history.map((h, i) => (
               <div key={i} className="flex items-start gap-2 text-xs">
-                <div className="w-1.5 h-1.5 rounded-full bg-var(--brand) mt-1.5 flex-0" />
+                <div className="w-1.5 h-1.5 rounded-full bg-(--brand) mt-1.5 shrink-0" />
                 <div>
                   <span className="font-semibold text-slate-700">{h.event}</span>
                   {h.at && <span className="text-slate-400 ml-1">· {formatDateDisplay(h.at.split("T")[0])}</span>}
@@ -592,7 +592,7 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
           <h2 className="font-bold text-slate-900">
             {reworkSource
               ? <span className="flex items-center gap-2"><RefreshCw className="w-4 h-4 text-violet-600" />New Rework Job</span>
-              : <span className="flex items-center gap-2"><Plus className="w-4 h-4 text-var(--brand)" />Create Jobs {extraJobs.length > 0 && <span className="px-2 py-0.5 rounded-full bg-var(--brand) text-white text-[10px] font-black">{1 + extraJobs.length}</span>}</span>
+              : <span className="flex items-center gap-2"><Plus className="w-4 h-4 text-(--brand)" />Create Jobs {extraJobs.length > 0 && <span className="px-2 py-0.5 rounded-full bg-(--brand) text-white text-[10px] font-black">{1 + extraJobs.length}</span>}</span>
             }
           </h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"><X className="w-4 h-4" /></button>
@@ -601,7 +601,7 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
           {reworkSource && (
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-violet-50 border border-violet-200 text-xs text-violet-700">
-              <Link2 className="w-3.5 h-3.5 mt-0.5 flex-0" />
+              <Link2 className="w-3.5 h-3.5 mt-0.5 shrink-0" />
               <span>Rework of: <strong>{reworkSource.customerName}</strong> — {reworkSource.serviceType || reworkSource.serviceName}</span>
             </div>
           )}
@@ -681,7 +681,7 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
             <div className="flex items-center justify-between px-4 py-3 rounded-xl"
               style={{ background: "rgba(76,122,45,0.08)", border: "1px solid rgba(76,122,45,0.2)" }}>
               <p className="text-sm font-bold text-slate-700">{1 + extraJobs.length} Jobs · Grand Total</p>
-              <p className="font-black text-var(--brand) text-lg">₹{grandTotal.toLocaleString("en-IN")}</p>
+              <p className="font-black text-(--brand) text-lg">₹{grandTotal.toLocaleString("en-IN")}</p>
             </div>
           )}
 
@@ -690,7 +690,7 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Scheduled Date</label>
             <input type="date" value={form.scheduledDate}
               onChange={(e) => setForm((p) => ({ ...p, scheduledDate: e.target.value }))}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm" />
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-(--brand) focus:outline-none text-sm" />
           </div>
 
           {/* Notes */}
@@ -698,12 +698,12 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Notes</label>
             <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
               placeholder="Additional notes..." rows={2}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm resize-none" />
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-(--brand) focus:outline-none text-sm resize-none" />
           </div>
 
-          <div className="bg-var(--brand-soft) rounded-xl p-3">
-            <p className="text-xs font-bold text-var(--brand-dark) mb-1">Assigned to all EMPLOYEEs</p>
-            <p className="text-sm text-var(--brand)">{EmployeeS.join(", ")}</p>
+          <div className="bg-(--brand-soft) rounded-xl p-3">
+            <p className="text-xs font-bold text-(--brand-dark) mb-1">Assigned to all EMPLOYEEs</p>
+            <p className="text-sm text-(--brand)">{EmployeeS.join(", ")}</p>
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -749,7 +749,7 @@ function CustomerJobsPanel({ customer, jobs, subJobs, attendanceByJob, isEmploye
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-10 h-10 rounded-2xl bg-var(--brand-soft) flex items-center justify-center text-var(--brand) text-sm font-black flex-0">
+          <div className="w-10 h-10 rounded-2xl bg-(--brand-soft) flex items-center justify-center text-(--brand) text-sm font-black shrink-0">
             {customer.name?.slice(0, 2).toUpperCase()}
           </div>
           <div className="min-w-0">
@@ -757,7 +757,7 @@ function CustomerJobsPanel({ customer, jobs, subJobs, attendanceByJob, isEmploye
             <p className="text-xs text-slate-400">{customer.phone} · {customer.propertyType}</p>
           </div>
         </div>
-        <div className="text-right flex-0">
+        <div className="text-right shrink-0">
           <p className="text-xl font-black text-slate-900">{counts.all}</p>
           <p className="text-xs text-slate-400">total jobs</p>
         </div>
@@ -1143,16 +1143,16 @@ export default function JobsPage() {
             {/* View toggle */}
             <div className="flex rounded-xl border border-slate-200 bg-white overflow-hidden">
               <button onClick={() => setViewMode("customers")}
-                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold transition-colors ${viewMode === "customers" ? "bg-var(--brand) text-white" : "text-slate-500 hover:text-slate-700"}`}>
+                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold transition-colors ${viewMode === "customers" ? "bg-(--brand) text-white" : "text-slate-500 hover:text-slate-700"}` }>
                 <Users className="w-3.5 h-3.5" /> By Customer
               </button>
             </div>
             <button onClick={handleCloudUpload} disabled={busy}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors shadow-sm disabled:opacity-60 w-full sm:w-auto min-h-44px active:scale-95">
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 transition-colors shadow-sm disabled:opacity-60 w-full sm:w-auto min-h-[44px] active:scale-95">
               <UploadCloud className="w-4 h-4" /> Cloud Export
             </button>
             <button onClick={() => { setReworkSource(null); setShowModal(true); }} disabled={busy}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-var(--brand-dark) transition-colors shadow-sm disabled:opacity-60 w-full sm:w-auto min-h-44px active:scale-95">
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-(--brand) text-white text-sm font-bold hover:bg-(--brand-dark) transition-colors shadow-sm disabled:opacity-60 w-full sm:w-auto min-h-[44px] active:scale-95">
               <Plus className="w-4 h-4" /> Create Job
             </button>
           </div>
@@ -1191,7 +1191,7 @@ export default function JobsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input value={search} onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search customers..."
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm bg-white" />
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-(--brand) focus:outline-none text-sm bg-white" />
             </div>
             {/* Customer list */}
             {customers
@@ -1201,15 +1201,15 @@ export default function JobsPage() {
                 if (cJobs.length === 0) return null;
                 return (
                   <button key={c.id} onClick={() => setSelectedCustomer(c)}
-                    className="w-full bg-white rounded-2xl border border-slate-200 px-4 py-3.5 flex items-center gap-3 hover:border-var(--brand) hover:shadow-sm transition-all text-left active:scale-[0.99]">
-                    <div className="w-10 h-10 rounded-2xl bg-var(--brand-soft) flex items-center justify-center text-var(--brand) text-sm font-black flex-0">
+                    className="w-full bg-white rounded-2xl border border-slate-200 px-4 py-3.5 flex items-center gap-3 hover:border-(--brand) hover:shadow-sm transition-all text-left active:scale-[0.99]">
+                    <div className="w-10 h-10 rounded-2xl bg-(--brand-soft) flex items-center justify-center text-(--brand) text-sm font-black shrink-0">
                       {c.name?.slice(0, 2).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-slate-900 text-sm truncate">{c.name}</p>
                       <p className="text-xs text-slate-400">{c.phone}</p>
                     </div>
-                    <div className="flex items-center gap-2 flex-0">
+                    <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs text-slate-400">{c.propertyType}</span>
                       <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">{cJobs.length}</span>
                       <ChevronRight className="w-4 h-4 text-slate-300" />
@@ -1233,7 +1233,7 @@ export default function JobsPage() {
           { key: "completed", label: isEmployee ? "કમ્પ્લીટ" : "Completed" },
         ].map((tab) => (
           <button key={tab.key} onClick={() => setStatusFilter(tab.key)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${statusFilter === tab.key ? "bg-var(--brand) text-white shadow-sm" : "bg-white border border-slate-200 text-slate-600 hover:border-slate-300"
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${statusFilter === tab.key ? "bg-(--brand) text-white shadow-sm" : "bg-white border border-slate-200 text-slate-600 hover:border-slate-300"
               }`}>
             {tab.label}
             <span className={`px-1.5 py-0.5 rounded-full text-xs font-black ${statusFilter === tab.key ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>
@@ -1249,7 +1249,7 @@ export default function JobsPage() {
           <p className="font-semibold text-slate-500">{isEmployee ? "કોઈ જોબ મળ્યો નહીં" : "No jobs found"}</p>
           {!isEmployee && (
             <button onClick={() => { setReworkSource(null); setShowModal(true); }}
-              className="mt-4 px-4 py-2 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-var(--brand-dark)">
+              className="mt-4 px-4 py-2 rounded-xl bg-(--brand) text-white text-sm font-bold hover:bg-(--brand-dark)">
               Create First Job
             </button>
           )}

@@ -329,13 +329,13 @@ useEffect(() => {
  </div>
  </div>
 
- {/* Toggle Button inside Menu */}
+ {/* Toggle Button inside Menu — replaced with proper X */}
  <button
- onClick={() => setMenuOpen(!menuOpen)}
- className={`absolute top-[calc(env(safe-area-inset-top)+0.5rem)] right-4 md:top-[calc(env(safe-area-inset-top)+1rem)] md:right-8 lg:right-12 p-2.5 rounded-full shadow-sm transition-all duration-300 hover:scale-105 z-50 ${isDark ?"bg-[#222] text-white border border-white/10" :"bg-white text-black border border-black/10"}`}
- aria-label="Toggle menu"
+ onClick={() => setMenuOpen(false)}
+ className={`absolute top-[calc(env(safe-area-inset-top)+0.5rem)] right-4 md:top-[calc(env(safe-area-inset-top)+1rem)] md:right-8 lg:right-12 p-3 rounded-full shadow-sm transition-all duration-300 hover:scale-105 hover:rotate-90 z-50 ${isDark ?"bg-[#222] text-white border border-white/10 hover:bg-white hover:text-black" :"bg-white text-black border border-black/10 hover:bg-black hover:text-white"}`}
+ aria-label="Close menu"
  >
- <HamburgerIcon open={menuOpen} />
+ <X size={22} />
  </button>
  </div>
  </nav>

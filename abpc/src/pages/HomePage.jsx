@@ -64,7 +64,7 @@ function EmployeeJobCard({ job, onComplete, saving }) {
           <p className="text-sm text-slate-500 mt-0.5">{job.serviceType || job.serviceName || "Service"}</p>
           {jobAddress ? <p className="text-xs text-slate-400 mt-0.5">{jobAddress}</p> : null}
         </div>
-        <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex-0 ${isCompleted ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+        <span className={`px-2.5 py-1 rounded-full text-xs font-bold shrink-0 ${isCompleted ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
           }`}>
           {isCompleted ? "કમ્પ્લીટ" : "પેન્ડિંગ"}
         </span>
