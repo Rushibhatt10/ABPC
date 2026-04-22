@@ -10,6 +10,21 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("firebase")) return "firebase";
+          if (id.includes("jspdf")) return "jspdf";
+          if (id.includes("html2canvas")) return "html2canvas";
+          if (id.includes("xlsx") || id.includes("file-saver")) return "sheet-export";
+          if (id.includes("gsap") || id.includes("@gsap")) return "motion";
+          if (id.includes("react") || id.includes("react-dom") || id.includes("react-router")) return "react-vendor";
+        },
+      },
+    },
+  },
   server: {
     port: 5179,
     host: "localhost",

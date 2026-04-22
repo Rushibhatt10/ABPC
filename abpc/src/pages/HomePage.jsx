@@ -29,15 +29,22 @@ function StatCard({ label, value, icon, color, sub }) {
     rose: "bg-rose-100 text-rose-600",
   };
   return (
-    <div className={`rounded-2xl border p-5 ${colors[color]}`}>
+    <div className={`rounded-2xl border-2 p-5 transition-all duration-300 hover:scale-[1.02] ${colors[color]}`}
+      style={{ boxShadow: `0 10px 30px -10px rgba(0,0,0,0.05), 0 0 15px -5px ${
+        color === 'green' ? 'rgba(16,185,129,0.2)' : 
+        color === 'amber' ? 'rgba(245,158,11,0.2)' : 
+        color === 'blue' ? 'rgba(59,130,246,0.2)' : 
+        color === 'violet' ? 'rgba(139,92,246,0.2)' : 
+        'rgba(0,0,0,0.05)'
+      }` }}>
       <div className="flex items-start justify-between mb-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconColors[color]}`}>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${iconColors[color]}`}>
           <IconComponent className="w-5 h-5" />
         </div>
       </div>
-      <p className="text-xl sm:text-2xl font-black text-slate-900">{value}</p>
-      <p className="text-sm font-semibold mt-0.5">{label}</p>
-      {sub && <p className="text-xs mt-1 opacity-70">{sub}</p>}
+      <p className="text-xl sm:text-2xl font-black text-slate-900 leading-none">{value}</p>
+      <p className="text-sm font-bold mt-1.5 text-slate-700">{label}</p>
+      {sub && <p className="text-[11px] mt-1 font-medium opacity-60">{sub}</p>}
     </div>
   );
 }
@@ -301,20 +308,30 @@ function AdminDashboard({ profile }) {
         {[
           { label: "Total Revenue",   value: formatCurrency(stats.totalRevenue),  sub: "All time collected",                          icon: TrendingUp, bg: "border-[rgba(76,122,45,0.3)]",   iconBg: "bg-[#4C7A2D]",   text: "text-[#4C7A2D]" },
           { label: "Pending Amount",  value: formatCurrency(stats.pendingAmount), sub: `${stats.pendingCount} invoice${stats.pendingCount !== 1 ? "s" : ""}`, icon: Clock,      bg: "border-[rgba(228,87,46,0.3)]",  iconBg: "bg-[#E4572E]",   text: "text-[#E4572E]"  },
-          { label: "Today's Jobs",    value: stats.todayJobs,                     sub: "Scheduled today",                             icon: Calendar,   bg: "border-[rgba(255,255,255,0.1)]", iconBg: "bg-white/10",    text: "text-white"      },
-          { label: "Total Customers", value: customers.length,                    sub: "In CRM",                                      icon: Users,      bg: "border-[rgba(255,255,255,0.1)]", iconBg: "bg-white/10",    text: "text-white"      },
+          { label: "Today's Jobs",    value: stats.todayJobs,                     sub: "Scheduled today",                             icon: Calendar,   bg: "border-[rgba(59,130,246,0.3)]", iconBg: "bg-blue-600",    text: "text-blue-600", color: 'blue'      },
+          { label: "Total Customers", value: customers.length,                    sub: "In CRM",                                      icon: Users,      bg: "border-[rgba(139,92,246,0.3)]", iconBg: "bg-violet-600",  text: "text-violet-600", color: 'violet'    },
         ].map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className={`rounded-2xl border ${s.bg} p-4 sm:p-5 flex flex-col gap-3 transition-all duration-200 hover:scale-[1.02]`}
-              style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)" }}>
-              <div className={`w-9 h-9 rounded-xl ${s.iconBg} flex items-center justify-center shadow-sm`}>
-                <Icon className="w-[18px] h-[18px] text-white" />
+            <div key={s.label} className={`rounded-2xl border-2 ${s.bg} p-4 sm:p-5 flex flex-col gap-3 transition-all duration-300 hover:scale-[1.05] hover:shadow-lg`}
+              style={{ 
+                background: "#ffffff", 
+                boxShadow: `0 10px 40px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1), 0 0 15px -5px ${
+                  s.color === 'blue' ? 'rgba(59,130,246,0.2)' : 
+                  s.color === 'violet' ? 'rgba(139,92,246,0.2)' : 
+                  s.color === 'green' ? 'rgba(16,185,129,0.2)' : 
+                  s.bg.includes('rgba(76,122,45') ? 'rgba(76,122,45,0.2)' : 
+                  s.bg.includes('rgba(228,87,46') ? 'rgba(228,87,46,0.2)' : 
+                  'rgba(0,0,0,0.05)'
+                }`
+              }}>
+              <div className={`w-10 h-10 rounded-xl ${s.iconBg} flex items-center justify-center shadow-lg shadow-black/5`}>
+                <Icon className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-xl sm:text-2xl font-black text-white leading-none">{s.value}</p>
-                <p className={`text-xs font-bold mt-1 ${s.text}`}>{s.label}</p>
-                {s.sub && <p className="text-[11px] text-white/40 mt-0.5">{s.sub}</p>}
+                <p className="text-xl sm:text-2xl font-black text-slate-900 leading-none">{s.value}</p>
+                <p className={`text-xs font-black mt-2 uppercase tracking-wider ${s.text}`}>{s.label}</p>
+                {s.sub && <p className="text-[10px] text-slate-400 font-bold mt-1">{s.sub}</p>}
               </div>
             </div>
           );
@@ -329,14 +346,14 @@ function AdminDashboard({ profile }) {
             const Icon = q.icon;
             return (
               <Link key={q.to} to={q.to}
-                className="group relative overflow-hidden rounded-2xl p-4 flex flex-col items-center gap-3 hover:scale-[1.02] transition-all duration-200 active:scale-95"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(10px)" }}
+                className="group relative overflow-hidden rounded-2xl p-4 flex flex-col items-center gap-3 hover:scale-[1.05] transition-all duration-300 active:scale-95 shadow-sm hover:shadow-md"
+                style={{ background: "#ffffff", border: "2px solid rgba(0,0,0,0.04)", boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)" }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(76,122,45,0.4)"}
-                onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"}>
-                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${q.gradient} flex items-center justify-center shadow-md`}>
-                  <Icon className="w-5 h-5 text-white" />
+                onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(0,0,0,0.04)"}>
+                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${q.gradient} flex items-center justify-center shadow-lg shadow-black/10 group-hover:shadow-xl group-hover:scale-110 transition-all duration-300`}>
+                  <Icon className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-xs font-bold text-white/70 text-center group-hover:text-white transition-colors leading-tight">{q.label}</span>
+                <span className="text-xs font-black text-slate-600 text-center group-hover:text-slate-900 transition-colors uppercase tracking-wider">{q.label}</span>
                 <ArrowRight className="absolute bottom-3 right-3 w-3 h-3 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all" />
               </Link>
             );

@@ -6,6 +6,14 @@ const openInNewTab = (url) => {
   window.open(url, "_blank", "noopener,noreferrer");
 };
 
+/**
+ * @param {{
+ *   address?: string,
+ *   className?: string,
+ *   label?: string,
+ *   showDirections?: boolean,
+ * }} props
+ */
 export default function MapLink({
   address,
   className = "",

@@ -35,6 +35,13 @@ const STATUS_COLORS = {
   completed: "bg-emerald-100 text-emerald-700",
 };
 
+const JOB_FORM_UNITS = [
+  { value: "sqft", label: "SqFt" },
+  { value: "sqmt", label: "SqMt" },
+  { value: "unit", label: "Unit" },
+  { value: "piece", label: "Per Piece" },
+];
+
 /**
  * Parses warranty string into days.
  * Returns 0 for unknown/invalid formats.
@@ -74,32 +81,117 @@ function warrantyStatus(job) {
   return isUnderWarranty(job) ? "active" : "expired";
 }
 
-function JobCard({ job, subJobs, isEmployee, onMarkSubDone, onRaiseRework, busy, onJobUpdated, onGenerateInvoice, onOpenReport, onOpenVideoReport, onOpenAdminReports, onOpenCheckIn, onSetLocation, onOpenAttendance }) {
+/**
+ * Stable treatment block for job creation so inputs don't remount while typing.
+ * @param {{
+ *   tKey: string,
+ *   tPrice: string,
+ *   tQty: string,
+ *   tUnit: string,
+ *   onTKey: (value: string) => void,
+ *   onPrice: (value: string) => void,
+ *   onQty: (value: string) => void,
+ *   onUnit: (value: string) => void,
+ *   label: string,
+ * }} props
+ */
+function TreatmentBlock({ tKey, tPrice, tQty, tUnit, onTKey, onPrice, onQty, onUnit, label }) {
+  const tmpl = tKey ? TREATMENT_TEMPLATES[tKey] : null;
+  const blockTotal = (parseFloat(tPrice) || 0) * (parseFloat(tQty) || 0);
+
+  return (
+    <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 space-y-3">
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
+      <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+        {TREATMENT_GROUPS.map((grp) => (
+          <div key={grp.group}>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{grp.group}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {grp.items.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => { onTKey(key); onPrice(""); onQty("1"); onUnit("unit"); }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                    tKey === key
+                      ? "bg-[var(--brand)] text-white border-[var(--brand)]"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-[var(--brand)]"
+                  }`}
+                >
+                  {TREATMENT_TEMPLATES[key].label.replace(/^[^â€”]+â€” /, "")}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      {tKey && (
+        <>
+          <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200">
+            <select
+              value={tUnit}
+              onChange={(e) => onUnit(e.target.value)}
+              className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none bg-white"
+            >
+              {JOB_FORM_UNITS.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
+            </select>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={tQty}
+              onChange={(e) => onQty(e.target.value)}
+              placeholder="Qty"
+              className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
+            />
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={tPrice}
+              onChange={(e) => onPrice(e.target.value)}
+              placeholder="Price â‚¹"
+              className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[var(--brand-soft)] border border-emerald-200">
+            <div>
+              <p className="text-xs font-bold text-slate-700">{tmpl?.label}</p>
+              <p className="text-[10px] text-slate-500">{tQty} {tUnit} Ã— â‚¹{tPrice || 0}</p>
+            </div>
+            <p className="font-black text-[var(--brand)] text-sm">â‚¹{blockTotal.toLocaleString("en-IN")}</p>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * @param {{
+ *   job: Record<string, any>,
+ *   subJobs: Array<Record<string, any>>,
+ *   attendanceByJob?: Record<string, Record<string, any>>,
+ *   isEmployee: boolean,
+ *   onMarkSubDone: (subJob: Record<string, any>) => void,
+ *   onRaiseRework: (job: Record<string, any>) => void,
+ *   busy: boolean,
+ *   onJobUpdated?: () => void,
+ *   onGenerateInvoice: (job: Record<string, any>) => void,
+ *   onOpenReport?: (job: Record<string, any>) => void,
+ *   onOpenVideoReport?: (job: Record<string, any>) => void,
+ *   onOpenAdminReports?: (job: Record<string, any>) => void,
+ *   onOpenCheckIn?: (job: Record<string, any>) => void,
+ *   onSetLocation?: (job: Record<string, any>) => void,
+ *   onOpenAttendance?: (job: Record<string, any>) => void,
+ * }} props
+ */
+function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone, onRaiseRework, busy, onJobUpdated, onGenerateInvoice, onOpenReport, onOpenVideoReport, onOpenAdminReports, onOpenCheckIn, onSetLocation, onOpenAttendance }) {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const { profile } = useAuth();
-  const employeeName = profile?.workerName || profile?.name || "";
-
-  // Real-time check: has this employee already checked in for this job?
-  const [checkedIn, setCheckedIn] = useState(false);
-  const [checkInTime, setCheckInTime] = useState(null);
-  useEffect(() => {
-    if (!isEmployee || !job.id || !employeeName) return;
-    const q = query(
-      collection(firestoreDb, "attendance"),
-      where("jobId", "==", job.id),
-      where("employeeName", "==", employeeName)
-    );
-    return subscribeQuery(q, (records) => {
-      if (records.length > 0) {
-        setCheckedIn(true);
-        setCheckInTime(records[0].timestamp);
-      } else {
-        setCheckedIn(false);
-        setCheckInTime(null);
-      }
-    });
-  }, [isEmployee, job.id, employeeName]);
+  const attendanceRecord = attendanceByJob[job.id];
+  const checkedIn = Boolean(attendanceRecord);
+  const checkInTime = attendanceRecord?.timestamp || null;
 
   // Modal state lifted to parent — use callbacks instead
   const setShowReport = () => onOpenReport?.(job);
@@ -443,7 +535,6 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
   const [quantity, setQuantity] = useState("1");
   const [unit, setUnit] = useState("unit");
 
-  const UNITS = [{ value: "sqft", label: "SqFt" }, { value: "sqmt", label: "SqMt" }, { value: "unit", label: "Unit" }, { value: "piece", label: "Per Piece" }];
 
   // Extra jobs — each has its own treatmentKey, price, quantity, unit
   const [extraJobs, setExtraJobs] = useState([]);
@@ -492,61 +583,6 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
       _extraJobs: extraJobs.filter(j => j.treatmentKey && parseFloat(j.price) > 0),
     });
   };
-
-  // Reusable treatment picker block
-  const TreatmentBlock = ({ tKey, tPrice, tQty, tUnit, onTKey, onPrice, onQty, onUnit, label }) => {
-    const tmpl = tKey ? TREATMENT_TEMPLATES[tKey] : null;
-    const blockTotal = (parseFloat(tPrice) || 0) * (parseFloat(tQty) || 0);
-    return (
-      <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 space-y-3">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
-        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-          {TREATMENT_GROUPS.map((grp) => (
-            <div key={grp.group}>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{grp.group}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {grp.items.map((key) => (
-                  <button key={key} type="button"
-                    onClick={() => { onTKey(key); onPrice(""); onQty("1"); onUnit("unit"); }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                      tKey === key
-                        ? "bg-[var(--brand)] text-white border-[var(--brand)]"
-                        : "bg-white text-slate-600 border-slate-200 hover:border-[var(--brand)]"
-                    }`}>
-                    {TREATMENT_TEMPLATES[key].label.replace(/^[^—]+— /, "")}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-        {tKey && (
-          <>
-            <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200">
-              <select value={tUnit} onChange={e => onUnit(e.target.value)}
-                className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none bg-white">
-                {UNITS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
-              </select>
-              <input type="number" min="0" step="1" value={tQty}
-                onChange={e => onQty(e.target.value)} placeholder="Qty"
-                className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-              <input type="number" min="0" step="1" value={tPrice}
-                onChange={e => onPrice(e.target.value)} placeholder="Price ₹"
-                className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-            </div>
-            <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[var(--brand-soft)] border border-emerald-200">
-              <div>
-                <p className="text-xs font-bold text-slate-700">{tmpl?.label}</p>
-                <p className="text-[10px] text-slate-500">{tQty} {tUnit} × ₹{tPrice || 0}</p>
-              </div>
-              <p className="font-black text-[var(--brand)] text-sm">₹{blockTotal.toLocaleString("en-IN")}</p>
-            </div>
-          </>
-        )}
-      </div>
-    );
-  };
-
   const grandTotal = total + extraJobs.reduce((s, j) => s + (parseFloat(j.price) || 0) * (parseFloat(j.quantity) || 0), 0);
 
   return (
@@ -583,8 +619,14 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
             </label>
             <TreatmentBlock
               label="Job 1"
-              tKey={treatmentKey} tPrice={price} tQty={quantity} tUnit={unit}
-              onTKey={setTreatmentKey} onPrice={setPrice} onQty={setQuantity} onUnit={setUnit}
+              tKey={treatmentKey}
+              tPrice={price}
+              tQty={quantity}
+              tUnit={unit}
+              onTKey={setTreatmentKey}
+              onPrice={setPrice}
+              onQty={setQuantity}
+              onUnit={setUnit}
             />
             {previewJobs.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
@@ -609,13 +651,16 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
                   <X className="w-3 h-3" /> Remove
                 </button>
               </div>
-              <TreatmentBlock
+                            <TreatmentBlock
                 label={`Job ${i + 2}`}
-                tKey={ej.treatmentKey} tPrice={ej.price} tQty={ej.quantity} tUnit={ej.unit}
-                onTKey={v => updateExtra(i, "treatmentKey", v)}
-                onPrice={v => updateExtra(i, "price", v)}
-                onQty={v => updateExtra(i, "quantity", v)}
-                onUnit={v => updateExtra(i, "unit", v)}
+                tKey={ej.treatmentKey}
+                tPrice={ej.price}
+                tQty={ej.quantity}
+                tUnit={ej.unit}
+                onTKey={(v) => updateExtra(i, "treatmentKey", v)}
+                onPrice={(v) => updateExtra(i, "price", v)}
+                onQty={(v) => updateExtra(i, "quantity", v)}
+                onUnit={(v) => updateExtra(i, "unit", v)}
               />
             </div>
           ))}
@@ -674,7 +719,7 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
 }
 
 /** Customer Jobs Panel — shows all jobs for a selected customer */
-function CustomerJobsPanel({ customer, jobs, subJobs, isEmployee, onMarkSubDone, onRaiseRework, onGenerateInvoice, busy, onBack, onOpenReport, onOpenVideoReport, onOpenAdminReports, onSetLocation, onOpenAttendance }) {
+function CustomerJobsPanel({ customer, jobs, subJobs, attendanceByJob, isEmployee, onMarkSubDone, onRaiseRework, onGenerateInvoice, busy, onBack, onOpenReport, onOpenVideoReport, onOpenAdminReports, onSetLocation, onOpenAttendance }) {
   const customerJobs = useMemo(() =>
     jobs.filter((j) => j.customerId === customer.id || j.customerName === customer.name)
       .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
@@ -743,7 +788,7 @@ function CustomerJobsPanel({ customer, jobs, subJobs, isEmployee, onMarkSubDone,
       ) : (
         <div className="space-y-3">
           {filtered.map(job => (
-            <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={isEmployee}
+            <JobCard key={job.id} job={job} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={isEmployee}
               onMarkSubDone={onMarkSubDone} onRaiseRework={onRaiseRework}
               onGenerateInvoice={onGenerateInvoice} busy={busy} onJobUpdated={() => {}}
               onOpenReport={onOpenReport} onOpenVideoReport={onOpenVideoReport} onOpenAdminReports={onOpenAdminReports} onSetLocation={onSetLocation} onOpenAttendance={onOpenAttendance} />
@@ -761,6 +806,7 @@ export default function JobsPage() {
 
   const [jobs, setJobs] = useState([]);
   const [subJobs, setSubJobs] = useState([]);
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [services, setServices] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -805,8 +851,26 @@ export default function JobsPage() {
       subscribeCollection("customers", setCustomers),
       subscribeCollection("services", setServices),
     ];
+    if (isEmployee && EmployeeName) {
+      unsubs.push(
+        subscribeQuery(
+          query(collection(firestoreDb, "attendance"), where("employeeName", "==", EmployeeName)),
+          setAttendanceRecords,
+        ),
+      );
+    } else {
+      setAttendanceRecords([]);
+    }
     return () => unsubs.forEach((u) => u());
   }, [isEmployee, EmployeeName]);
+
+  const attendanceByJob = useMemo(() => {
+    return attendanceRecords.reduce((acc, record) => {
+      if (!record.jobId || acc[record.jobId]) return acc;
+      acc[record.jobId] = record;
+      return acc;
+    }, {});
+  }, [attendanceRecords]);
 
   const filtered = useMemo(() => {
     let list = isEmployee
@@ -1107,6 +1171,7 @@ export default function JobsPage() {
             customer={selectedCustomer}
             jobs={jobs}
             subJobs={subJobs}
+            attendanceByJob={attendanceByJob}
             isEmployee={false}
             onMarkSubDone={handleMarkSubDone}
             onRaiseRework={handleRaiseRework}
@@ -1192,7 +1257,7 @@ export default function JobsPage() {
       ) : isEmployee ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filtered.map((job) => (
-            <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={isEmployee}
+            <JobCard key={job.id} job={job} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={isEmployee}
               onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onOpenCheckIn={setCheckInJob} />
           ))}
         </div>
@@ -1200,13 +1265,13 @@ export default function JobsPage() {
         <div className="space-y-6">
           {jobChains.map(({ original, reworks }) => (
             <div key={original.id}>
-              <JobCard job={original} subJobs={subJobs} isEmployee={false}
+              <JobCard job={original} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={false}
                 onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob} />
               {reworks.length > 0 && (
                 <div className="ml-6 mt-2 space-y-2 border-l-2 border-violet-200 pl-4">
                   <p className="text-xs font-bold text-violet-500 uppercase tracking-wider mb-2">Rework Jobs ({reworks.length})</p>
                   {reworks.map((rw) => (
-                    <JobCard key={rw.id} job={rw} subJobs={subJobs} isEmployee={false}
+                    <JobCard key={rw.id} job={rw} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={false}
                       onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob} />
                   ))}
                 </div>
@@ -1214,7 +1279,7 @@ export default function JobsPage() {
             </div>
           ))}
           {filtered.filter(j => j.parentJobId && !jobChains.find(c => c.original.id === j.parentJobId)).map((job) => (
-            <JobCard key={job.id} job={job} subJobs={subJobs} isEmployee={false}
+            <JobCard key={job.id} job={job} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={false}
               onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob} />
           ))}
         </div>
@@ -1272,5 +1337,7 @@ export default function JobsPage() {
     </div>
   );
 }
+
+
 
 

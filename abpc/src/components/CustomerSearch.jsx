@@ -1,5 +1,5 @@
 /**
- * CustomerSearch — Searchable customer selector with inline "Add New Customer" modal.
+ * CustomerSearch - Searchable customer selector with inline "Add New Customer" modal.
  *
  * Props:
  *   customers       : array of customer objects from Firestore
@@ -7,13 +7,13 @@
  *   onChange(c)     : called with full customer object when selected, or null when cleared
  *   onCustomerCreated(c) : called after a new customer is saved (optional)
  */
-import { useEffect, useRef, useState } from "react";
-import { Search, Plus, X, User, Phone, MapPin, AlertCircle, Check } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { Search, Plus, X, MapPin, AlertCircle, Check } from "lucide-react";
 import { createRecord } from "../utils/firestoreHelpers";
 
 const propertyTypes = ["Residential", "Commercial", "Industrial"];
 
-/** Build address string from structured parts */
 function buildAddress({ flatNo, society, area, city, pin }) {
   return [flatNo, society, area, city, pin].filter(Boolean).join(", ");
 }
@@ -26,18 +26,22 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [dupWarning, setDupWarning] = useState("");
 
-  const f = (key) => (e) => setForm(p => ({ ...p, [key]: e.target.value }));
+  const f = (key) => (e) => setForm((p) => ({ ...p, [key]: e.target.value }));
 
   const checkDuplicate = (phone) => {
     const dup = customers.find((c) => c.phone?.replace(/\D/g, "") === phone.replace(/\D/g, "") && phone.length >= 10);
-    setDupWarning(dup ? `⚠️ ${dup.name} already exists with this number.` : "");
+    setDupWarning(dup ? `Customer already exists: ${dup.name}.` : "");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (dupWarning) return;
     const address = buildAddress(form);
-    if (!address) { alert("Please fill at least Society/Area and City."); return; }
+    if (!address) {
+      alert("Please fill at least Society/Area and City.");
+      return;
+    }
+
     setSaving(true);
     try {
       const id = await createRecord("customers", {
@@ -48,7 +52,15 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
         email: form.email.trim(),
         notes: form.notes.trim(),
       });
-      onSaved({ id, ...form, address });
+      onSaved({
+        id,
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+        address,
+        propertyType: form.propertyType,
+        email: form.email.trim(),
+        notes: form.notes.trim(),
+      });
     } catch (err) {
       alert(err.message);
     } finally {
@@ -63,29 +75,33 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <h2 className="font-bold text-slate-900">Add New Customer</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100" type="button">
             <X className="w-4 h-4" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Name */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Full Name *</label>
             <input value={form.name} onChange={f("name")} required placeholder="Customer full name" className={inputCls} />
           </div>
-          {/* Phone */}
+
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Phone *</label>
-            <input value={form.phone} onChange={(e) => { f("phone")(e); checkDuplicate(e.target.value); }}
-              required placeholder="10-digit mobile number" className={inputCls} />
+            <input
+              value={form.phone}
+              onChange={(e) => { f("phone")(e); checkDuplicate(e.target.value); }}
+              required
+              placeholder="10-digit mobile number"
+              className={inputCls}
+            />
             {dupWarning && (
               <p className="flex items-center gap-1 text-xs text-amber-600 mt-1 font-semibold">
-                <AlertCircle className="w-3 h-3" />{dupWarning}
+                <AlertCircle className="w-3 h-3" />
+                {dupWarning}
               </p>
             )}
           </div>
 
-          {/* ── Structured Address ── */}
           <div className="space-y-2">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Address *</label>
             <p className="text-[10px] text-slate-400 -mt-1">Society/Area + City is enough for GPS to work.</p>
@@ -113,7 +129,6 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
               </div>
             </div>
 
-            {/* Live preview */}
             {buildAddress(form) && (
               <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
                 <MapPin className="w-3.5 h-3.5 text-emerald-600 mt-0.5 flex-shrink-0" />
@@ -122,23 +137,31 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
             )}
           </div>
 
-          {/* Property Type */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Property Type</label>
             <div className="grid grid-cols-3 gap-2">
               {propertyTypes.map((t) => (
-                <button key={t} type="button" onClick={() => setForm(p => ({ ...p, propertyType: t }))}
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setForm((p) => ({ ...p, propertyType: t }))}
                   className={`py-2 rounded-xl text-xs font-bold border-2 transition-all ${
                     form.propertyType === t ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]" : "border-slate-200 text-slate-500 hover:border-slate-300"
-                  }`}>{t}</button>
+                  }`}
+                >
+                  {t}
+                </button>
               ))}
             </div>
           </div>
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
-            <button type="submit" disabled={saving || !!dupWarning}
-              className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] disabled:opacity-60">
+            <button
+              type="submit"
+              disabled={saving || !!dupWarning}
+              className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] disabled:opacity-60"
+            >
               {saving ? "Saving..." : "Add Customer"}
             </button>
           </div>
@@ -148,31 +171,167 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
   );
 }
 
+/**
+ * Portal-based dropdown that renders to document.body to escape overflow:auto clipping.
+ */
+function DropdownPortal({ inputWrapRef, results, query, activeIdx, onSelect, onActiveIdx, onAddNew }) {
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const dropdownRef = useRef(null);
+
+  const updatePos = useCallback(() => {
+    if (!inputWrapRef.current) return;
+    const rect = inputWrapRef.current.getBoundingClientRect();
+    setPos({
+      top: rect.bottom + 6,
+      left: rect.left,
+      width: rect.width,
+    });
+  }, [inputWrapRef]);
+
+  useEffect(() => {
+    updatePos();
+    window.addEventListener("scroll", updatePos, true);
+    window.addEventListener("resize", updatePos);
+    return () => {
+      window.removeEventListener("scroll", updatePos, true);
+      window.removeEventListener("resize", updatePos);
+    };
+  }, [updatePos]);
+
+  return createPortal(
+    <div
+      ref={dropdownRef}
+      style={{
+        position: "fixed",
+        top: pos.top,
+        left: pos.left,
+        width: pos.width,
+        zIndex: 99999,
+        borderRadius: 12,
+        background: "#ffffff",
+        border: "2px solid #e2e8f0",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08)",
+        maxHeight: "min(320px, 50vh)",
+        overflowY: "auto",
+        overflowX: "hidden",
+      }}
+    >
+      {results.length === 0 && query.trim() && (
+        <div style={{ padding: "12px 16px", fontSize: 14, color: "#64748b" }}>
+          No customers found for &quot;{query}&quot;
+        </div>
+      )}
+
+      {results.map((customer, i) => (
+        <button
+          key={customer.id}
+          type="button"
+          onMouseDown={() => onSelect(customer)}
+          onMouseEnter={() => onActiveIdx(i)}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "12px 16px",
+            textAlign: "left",
+            border: "none",
+            cursor: "pointer",
+            borderBottom: "1px solid #f1f5f9",
+            background: activeIdx === i ? "rgba(76,122,45,0.08)" : "#ffffff",
+            transition: "background 0.15s",
+          }}
+        >
+          <div style={{
+            width: 32, height: 32, borderRadius: 8,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 11, fontWeight: 900, flexShrink: 0,
+            background: "#ecfdf5", color: "#4C7A2D",
+          }}>
+            {customer.name?.slice(0, 2).toUpperCase()}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontWeight: 600, fontSize: 14, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>
+              {customer.name}
+            </p>
+            <p style={{ fontSize: 12, color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>
+              {customer.phone} · {customer.address}
+            </p>
+          </div>
+          {activeIdx === i && <Check style={{ width: 16, height: 16, flexShrink: 0, color: "#059669" }} />}
+        </button>
+      ))}
+
+      <button
+        type="button"
+        onMouseDown={onAddNew}
+        onMouseEnter={() => onActiveIdx(results.length)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "12px 16px",
+          textAlign: "left",
+          border: "none",
+          cursor: "pointer",
+          background: activeIdx === results.length ? "rgba(76,122,45,0.08)" : "#ffffff",
+          transition: "background 0.15s",
+        }}
+      >
+        <div style={{
+          width: 32, height: 32, borderRadius: 8,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0, background: "#ecfdf5",
+        }}>
+          <Plus style={{ width: 16, height: 16, color: "#059669" }} />
+        </div>
+        <span style={{ fontSize: 14, fontWeight: 700, color: "#059669" }}>+ Add New Customer</span>
+      </button>
+    </div>,
+    document.body
+  );
+}
+
+/**
+ * @param {{
+ *   customers?: Array<Record<string, any>>,
+ *   value?: Record<string, any> | null,
+ *   onChange: (customer: Record<string, any> | null) => void,
+ *   onCustomerCreated?: (customer: Record<string, any>) => void,
+ *   placeholder?: string,
+ * }} props
+ */
 export default function CustomerSearch({ customers = [], value, onChange, onCustomerCreated, placeholder = "Search customer by name or phone..." }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
   const [showAddModal, setShowAddModal] = useState(false);
   const inputRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const inputWrapRef = useRef(null);
 
-  // Filter results
-  const results = query.trim().length === 0 ? [] : customers.filter((c) => {
-    const q = query.toLowerCase();
-    return c.name?.toLowerCase().includes(q) || c.phone?.includes(q);
-  }).slice(0, 8);
+  const results = query.trim().length === 0
+    ? []
+    : customers.filter((c) => {
+        const q = query.toLowerCase();
+        return c.name?.toLowerCase().includes(q) || c.phone?.includes(q);
+      }).slice(0, 8);
 
-  // Close on outside click
+  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e) => {
-      if (!dropdownRef.current?.contains(e.target)) setOpen(false);
+      if (inputWrapRef.current?.contains(e.target)) return;
+      // Check if click is in the portal dropdown (any element with our portal z-index)
+      const el = e.target;
+      if (el?.closest?.("[data-customer-dropdown]")) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const select = (c) => {
-    onChange(c);
+  const select = (customer) => {
+    onChange(customer);
     setQuery("");
     setOpen(false);
   };
@@ -180,14 +339,21 @@ export default function CustomerSearch({ customers = [], value, onChange, onCust
   const clear = () => {
     onChange(null);
     setQuery("");
+    setOpen(false);
     setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   const handleKeyDown = (e) => {
     if (!open) return;
-    const total = results.length + 1; // +1 for Add New
-    if (e.key === "ArrowDown") { e.preventDefault(); setActiveIdx((i) => (i + 1) % total); }
-    if (e.key === "ArrowUp") { e.preventDefault(); setActiveIdx((i) => (i - 1 + total) % total); }
+    const total = results.length + 1;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIdx((i) => (i + 1) % total);
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIdx((i) => (i - 1 + total) % total);
+    }
     if (e.key === "Enter") {
       e.preventDefault();
       if (activeIdx < results.length) select(results[activeIdx]);
@@ -196,105 +362,85 @@ export default function CustomerSearch({ customers = [], value, onChange, onCust
     if (e.key === "Escape") setOpen(false);
   };
 
-  const handleNewCustomer = (c) => {
+  const handleNewCustomer = (customer) => {
     setShowAddModal(false);
-    select(c);
-    onCustomerCreated?.(c);
+    select(customer);
+    onCustomerCreated?.(customer);
   };
 
-  // Selected state — show read-only card
   if (value) {
     return (
-      <div className="flex items-center gap-3 px-4 py-3 rounded-xl"
-        style={{ background: "rgba(76,122,45,0.12)", border: "1px solid rgba(76,122,45,0.3)" }}>
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-black flex-shrink-0"
-          style={{ background: "#4C7A2D" }}>
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-black flex-shrink-0 bg-[#4C7A2D]">
           {value.name?.slice(0, 2).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-white text-sm truncate">{value.name}</p>
-          <p className="text-xs truncate" style={{ color: "rgba(255,255,255,0.5)" }}>{value.phone} · {value.address}</p>
+          <p className="font-bold text-slate-900 text-sm truncate">{value.name}</p>
+          <p className="text-xs truncate text-slate-500">{value.phone} · {value.address}</p>
         </div>
-        <button type="button" onClick={clear} className="p-1.5 rounded-lg flex-shrink-0 transition-colors"
-          style={{ color: "rgba(255,255,255,0.4)" }}
-          onMouseEnter={e => e.currentTarget.style.color = "#F87171"}
-          onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.4)"}>
+        <button
+          type="button"
+          onClick={clear}
+          className="p-1.5 rounded-lg flex-shrink-0 text-slate-400 hover:text-rose-500 transition-colors"
+        >
           <X className="w-4 h-4" />
         </button>
       </div>
     );
   }
 
+  const showDropdown = open && query.trim();
+
   return (
     <>
-      <div ref={dropdownRef} className="relative">
-        {/* Search input */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+      <div ref={inputWrapRef} className="relative">
+        <div
+          className="relative rounded-xl"
+          style={{
+            background: "#ffffff",
+            border: "2px solid #cbd5e1",
+            boxShadow: "0 1px 3px rgba(15, 23, 42, 0.08)",
+          }}
+        >
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
           <input
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => { setQuery(e.target.value); setOpen(true); setActiveIdx(0); }}
-            onFocus={() => setOpen(true)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setOpen(Boolean(e.target.value.trim()));
+              setActiveIdx(0);
+            }}
+            onFocus={() => setOpen(Boolean(query.trim()))}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff" }}
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl focus:outline-none text-sm"
+            className="w-full pl-10 pr-4 py-3 rounded-xl bg-white text-sm focus:outline-none"
+            style={{
+              background: "#ffffff",
+              color: "#0f172a",
+              border: "none",
+              boxShadow: "none",
+            }}
           />
         </div>
-
-        {/* Dropdown */}
-        {open && (
-          <div className="absolute z-[999] w-full mt-1 rounded-xl shadow-2xl overflow-hidden"
-            style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.12)", top: "100%" }}>
-            {results.length === 0 && query.trim() && (
-              <div className="px-4 py-3 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>No customers found for "{query}"</div>
-            )}
-            {results.length === 0 && !query.trim() && (
-              <div className="px-4 py-3 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Start typing to search…</div>
-            )}
-            {results.map((c, i) => (
-              <button
-                key={c.id}
-                type="button"
-                onMouseDown={() => select(c)}
-                onMouseEnter={() => setActiveIdx(i)}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
-                style={{
-                  borderBottom: "1px solid rgba(255,255,255,0.06)",
-                  background: activeIdx === i ? "rgba(76,122,45,0.15)" : "transparent",
-                }}
-              >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black flex-shrink-0"
-                  style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>
-                  {c.name?.slice(0, 2).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate text-white">{c.name}</p>
-                  <p className="text-xs truncate" style={{ color: "rgba(255,255,255,0.4)" }}>{c.phone} · {c.address}</p>
-                </div>
-                {activeIdx === i && <Check className="w-4 h-4 flex-shrink-0" style={{ color: "#6DBF4A" }} />}
-              </button>
-            ))}
-
-            {/* Add new customer option */}
-            <button
-              type="button"
-              onMouseDown={() => { setOpen(false); setShowAddModal(true); }}
-              onMouseEnter={() => setActiveIdx(results.length)}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
-              style={{ background: activeIdx === results.length ? "rgba(76,122,45,0.15)" : "transparent" }}
-            >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(76,122,45,0.2)" }}>
-                <Plus className="w-4 h-4" style={{ color: "#6DBF4A" }} />
-              </div>
-              <span className="text-sm font-bold" style={{ color: "#6DBF4A" }}>+ Add New Customer</span>
-            </button>
-          </div>
-        )}
       </div>
+
+      {/* Portal dropdown — escapes overflow:auto clipping */}
+      {showDropdown && (
+        <DropdownPortal
+          inputWrapRef={inputWrapRef}
+          results={results}
+          query={query}
+          activeIdx={activeIdx}
+          onSelect={select}
+          onActiveIdx={setActiveIdx}
+          onAddNew={() => {
+            setOpen(false);
+            setShowAddModal(true);
+          }}
+        />
+      )}
 
       {showAddModal && (
         <AddCustomerModal

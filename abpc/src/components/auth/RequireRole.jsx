@@ -1,6 +1,9 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
+/**
+ * @param {{ allow?: string[], children: React.ReactNode }} props
+ */
 export default function RequireRole({ allow = [], children }) {
   const { loading, profile } = useAuth();
 

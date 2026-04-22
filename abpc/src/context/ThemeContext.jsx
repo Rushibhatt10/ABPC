@@ -1,27 +1,32 @@
-import React, { useEffect, useState, createContext } from 'react';
+import React, { useEffect, useMemo, useState, createContext } from "react";
 
 export const ThemeContext = createContext({
-  theme: 'light',
+  theme: "light",
   toggleTheme: () => {},
 });
 
+/**
+ * @param {{ children: React.ReactNode }} props
+ */
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
-    const stored = localStorage.getItem('abpc_theme');
-    return stored === 'dark' || stored === 'light' ? stored : 'light';
+    const stored = localStorage.getItem("abpc_theme");
+    return stored === "dark" || stored === "light" ? stored : "light";
   });
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    localStorage.setItem('abpc_theme', theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("abpc_theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
+  const value = useMemo(() => ({ theme, toggleTheme }), [theme]);
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

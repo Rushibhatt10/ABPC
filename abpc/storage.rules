@@ -1,19 +1,50 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-
     function signedIn() {
       return request.auth != null;
     }
 
+    function hasUserDoc() {
+      return signedIn() &&
+        firestore.exists(/databases/(default)/documents/users/$(request.auth.uid));
+    }
+
+    function currentRole() {
+      return hasUserDoc()
+        ? firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role
+        : null;
+    }
+
+    function isAdmin() {
+      return currentRole() == "admin";
+    }
+
+    function isFieldTechnician() {
+      return currentRole() == "field_technician";
+    }
+
+    function canUploadReportMedia(maxBytes, allowedPrefixes) {
+      return signedIn() &&
+        (isAdmin() || isFieldTechnician()) &&
+        request.resource.size <= maxBytes &&
+        request.resource.contentType != null &&
+        request.resource.contentType.matches(allowedPrefixes);
+    }
+
     match /reports/images/{fileName} {
-      allow read: if signedIn();
-      allow write: if signedIn() && request.resource.size <= 5 * 1024 * 1024;
+      allow read: if signedIn() && (isAdmin() || isFieldTechnician());
+      allow write: if canUploadReportMedia(5 * 1024 * 1024, "image/.*");
     }
 
     match /reports/audio/{fileName} {
-      allow read: if signedIn();
-      allow write: if signedIn() && request.resource.size <= 5 * 1024 * 1024;
+      allow read: if signedIn() && (isAdmin() || isFieldTechnician());
+      allow write: if canUploadReportMedia(5 * 1024 * 1024, "audio/.*");
+    }
+
+    match /reports/video/{fileName} {
+      allow read: if signedIn() && (isAdmin() || isFieldTechnician());
+      allow write: if canUploadReportMedia(20 * 1024 * 1024, "video/.*");
     }
 
     match /{allPaths=**} {
