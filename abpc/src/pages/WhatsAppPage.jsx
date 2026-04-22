@@ -143,12 +143,12 @@ function WhatsAppModal({ job, invoices, quotations, amcs, onClose }) {
 
           {/* Job info strip */}
           <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200">
-            <Briefcase className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <Briefcase className="w-4 h-4 text-slate-400 flex-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-800 truncate">{data.service}</p>
               <p className="text-xs text-slate-400">{data.jobDate} · {data.amount}</p>
             </div>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${job.status === "completed" ? "bg-emerald-100 text-emerald-700" :
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-0 ${job.status === "completed" ? "bg-emerald-100 text-emerald-700" :
               job.status === "in_progress" ? "bg-blue-100 text-blue-700" :
                 "bg-amber-100 text-amber-700"
               }`}>{job.status || "pending"}</span>
@@ -165,7 +165,7 @@ function WhatsAppModal({ job, invoices, quotations, amcs, onClose }) {
                   <button key={t.id} type="button" onClick={() => setMsgType(t.id)}
                     className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold text-left transition-all ${active ? `${t.bg} ring-1 ring-current` : "border-slate-200 text-slate-600 hover:border-slate-300 bg-white"
                       }`}>
-                    <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${active ? t.color : "text-slate-400"}`} />
+                    <Icon className={`w-3.5 h-3.5 flex-0 ${active ? t.color : "text-slate-400"}`} />
                     <span className={active ? t.color : ""}>{t.label}</span>
                   </button>
                 );
@@ -323,7 +323,7 @@ export default function WhatsAppPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search by customer or phone..."
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white" />
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm bg-white" />
           </div>
 
           {customerGroups.length === 0 ? (
@@ -341,14 +341,14 @@ export default function WhatsAppPage() {
                     {/* Customer row */}
                     <button onClick={() => setExpandedCustomer(isOpen ? null : group.key)}
                       className="w-full px-4 py-3.5 flex items-center gap-3 hover:bg-slate-50 transition-colors text-left">
-                      <div className="w-9 h-9 rounded-xl bg-[var(--brand-soft)] flex items-center justify-center text-[var(--brand)] text-xs font-black flex-shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-var(--brand-soft) flex items-center justify-center text-var(--brand) text-xs font-black flex-0">
                         {group.name?.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-slate-900 text-sm">{group.name}</p>
                         <p className="text-xs text-slate-400">{group.phone} · {group.jobs.length} job{group.jobs.length !== 1 ? "s" : ""}</p>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-0">
                         {customerAmc && (
                           <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">AMC</span>
                         )}
@@ -363,7 +363,7 @@ export default function WhatsAppPage() {
                         {/* AMC card if exists */}
                         {customerAmc && (
                           <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
-                            <RefreshCw className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                            <RefreshCw className="w-3.5 h-3.5 text-emerald-600 flex-0" />
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-bold text-emerald-800">AMC Active</p>
                               <p className="text-[10px] text-emerald-600">
@@ -371,7 +371,7 @@ export default function WhatsAppPage() {
                               </p>
                             </div>
                             <button onClick={() => setSelectedJob({ ...group.jobs[0], _amcRenewal: true, customerName: group.name, customerPhone: group.phone })}
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white flex-shrink-0"
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white flex-0"
                               style={{ background: "#25D366" }}>
                               <MessageSquare className="w-3 h-3" /> Renew
                             </button>
@@ -385,12 +385,12 @@ export default function WhatsAppPage() {
                               <p className="text-xs font-bold text-slate-800 truncate">{job.treatmentLabel || job.serviceType || job.serviceName}</p>
                               <p className="text-[10px] text-slate-400">{job.scheduledDate} · {job.finalPrice ? `₹${Number(job.finalPrice).toLocaleString("en-IN")}` : ""}</p>
                             </div>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${job.status === "completed" ? "bg-emerald-100 text-emerald-700" :
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-0 ${job.status === "completed" ? "bg-emerald-100 text-emerald-700" :
                               job.status === "in_progress" ? "bg-blue-100 text-blue-700" :
                                 "bg-amber-100 text-amber-700"
                               }`}>{job.status || "pending"}</span>
                             <button onClick={() => setSelectedJob(job)}
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white flex-shrink-0"
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white flex-0"
                               style={{ background: "#25D366" }}>
                               <MessageSquare className="w-3 h-3" /> Send
                             </button>
@@ -431,7 +431,7 @@ export default function WhatsAppPage() {
                     </div>
                     <a href={num ? `https://wa.me/${num}?text=${encodeURIComponent(text)}` : "#"}
                       target="_blank" rel="noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white flex-shrink-0 active:scale-95 transition-all"
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white flex-0 active:scale-95 transition-all"
                       style={{ background: "#25D366" }}>
                       <Send className="w-3 h-3" /> Remind
                     </a>
@@ -451,7 +451,7 @@ export default function WhatsAppPage() {
             const num = getWhatsAppNumber(c.phone);
             return (
               <div key={c.id} className="bg-white rounded-2xl border border-slate-200 px-4 py-3.5 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[var(--brand-soft)] flex items-center justify-center text-[var(--brand)] text-xs font-black flex-shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-var(--brand-soft) flex items-center justify-center text-var(--brand) text-xs font-black flex-0">
                   {c.name?.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -459,7 +459,7 @@ export default function WhatsAppPage() {
                   <p className="text-xs text-slate-400">{c.phone}</p>
                 </div>
                 <a href={num ? `https://wa.me/${num}` : "#"} target="_blank" rel="noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white flex-shrink-0 active:scale-95 transition-all"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white flex-0 active:scale-95 transition-all"
                   style={{ background: "#25D366" }}>
                   <MessageSquare className="w-3 h-3" /> Chat
                 </a>

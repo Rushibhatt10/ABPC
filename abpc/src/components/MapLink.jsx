@@ -59,7 +59,7 @@ export default function MapLink({
         onClick={() => openInNewTab(searchUrl)}
         type="button"
       >
-        <MapPin className="h-4 w-4 flex-shrink-0" />
+        <MapPin className="h-4 w-4 shrink-0" />
         <span>{label}</span>
       </button>
 
@@ -71,9 +71,9 @@ export default function MapLink({
           type="button"
         >
           {loadingDirections ? (
-            <LoaderCircle className="h-4 w-4 animate-spin flex-shrink-0" />
+            <LoaderCircle className="h-4 w-4 animate-spin shrink-0" />
           ) : (
-            <Navigation className="h-4 w-4 flex-shrink-0" />
+            <Navigation className="h-4 w-4 shrink-0" />
           )}
           <span>{loadingDirections ? "Getting location..." : "Get Directions"}</span>
         </button>

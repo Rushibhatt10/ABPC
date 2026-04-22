@@ -30,13 +30,14 @@ function StatCard({ label, value, icon, color, sub }) {
   };
   return (
     <div className={`rounded-2xl border-2 p-5 transition-all duration-300 hover:scale-[1.02] ${colors[color]}`}
-      style={{ boxShadow: `0 10px 30px -10px rgba(0,0,0,0.05), 0 0 15px -5px ${
-        color === 'green' ? 'rgba(16,185,129,0.2)' : 
-        color === 'amber' ? 'rgba(245,158,11,0.2)' : 
-        color === 'blue' ? 'rgba(59,130,246,0.2)' : 
-        color === 'violet' ? 'rgba(139,92,246,0.2)' : 
-        'rgba(0,0,0,0.05)'
-      }` }}>
+      style={{
+        boxShadow: `0 10px 30px -10px rgba(0,0,0,0.05), 0 0 15px -5px ${color === 'green' ? 'rgba(16,185,129,0.2)' :
+            color === 'amber' ? 'rgba(245,158,11,0.2)' :
+              color === 'blue' ? 'rgba(59,130,246,0.2)' :
+                color === 'violet' ? 'rgba(139,92,246,0.2)' :
+                  'rgba(0,0,0,0.05)'
+          }`
+      }}>
       <div className="flex items-start justify-between mb-3">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${iconColors[color]}`}>
           <IconComponent className="w-5 h-5" />
@@ -63,9 +64,8 @@ function EmployeeJobCard({ job, onComplete, saving }) {
           <p className="text-sm text-slate-500 mt-0.5">{job.serviceType || job.serviceName || "Service"}</p>
           {jobAddress ? <p className="text-xs text-slate-400 mt-0.5">{jobAddress}</p> : null}
         </div>
-        <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex-shrink-0 ${
-          isCompleted ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-        }`}>
+        <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex-0 ${isCompleted ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+          }`}>
           {isCompleted ? "કમ્પ્લીટ" : "પેન્ડિંગ"}
         </span>
       </div>
@@ -183,9 +183,8 @@ function EmployeeDashboard({ profile }) {
       </div>
 
       {msg.text && (
-        <div className={`px-4 py-3 rounded-xl text-sm font-medium border ${
-          msg.type === "success" ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-rose-50 border-rose-200 text-rose-700"
-        }`}>
+        <div className={`px-4 py-3 rounded-xl text-sm font-medium border ${msg.type === "success" ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-rose-50 border-rose-200 text-rose-700"
+          }`}>
           {msg.text}
         </div>
       )}
@@ -200,20 +199,19 @@ function EmployeeDashboard({ profile }) {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder="જોબ ID અથવા કસ્ટમર નામ સર્ચ કરો..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white" />
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm bg-white" />
       </div>
 
       {/* Day filter */}
       <div className="flex gap-2">
         {[
-          { key: "today",    label: "આજ" },
+          { key: "today", label: "આજ" },
           { key: "tomorrow", label: "કાલ" },
-          { key: "all",      label: "બધા" },
+          { key: "all", label: "બધા" },
         ].map(t => (
           <button key={t.key} onClick={() => setDayFilter(t.key)}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-              dayFilter === t.key ? "bg-[var(--brand)] text-white" : "bg-white border border-slate-200 text-slate-600"
-            }`}>
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${dayFilter === t.key ? "bg-var(--brand) text-white" : "bg-white border border-slate-200 text-slate-600"
+              }`}>
             {t.label}
           </button>
         ))}
@@ -276,10 +274,10 @@ function AdminDashboard({ profile }) {
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   const quickLinks = [
-    { label: "New Customer",  to: "/admin/customers",  icon: Users,     gradient: "from-blue-500 to-blue-600" },
-    { label: "Create Job",    to: "/admin/jobs",        icon: Briefcase, gradient: "from-emerald-500 to-emerald-600" },
-    { label: "New Invoice",   to: "/admin/invoices",    icon: Receipt,   gradient: "from-violet-500 to-violet-600" },
-    { label: "New Quotation", to: "/admin/quotations",  icon: FileText,  gradient: "from-amber-500 to-amber-600" },
+    { label: "New Customer", to: "/admin/customers", icon: Users, gradient: "from-blue-500 to-blue-600" },
+    { label: "Create Job", to: "/admin/jobs", icon: Briefcase, gradient: "from-emerald-500 to-emerald-600" },
+    { label: "New Invoice", to: "/admin/invoices", icon: Receipt, gradient: "from-violet-500 to-violet-600" },
+    { label: "New Quotation", to: "/admin/quotations", icon: FileText, gradient: "from-amber-500 to-amber-600" },
   ];
 
   return (
@@ -306,25 +304,15 @@ function AdminDashboard({ profile }) {
       {/* ── STAT CARDS ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
-          { label: "Total Revenue",   value: formatCurrency(stats.totalRevenue),  sub: "All time collected",                          icon: TrendingUp, bg: "border-[rgba(76,122,45,0.3)]",   iconBg: "bg-[#4C7A2D]",   text: "text-[#4C7A2D]" },
-          { label: "Pending Amount",  value: formatCurrency(stats.pendingAmount), sub: `${stats.pendingCount} invoice${stats.pendingCount !== 1 ? "s" : ""}`, icon: Clock,      bg: "border-[rgba(228,87,46,0.3)]",  iconBg: "bg-[#E4572E]",   text: "text-[#E4572E]"  },
-          { label: "Today's Jobs",    value: stats.todayJobs,                     sub: "Scheduled today",                             icon: Calendar,   bg: "border-[rgba(59,130,246,0.3)]", iconBg: "bg-blue-600",    text: "text-blue-600", color: 'blue'      },
-          { label: "Total Customers", value: customers.length,                    sub: "In CRM",                                      icon: Users,      bg: "border-[rgba(139,92,246,0.3)]", iconBg: "bg-violet-600",  text: "text-violet-600", color: 'violet'    },
+          { label: "Total Revenue", value: formatCurrency(stats.totalRevenue), sub: "All time collected", icon: TrendingUp, bg: "border-[rgba(76,122,45,0.3)]", iconBg: "bg-[#4C7A2D]", text: "text-[#4C7A2D]" },
+          { label: "Pending Amount", value: formatCurrency(stats.pendingAmount), sub: `${stats.pendingCount} invoice${stats.pendingCount !== 1 ? "s" : ""}`, icon: Clock, bg: "border-[rgba(228,87,46,0.3)]", iconBg: "bg-[#E4572E]", text: "text-[#E4572E]" },
+          { label: "Today's Jobs", value: stats.todayJobs, sub: "Scheduled today", icon: Calendar, bg: "border-[rgba(59,130,246,0.3)]", iconBg: "bg-blue-600", text: "text-blue-600", color: 'blue' },
+          { label: "Total Customers", value: customers.length, sub: "In CRM", icon: Users, bg: "border-[rgba(139,92,246,0.3)]", iconBg: "bg-violet-600", text: "text-violet-600", color: 'violet' },
         ].map((s) => {
           const Icon = s.icon;
           return (
             <div key={s.label} className={`rounded-2xl border-2 ${s.bg} p-4 sm:p-5 flex flex-col gap-3 transition-all duration-300 hover:scale-[1.05] hover:shadow-lg`}
-              style={{ 
-                background: "#ffffff", 
-                boxShadow: `0 10px 40px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1), 0 0 15px -5px ${
-                  s.color === 'blue' ? 'rgba(59,130,246,0.2)' : 
-                  s.color === 'violet' ? 'rgba(139,92,246,0.2)' : 
-                  s.color === 'green' ? 'rgba(16,185,129,0.2)' : 
-                  s.bg.includes('rgba(76,122,45') ? 'rgba(76,122,45,0.2)' : 
-                  s.bg.includes('rgba(228,87,46') ? 'rgba(228,87,46,0.2)' : 
-                  'rgba(0,0,0,0.05)'
-                }`
-              }}>
+              style={{ background: "#ffffff", boxShadow: "0 10px 40px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1)" }}>
               <div className={`w-10 h-10 rounded-xl ${s.iconBg} flex items-center justify-center shadow-lg shadow-black/5`}>
                 <Icon className="w-5 h-5 text-white" />
               </div>
@@ -350,7 +338,7 @@ function AdminDashboard({ profile }) {
                 style={{ background: "#ffffff", border: "2px solid rgba(0,0,0,0.04)", boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)" }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(76,122,45,0.4)"}
                 onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(0,0,0,0.04)"}>
-                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${q.gradient} flex items-center justify-center shadow-lg shadow-black/10 group-hover:shadow-xl group-hover:scale-110 transition-all duration-300`}>
+                <div className={`w-12 h-12 rounded-2xl bg-gradient ${q.gradient} flex items-center justify-center shadow-lg shadow-black/10 group-hover:shadow-xl group-hover:scale-110 transition-all duration-300`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-xs font-black text-slate-600 text-center group-hover:text-slate-900 transition-colors uppercase tracking-wider">{q.label}</span>

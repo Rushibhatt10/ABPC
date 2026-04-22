@@ -185,7 +185,7 @@ export default function ComplaintsPage() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-(--brand) text-white text-sm font-bold hover:bg-(--brand-dark) transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
           New Complaint
@@ -220,7 +220,7 @@ export default function ComplaintsPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by customer, service, description..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white" />
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-(--brand) focus:outline-none text-sm bg-white" />
       </div>
 
       {/* Filters */}
@@ -232,7 +232,7 @@ export default function ComplaintsPage() {
               onClick={() => setFilterStatus(s)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 filterStatus === s
-                  ? "bg-[var(--brand)] text-white"
+                  ? "bg-(--brand) text-white"
                   : "bg-white border border-slate-200 text-slate-600 hover:border-slate-300"
               }`}
             >
@@ -397,7 +397,7 @@ export default function ComplaintsPage() {
                   value={form.linkedJobId}
                   onChange={(e) => setForm((p) => ({ ...p, linkedJobId: e.target.value }))}
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-(--brand) focus:outline-none text-sm"
                 >
                   <option value="">Select a completed job</option>
                   {completedJobs.map((j) => (
@@ -419,7 +419,7 @@ export default function ComplaintsPage() {
                       onClick={() => setForm((p) => ({ ...p, complaintType: t }))}
                       className={`py-2 rounded-xl text-xs font-semibold border-2 transition-all ${
                         form.complaintType === t
-                          ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]"
+                          ? "border-(--brand) bg-(--brand-soft) text-(--brand)"
                           : "border-slate-200 text-slate-600 hover:border-slate-300"
                       }`}
                     >
@@ -437,7 +437,7 @@ export default function ComplaintsPage() {
                   placeholder="Describe the issue or feedback in detail..."
                   rows={4}
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-(--brand) focus:outline-none text-sm resize-none"
                 />
               </div>
 
@@ -445,7 +445,7 @@ export default function ComplaintsPage() {
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">
                   Cancel
                 </button>
-                <button type="submit" disabled={busy} className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] disabled:opacity-60">
+                <button type="submit" disabled={busy} className="flex-1 py-2.5 rounded-xl bg-(--brand) text-white text-sm font-bold hover:bg-(--brand-dark) disabled:opacity-60">
                   {busy ? "Submitting..." : "Submit"}
                 </button>
               </div>

@@ -35,7 +35,7 @@ function RecordPaymentModal({ invoice, onClose, onSaved }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-300 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <div className="w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)" }}>
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
           <div>
@@ -191,7 +191,7 @@ export default function PaymentsPage() {
             <div key={s.label} className="rounded-2xl p-4 sm:p-5 flex flex-col gap-3 transition-all duration-200 hover:scale-[1.02]"
               style={{ ...glass, border: `1px solid ${s.accent}33` }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${s.accent}22` }}>
-                <Icon className="w-[18px] h-[18px]" style={{ color: s.accent }} />
+                <Icon className="w-18px h-18px" style={{ color: s.accent }} />
               </div>
               <div>
                 <p className="text-xl sm:text-2xl font-black text-white leading-none">{s.value}</p>
@@ -232,7 +232,7 @@ export default function PaymentsPage() {
       ) : (
         <div className="rounded-2xl overflow-hidden" style={glass}>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[500px]">
+            <table className="w-full text-sm min-w-500px">
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)" }}>
                   {["Invoice", "Customer", "Date", "Total", "Received", "Balance", "Status", "Actions"].map((h, i) => (

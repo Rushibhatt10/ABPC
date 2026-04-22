@@ -388,7 +388,7 @@ export default function ReportsPage() {
           {isEmployee && (
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm"
             >
               <Plus className="w-4 h-4" />
               નવો રિપોર્ટ સબમિટ કરો

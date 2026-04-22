@@ -97,7 +97,7 @@ export default function AppShell({ children }) {
             >
               {({ isActive }) => (
                 <>
-                  <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-[#7ED348]" : "text-white/50 group-hover:text-white/80"}`} />
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-[#7ED348]" : "text-white/50 group-hover:text-white/80"}`} />
                   <span className="flex-1">{item.label}</span>
                   {badge && (
                     <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black leading-none"
@@ -116,7 +116,7 @@ export default function AppShell({ children }) {
       {/* Profile */}
       <div className="px-3 py-4 border-t border-white/10">
         <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-black flex-shrink-0" style={{ background: "linear-gradient(135deg, #5E9A38, #7ED348)" }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-black shrink-0" style={{ background: "linear-gradient(135deg, #5E9A38, #7ED348)" }}>
             {profile?.avatar || profile?.name?.slice(0, 2).toUpperCase() || "AB"}
           </div>
           <div className="flex-1 min-w-0">
@@ -139,9 +139,9 @@ export default function AppShell({ children }) {
   );
 
   return (
-    <div className="flex h-screen bg-[var(--bg-soft)] overflow-hidden">
+    <div className="flex h-screen bg-(--bg-soft) overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-60 flex-shrink-0" style={{ background: "linear-gradient(180deg, #38702F 0%, #1A3D14 100%)", borderRight: "1px solid rgba(255,255,255,0.12)" }}>
+      <aside className="hidden lg:flex flex-col w-60 shrink-0" style={{ background: "linear-gradient(180deg, #38702F 0%, #1A3D14 100%)", borderRight: "1px solid rgba(255,255,255,0.12)" }}>
         <SidebarContent />
       </aside>
 
@@ -158,7 +158,7 @@ export default function AppShell({ children }) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden overflow-x-hidden">
         {/* Top Header */}
-        <header className="flex-shrink-0 h-14 flex items-center px-4 lg:px-6 gap-4 z-30 bg-white border-b border-slate-200">
+        <header className="shrink-0 h-14 flex items-center px-4 lg:px-6 gap-4 z-30 bg-white border-b border-slate-200">
           <button
             className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
             onClick={() => setSidebarOpen(true)}
@@ -174,7 +174,7 @@ export default function AppShell({ children }) {
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-500 rounded-full" />
             </button>
             <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200">
-              <div className="w-7 h-7 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-[10px] font-black">
+              <div className="w-7 h-7 rounded-lg bg-(--brand) flex items-center justify-center text-white text-[10px] font-black">
                 {profile?.avatar || profile?.name?.slice(0, 2).toUpperCase() || "AB"}
               </div>
               <span className="text-sm font-semibold text-slate-700">{profile?.name}</span>

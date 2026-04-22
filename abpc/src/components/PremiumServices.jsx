@@ -116,12 +116,12 @@ const PremiumServices = () => {
     >
       {/* ambient glow */}
       <div
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] blur-[160px] rounded-full pointer-events-none ${
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-900px h-900px blur-[160px] rounded-full pointer-events-none ${
           isDark ? 'bg-[#95B15F]/6' : 'bg-[#95B15F]/4'
         }`}
       />
 
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-5 md:px-14 relative z-10">
+      <div className="max-w-1440px mx-auto px-4 sm:px-5 md:px-14 relative z-10">
         {/* heading */}
         <div className="mb-10 sm:mb-12 md:mb-20 flex flex-col items-center text-center">
           <span className="text-[#95B15F] text-sm md:text-base uppercase tracking-[0.3em] opacity-80 mb-3 block">
@@ -151,14 +151,14 @@ const PremiumServices = () => {
           return (
             <div
               key={service.id}
-              className={`snap-center shrink-0 w-[94vw] sm:w-[90vw] md:w-[820px] lg:w-[980px] md:min-h-[520px] md:max-h-[72vh] relative group rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col md:flex-row transition-all duration-700 ${
+              className={`snap-center shrink-0 w-[94vw] sm:w-[90vw] md:w-820px lg:w-980px md:min-h-520px md:max-h-[72vh] relative group rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col md:flex-row transition-all duration-700 ${
                 isDark
                   ? 'bg-[#0a0a0a] shadow-[0_20px_60px_rgba(0,0,0,0.6)]'
                   : 'bg-[#ffffff] shadow-[0_20px_60px_rgba(0,0,0,0.08)]'
               } ${isActive ? 'ring-1 ring-[#95B15F]/30' : ''}`}
             >
               {/* video / image side */}
-              <div className="w-full md:w-[48%] aspect-[5/4] sm:aspect-[4/3] md:aspect-auto relative overflow-hidden shrink-0">
+              <div className="w-full md:w-[48%] aspect-5/4 sm:aspect-4/3 md:aspect-auto relative overflow-hidden shrink-0">
                 <video
                   ref={(el) => { videoRefs.current[idx] = el; }}
                   src={service.video}
@@ -168,7 +168,7 @@ const PremiumServices = () => {
                   preload="metadata"
                   className="w-full h-full object-cover pointer-events-none"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:via-transparent md:to-black/20 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient from-black/40 via-transparent to-transparent md:bg-gradient md:from-transparent md:via-transparent md:to-black/20 pointer-events-none" />
                 <span className="absolute top-4 sm:top-5 left-4 sm:left-5 text-white/60 text-4xl sm:text-5xl leading-none z-10">
                   {service.id}
                 </span>
@@ -195,7 +195,7 @@ const PremiumServices = () => {
                 <ul className="space-y-3 md:space-y-4">
                   {service.points.map((point, i) => (
                     <li key={i} className={`flex items-start gap-3 ${isDark ? 'text-white/55' : 'text-black/55'}`}>
-                      <CheckCircle2 size={16} className="text-[#95B15F] shrink-0 mt-[3px]" />
+                      <CheckCircle2 size={16} className="text-[#95B15F] shrink-0 mt-3px" />
                       <span className="text-[13px] sm:text-sm md:text-[0.9rem] leading-relaxed tracking-wide">
                         {point}
                       </span>

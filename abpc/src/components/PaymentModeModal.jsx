@@ -17,7 +17,7 @@ export default function PaymentModeModal({ onConfirm, onClose, title = "Generate
   const [selected, setSelected] = useState("UPI");
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-300 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-auto">
 
         {/* Header */}
@@ -49,7 +49,7 @@ export default function PaymentModeModal({ onConfirm, onClose, title = "Generate
                 onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = "rgba(0,0,0,0.04)"; }}
                 onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = "rgba(0,0,0,0.02)"; }}
               >
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-0"
                   style={{ background: isSelected ? m.bg : "rgba(0,0,0,0.05)" }}>
                   <Icon className="w-4 h-4" style={{ color: isSelected ? m.color : "#94a3b8" }} />
                 </div>
@@ -57,7 +57,7 @@ export default function PaymentModeModal({ onConfirm, onClose, title = "Generate
                   style={{ color: isSelected ? m.color : "#374151" }}>
                   {m.label}
                 </span>
-                {isSelected && <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: m.color }} />}
+                {isSelected && <CheckCircle2 className="w-4 h-4 flex-0" style={{ color: m.color }} />}
               </button>
             );
           })}

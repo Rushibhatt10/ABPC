@@ -209,7 +209,7 @@ export default function SetJobLocation({ job, onClose, onSaved }) {
   });
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4">
+    <div className="fixed inset-0 z-200 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4">
       <div
         className="w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl overflow-hidden max-h-[95vh] overflow-y-auto"
         style={{ ...glass, boxShadow: "0 32px 80px rgba(0,0,0,0.9)" }}
@@ -251,7 +251,7 @@ export default function SetJobLocation({ job, onClose, onSaved }) {
           {autoStatus === "loading" && (
             <div className="rounded-xl p-4 flex items-center gap-3"
               style={{ background: "rgba(76,122,45,0.08)", border: "1px solid rgba(76,122,45,0.2)" }}>
-              <Loader2 className="w-5 h-5 animate-spin flex-shrink-0" style={{ color: "#6DBF4A" }} />
+              <Loader2 className="w-5 h-5 animate-spin shrink-0" style={{ color: "#6DBF4A" }} />
               <div>
                 <p className="text-sm font-black" style={{ color: "#6DBF4A" }}>Auto-locating address…</p>
                 <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
@@ -299,7 +299,7 @@ export default function SetJobLocation({ job, onClose, onSaved }) {
             <div className="rounded-xl p-3.5 space-y-2"
               style={{ background: "rgba(228,87,46,0.08)", border: "1px solid rgba(228,87,46,0.25)" }}>
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" style={{ color: "#F87171" }} />
+                <AlertCircle className="w-4 h-4 shrink-0" style={{ color: "#F87171" }} />
                 <p className="text-xs font-black" style={{ color: "#F87171" }}>
                   Couldn't auto-locate this address
                 </p>
@@ -389,7 +389,7 @@ export default function SetJobLocation({ job, onClose, onSaved }) {
                             onMouseEnter={(e) => e.currentTarget.style.background = "rgba(76,122,45,0.15)"}
                             onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
                             <div className="flex items-start gap-2">
-                              <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: "#6DBF4A" }} />
+                              <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: "#6DBF4A" }} />
                               <div className="min-w-0">
                                 <p className="text-sm font-semibold text-white truncate">{s.shortName || s.displayName.split(",")[0]}</p>
                                 <p className="text-[10px] mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.4)" }}>{s.displayName}</p>
@@ -429,7 +429,7 @@ export default function SetJobLocation({ job, onClose, onSaved }) {
                       autoComplete="off"
                     />
                     <button onClick={handleParseMapsLink} disabled={!mapsLink.trim()}
-                      className="px-3 py-2.5 rounded-xl text-xs font-black flex items-center gap-1.5 flex-shrink-0"
+                      className="px-3 py-2.5 rounded-xl text-xs font-black flex items-center gap-1.5 shrink-0"
                       style={{
                         background: mapsLink.trim() ? "rgba(76,122,45,0.2)" : "rgba(255,255,255,0.05)",
                         border: mapsLink.trim() ? "1px solid rgba(76,122,45,0.4)" : "1px solid rgba(255,255,255,0.07)",
@@ -440,7 +440,7 @@ export default function SetJobLocation({ job, onClose, onSaved }) {
                   </div>
                   {mapsLinkErr && (
                     <div className="flex items-start gap-1.5 px-3 py-2 rounded-xl" style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)" }}>
-                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "#F87171" }} />
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "#F87171" }} />
                       <p className="text-[11px]" style={{ color: "#F87171" }}>{mapsLinkErr}</p>
                     </div>
                   )}
@@ -495,7 +495,7 @@ export default function SetJobLocation({ job, onClose, onSaved }) {
           {msg && (
             <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl"
               style={{ background: "rgba(76,122,45,0.12)", border: "1px solid rgba(76,122,45,0.25)" }}>
-              <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "#6DBF4A" }} />
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "#6DBF4A" }} />
               <p className="text-xs leading-relaxed" style={{ color: "#6DBF4A" }}>{msg}</p>
             </div>
           )}

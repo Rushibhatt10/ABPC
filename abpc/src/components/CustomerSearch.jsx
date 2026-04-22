@@ -68,10 +68,10 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
     }
   };
 
-  const inputCls = "w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm";
+  const inputCls = "w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-(--brand) focus:outline-none text-sm";
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <h2 className="font-bold text-slate-900">Add New Customer</h2>
@@ -131,7 +131,7 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
 
             {buildAddress(form) && (
               <div className="flex items-start gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
-                <MapPin className="w-3.5 h-3.5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <MapPin className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
                 <p className="text-xs text-emerald-700 leading-relaxed">{buildAddress(form)}</p>
               </div>
             )}
@@ -146,7 +146,7 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
                   type="button"
                   onClick={() => setForm((p) => ({ ...p, propertyType: t }))}
                   className={`py-2 rounded-xl text-xs font-bold border-2 transition-all ${
-                    form.propertyType === t ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]" : "border-slate-200 text-slate-500 hover:border-slate-300"
+                    form.propertyType === t ? "border-(--brand) bg-(--brand-soft) text-(--brand)" : "border-slate-200 text-slate-500 hover:border-slate-300"
                   }`}
                 >
                   {t}
@@ -160,7 +160,7 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
             <button
               type="submit"
               disabled={saving || !!dupWarning}
-              className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] disabled:opacity-60"
+              className="flex-1 py-2.5 rounded-xl bg-(--brand) text-white text-sm font-bold hover:bg-(--brand-dark) disabled:opacity-60"
             >
               {saving ? "Saving..." : "Add Customer"}
             </button>
@@ -371,7 +371,7 @@ export default function CustomerSearch({ customers = [], value, onChange, onCust
   if (value) {
     return (
       <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-black flex-shrink-0 bg-[#4C7A2D]">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-black shrink-0 bg-[#4C7A2D]">
           {value.name?.slice(0, 2).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
@@ -381,7 +381,7 @@ export default function CustomerSearch({ customers = [], value, onChange, onCust
         <button
           type="button"
           onClick={clear}
-          className="p-1.5 rounded-lg flex-shrink-0 text-slate-400 hover:text-rose-500 transition-colors"
+          className="p-1.5 rounded-lg shrink-0 text-slate-400 hover:text-rose-500 transition-colors"
         >
           <X className="w-4 h-4" />
         </button>

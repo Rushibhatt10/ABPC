@@ -41,12 +41,12 @@ export default function AttendanceAdminView({ job, onClose }) {
   const presentCount = Object.keys(checkedInMap).length;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4">
+    <div className="fixed inset-0 z-200 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4">
       <div className="w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[85vh] flex flex-col"
         style={{ ...glass, boxShadow: "0 24px 80px rgba(0,0,0,0.9)" }}>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
+        <div className="flex items-center justify-between px-5 py-4 flex-0"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
           <div>
             <div className="flex items-center gap-2">
@@ -71,7 +71,7 @@ export default function AttendanceAdminView({ job, onClose }) {
           {/* Job address */}
           <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl"
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }} />
+            <MapPin className="w-3.5 h-3.5 flex-0 mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }} />
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
               {job.address || job.customerAddress || "No address set"}
             </p>
