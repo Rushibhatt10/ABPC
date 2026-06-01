@@ -14,7 +14,7 @@ const premiumServicesData = [
       'Injection (drilling) treatment for existing buildings',
       'Pipe system for future termite control',
     ],
-    video: 'Video.mp4',
+    video: 'evr.mp4',
   },
   {
     id: '02',
@@ -29,7 +29,7 @@ const premiumServicesData = [
       'Power fogging for open areas',
       'Anti-breeding larva treatment',
     ],
-    video: 'Video2.mp4',
+    video: '3.mp4',
   },
   {
     id: '03',
@@ -42,7 +42,7 @@ const premiumServicesData = [
       'Wooden furniture protection',
       'Safe for family and pets',
     ],
-    video: 'coc.mp4',
+    video: 'gpcr.mp4',
   },
   {
     id: '04',
@@ -54,7 +54,7 @@ const premiumServicesData = [
       'Bird protection nets',
       'Anti-bird spike installation',
     ],
-    video: 'wc.mp4',
+    video: 'wcr.mp4',
   },
   {
     id: '05',
@@ -67,7 +67,7 @@ const premiumServicesData = [
       'Flexible service timing',
       'Free inspection available',
     ],
-    video: 'ABAB.mp4',
+    video: 'self.mp4',
   },
 ];
 
