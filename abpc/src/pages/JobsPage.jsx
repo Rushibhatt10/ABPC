@@ -26,8 +26,10 @@ import {
   Users, ChevronRight, ArrowLeft, Video, BarChart2,
 } from "lucide-react";
 import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
+import FileSaver from "file-saver";
 import { isDriveUploadConfigured, uploadFileToDrive } from "../utils/driveUpload";
+
+const saveAs = FileSaver.saveAs || FileSaver;
 
 const STATUS_COLORS = {
   pending: "bg-amber-100 text-amber-700",
@@ -194,8 +196,8 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
   const checkInTime = attendanceRecord?.timestamp || null;
 
   // Modal state lifted to parent — use callbacks instead
-  const setShowReport = () => onOpenReport?.(job);
-  const setShowVideoReport = () => onOpenVideoReport?.(job);
+  const setShowReport = () => (isEmployee ? onOpenReport?.(job) : onOpenAdminReports?.(job));
+  const setShowVideoReport = () => (isEmployee ? onOpenReport?.(job) : onOpenAdminReports?.(job));
   const setShowAdminReports = () => onOpenAdminReports?.(job);
   const setShowSetLocation = () => onSetLocation?.(job);
   const jobSubJobs = subJobs.filter((s) => s.jobId === job.id).sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
@@ -305,74 +307,91 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
 
         {/* Admin actions */}
         {!isEmployee && (
-          <div className="flex flex-wrap gap-2 mt-3">
+          <div className="flex flex-wrap gap-1.5 mt-3">
             {job.status === "completed" && wStatus === "active" && (
               <button onClick={() => onRaiseRework(job)} disabled={busy}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-50 border border-violet-200 text-xs font-semibold text-violet-700 hover:bg-violet-100 transition-colors">
-                <RefreshCw className="w-3 h-3" /> Complaint 
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.25)", color: "#A78BFA" }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(139,92,246,0.3)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                <RefreshCw className="w-3 h-3" /> Complaint
               </button>
             )}
             {job.status === "completed" && !job.reportImage && !job.reportAudio && !job.reportNote && (
               <button onClick={() => setShowReport(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
-                <FileText className="w-3 h-3" /> Add Report
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", color: "#34D399" }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(16,185,129,0.3)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                <FileText className="w-3 h-3" /> Reports
               </button>
             )}
             {(job.reportImage || job.reportAudio || job.reportNote) && (
               <button onClick={() => setShowReport(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
-                <FileText className="w-3 h-3" /> View Report
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.25)", color: "#60A5FA" }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(59,130,246,0.3)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                <FileText className="w-3 h-3" /> Reports
               </button>
             )}
-            {/* Invoice — Generate or View */}
             {job.status === "completed" && !job.invoiceId && (
               <button onClick={() => onGenerateInvoice(job)} disabled={busy}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors active:scale-95">
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)", color: "#FCD34D" }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(245,158,11,0.3)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
                 <Receipt className="w-3 h-3" /> Generate Invoice
               </button>
             )}
             {job.invoiceId && (
               <Link to={`/admin/invoices/${job.invoiceId}`}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", color: "#34D399" }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(16,185,129,0.3)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
                 <Receipt className="w-3 h-3" /> View Invoice
               </Link>
             )}
             {job.status === "completed" && (
               <Link to={`/admin/certificate/${job.id}`}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors">
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)", color: "#FCD34D" }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(245,158,11,0.3)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
                 <FileText className="w-3 h-3" /> Certificate
               </Link>
             )}
             {job.history?.length > 0 && (
               <button onClick={() => setShowHistory(!showHistory)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.09)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}>
                 <History className="w-3 h-3" /> History ({job.history.length})
               </button>
             )}
-            {/* Admin: View all employee reports — visible for in_progress AND completed jobs */}
             {(job.status === "completed" || job.status === "in_progress") && (
               <button onClick={() => setShowAdminReports(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
-                style={{ background: "rgba(76,122,45,0.12)", border: "1px solid rgba(76,122,45,0.25)", color: "#6DBF4A" }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                style={{ background: "rgba(76,122,45,0.12)", border: "1px solid rgba(76,122,45,0.3)", color: "#6DBF4A" }}
                 onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(76,122,45,0.4)"}
                 onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
                 <BarChart2 className="w-3 h-3" /> Reports
               </button>
             )}
-            {/* Set GPS coordinates for attendance validation */}
             <button onClick={() => setShowSetLocation()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
               style={job.jobLat && job.jobLng
-                ? { background: "rgba(66,133,244,0.1)", border: "1px solid rgba(66,133,244,0.25)", color: "#60A5FA" }
+                ? { background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.25)", color: "#60A5FA" }
                 : { background: "rgba(228,87,46,0.1)", border: "1px solid rgba(228,87,46,0.25)", color: "#E4572E" }}
-              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(66,133,244,0.3)"}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(59,130,246,0.3)"}
               onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
               <MapPin className="w-3 h-3" />
               {job.jobLat && job.jobLng ? "Location Set ✓" : "Set Location"}
             </button>
-            {/* Admin: View live attendance */}
             <button onClick={() => onOpenAttendance?.(job)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
               style={{ background: "rgba(228,87,46,0.1)", border: "1px solid rgba(228,87,46,0.25)", color: "#E4572E" }}
               onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(228,87,46,0.3)"}
               onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
@@ -413,7 +432,7 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
                     {!job.reportImage && !job.reportAudio && !job.reportNote ? (
                       <button onClick={() => onOpenReport?.(job)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
-                        <FileText className="w-3 h-3" /> Add Report
+                        <FileText className="w-3 h-3" /> Complete Report
                       </button>
                     ) : (
                       <button onClick={() => onOpenReport?.(job)}
@@ -421,12 +440,12 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
                         <FileText className="w-3 h-3" /> View Report
                       </button>
                     )}
-                    <button onClick={() => onOpenVideoReport?.(job)}
+                    <button onClick={() => onOpenReport?.(job)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
                       style={{ background: "rgba(76,122,45,0.15)", border: "1px solid rgba(76,122,45,0.3)", color: "#6DBF4A" }}
                       onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 16px rgba(76,122,45,0.5)"}
                       onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
-                      <Video className="w-3 h-3" /> Video Report
+                      <Video className="w-3 h-3" /> Add Video
                     </button>
                     {completedCount < jobSubJobs.length && (
                       <span className="flex items-center px-2 py-1 rounded-xl text-[10px] font-semibold"
@@ -450,7 +469,7 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
                 {!job.reportImage && !job.reportAudio && !job.reportNote ? (
                   <button onClick={() => onOpenReport?.(job)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
-                    <FileText className="w-3 h-3" /> Add Report
+                    <FileText className="w-3 h-3" /> Complete Report
                   </button>
                 ) : (
                   <button onClick={() => onOpenReport?.(job)}
@@ -458,12 +477,12 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
                     <FileText className="w-3 h-3" /> View Report
                   </button>
                 )}
-                <button onClick={() => onOpenVideoReport?.(job)}
+                <button onClick={() => onOpenReport?.(job)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
                   style={{ background: "rgba(76,122,45,0.15)", border: "1px solid rgba(76,122,45,0.3)", color: "#6DBF4A" }}
                   onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 16px rgba(76,122,45,0.5)"}
                   onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
-                  <Video className="w-3 h-3" /> Video Report
+                  <Video className="w-3 h-3" /> Add Video
                 </button>
               </>
             )}

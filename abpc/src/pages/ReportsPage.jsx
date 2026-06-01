@@ -8,8 +8,10 @@ import { uploadToCloudinary } from "../utils/cloudinaryUpload";
 import { useVoiceRecorder } from "../hooks/useVoiceRecorder";
 import { FileText, Image, Mic, Filter, X, Plus, Camera, Trash2, Square, AlertCircle, Download, Printer, CheckCircle2, Eye, EyeOff, UploadCloud, RefreshCw, Link2 } from "lucide-react";
 import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
+import FileSaver from "file-saver";
 import { isDriveUploadConfigured, uploadFileToDrive } from "../utils/driveUpload";
+
+const saveAs = FileSaver.saveAs || FileSaver;
 
 const EmployeeS = ["Nakul", "Divyesh", "Sagar"];
 const MAX_IMAGE_MB = 1;
@@ -39,8 +41,8 @@ export default function ReportsPage() {
       ? query(collection(firestoreDb, "jobs"), where("assignedTo", "array-contains", EmployeeName))
       : query(collection(firestoreDb, "jobs"), orderBy("createdAt", "desc"));
 
-    // Real-time reports subscription for instant admin visibility
-    const reportsQ = query(collection(firestoreDb, "reports"), orderBy("timestamp", "desc"));
+    // Real-time job report subscription for instant admin visibility
+    const reportsQ = query(collection(firestoreDb, "jobReports"), orderBy("timestamp", "desc"));
 
     const unsubs = [
       subscribeQuery(jobsQ, setJobs, (err) => showMsg("error", `Jobs load failed: ${err.code}`)),
@@ -50,14 +52,23 @@ export default function ReportsPage() {
     return () => unsubs.forEach((u) => u());
   }, [isEmployee, EmployeeName]);
 
+  const getReportEmployeeName = (report) => report.employeeName || report.EmployeeName || report.EmployeeName || report.employeeName || "";
+  const getReportNote = (report) => report.note || report.notes || "";
+
   const visible = useMemo(() => {
     return reports.filter((r) => {
-      if (isEmployee && r.EmployeeName !== EmployeeName) return false;
+      const employeeName = getReportEmployeeName(r);
+      if (isEmployee && employeeName !== EmployeeName) return false;
       if (filterJob && r.jobId !== filterJob) return false;
-      if (!isEmployee && filterEmployee && r.EmployeeName !== filterEmployee) return false;
+      if (!isEmployee && filterEmployee && employeeName !== filterEmployee) return false;
       return true;
     });
   }, [reports, isEmployee, EmployeeName, filterJob, filterEmployee]);
+
+  const employeeOptions = useMemo(
+    () => Array.from(new Set(reports.map(getReportEmployeeName).filter(Boolean))).sort(),
+    [reports]
+  );
 
   const showMsg = (type, text) => {
     setMsg({ type, text });
@@ -114,15 +125,16 @@ export default function ReportsPage() {
     
     try {
       // Step 1: Create report document first (without URLs)
-      const reportId = await createRecord("reports", {
+      const reportId = await createRecord("jobReports", {
         jobId: form.jobId,
-        EmployeeName,
+        employeeName: EmployeeName,
         uploaderUid: profile?.uid || "",
-        notes: form.notes,
+        note: form.notes,
         imageUrls: [],
+        photoUrls: [],
         audioUrl: null,
         timestamp: new Date().toISOString(),
-        checklist: null,
+        status: "submitted",
       });
 
       // Step 2: Upload images to Cloudinary and WAIT for completion
@@ -157,9 +169,10 @@ export default function ReportsPage() {
       }
 
       // Step 4: ONLY AFTER all uploads complete, update report with URLs
-      await updateRecord("reports", reportId, { 
-        imageUrls: uploadedImages, 
-        audioUrl: voiceUrl 
+      await updateRecord("jobReports", reportId, {
+        imageUrls: uploadedImages,
+        photoUrls: uploadedImages,
+        audioUrl: voiceUrl,
       });
 
       // Cleanup
@@ -203,7 +216,7 @@ export default function ReportsPage() {
 
   const handleDeleteReport = async (reportId) => {
     try {
-      await deleteRecord("reports", reportId);
+      await deleteRecord("jobReports", reportId);
       setDeleteConfirm(null);
       showMsg("success", "Report deleted.");
     } catch (err) {
@@ -222,15 +235,15 @@ export default function ReportsPage() {
         "Phone Number": customer?.phone || "N/A",
         "Address": customer?.address || job?.address || "N/A",
         "Service Type": job?.serviceType || "N/A",
-        "Employee Name": r.EmployeeName || "N/A",
+        "Employee Name": getReportEmployeeName(r) || "N/A",
         "Date": r.timestamp ? new Date(r.timestamp).toLocaleDateString("en-IN") : "N/A",
         "Time": r.timestamp ? new Date(r.timestamp).toLocaleTimeString("en-IN") : "N/A",
-        "Notes": r.notes || "N/A",
+        "Notes": getReportNote(r) || "N/A",
         "Inspection Done": r.checklist?.inspectionDone ? "Yes" : "No",
         "Chemical Applied": r.checklist?.chemicalApplied ? "Yes" : "No",
         "Area Covered": r.checklist?.areaCovered ? "Yes" : "No",
         "Customer Satisfied": r.checklist?.customerSatisfied ? "Yes" : "No",
-        "Images": (r.imageUrls || []).length,
+        "Images": (r.photoUrls || r.imageUrls || []).length,
         "Voice Note": r.audioUrl ? "Yes" : "No",
       };
     });
@@ -337,9 +350,9 @@ export default function ReportsPage() {
             <tr>
               <td>${job?.customerName || "N/A"}</td>
               <td>${job?.serviceType || "N/A"}</td>
-              <td>${r.EmployeeName || "N/A"}</td>
+              <td>${getReportEmployeeName(r) || "N/A"}</td>
               <td>${r.timestamp ? new Date(r.timestamp).toLocaleString("en-IN") : "N/A"}</td>
-              <td>${r.notes || "—"}</td>
+              <td>${getReportNote(r) || "—"}</td>
               <td>${allDone ? "✓ Complete" : "Pending"}</td>
             </tr>
           `;
@@ -429,7 +442,7 @@ export default function ReportsPage() {
               className="px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-(--brand) focus:outline-none text-sm"
             >
               <option value="">All Employees</option>
-              {EmployeeS.map((w) => <option key={w} value={w}>{w}</option>)}
+              {(employeeOptions.length ? employeeOptions : EmployeeS).map((w) => <option key={w} value={w}>{w}</option>)}
             </select>
           </div>
         </div>
@@ -445,8 +458,10 @@ export default function ReportsPage() {
       ) : (
         <div className="space-y-4">
           {visible.map((r) => {
+            const employeeName = getReportEmployeeName(r);
+            const reportNote = getReportNote(r);
             const allDone = r.checklist && Object.values(r.checklist).every(Boolean);
-            const images = r.imageUrls || r.images || [];
+            const images = r.photoUrls || r.imageUrls || r.images || [];
             const audioSrc = r.audioUrl || r.voiceNote || null;
             return (
               <div key={r.id} className="bg-white rounded-2xl border border-slate-200 p-5">
@@ -454,10 +469,10 @@ export default function ReportsPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg bg-(--brand-soft) flex items-center justify-center text-(--brand) text-xs font-black">
-                        {r.EmployeeName?.slice(0, 2).toUpperCase()}
+                        {employeeName?.slice(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 text-sm">{r.EmployeeName}</p>
+                        <p className="font-bold text-slate-900 text-sm">{employeeName}</p>
                         <p className="text-xs text-slate-400">{r.timestamp ? new Date(r.timestamp).toLocaleString("en-IN") : ""}</p>
                       </div>
                     </div>
@@ -562,8 +577,8 @@ export default function ReportsPage() {
                   </div>
                 )}
 
-                {r.notes && (
-                  <p className="text-sm text-slate-700 mb-3 whitespace-pre-wrap">{r.notes}</p>
+                {reportNote && (
+                  <p className="text-sm text-slate-700 mb-3 whitespace-pre-wrap">{reportNote}</p>
                 )}
 
                 {/* Images — always visible to admins */}

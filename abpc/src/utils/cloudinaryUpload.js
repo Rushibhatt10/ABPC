@@ -24,7 +24,7 @@ export async function uploadVideoToCloudinary(file, jobId = "") {
 
   const allowed = ["video/mp4", "video/webm"];
   if (!allowed.includes(file.type)) throw new Error("Only MP4 and WebM videos are allowed.");
-  if (file.size > 5 * 1024 * 1024) throw new Error("Video must be under 5MB.");
+  if (file.size > 50 * 1024 * 1024) throw new Error("Video must be under 50 MB.");
 
   const fd = new FormData();
   fd.append("file", file);

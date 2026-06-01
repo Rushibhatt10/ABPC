@@ -42,13 +42,13 @@ export default function AppShell({ children }) {
   const [complaints, setComplaints] = useState([]);
   const [amcs, setAmcs] = useState([]);
   useEffect(() => {
-    if (isEmployee) return;
+    if (!isAdmin) return;
     const unsubs = [
       subscribeCollection("complaints", setComplaints),
       subscribeCollection("amc", setAmcs),
     ];
     return () => unsubs.forEach(u => u());
-  }, [isEmployee]);
+  }, [isAdmin]);
 
   const openComplaints = complaints.filter(c => c.status !== "Resolved").length;
   const expiringAmcs = amcs.filter(a => a.status === "Active" && daysUntil(a.endDate) <= 30 && daysUntil(a.endDate) >= 0).length;
