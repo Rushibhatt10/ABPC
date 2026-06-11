@@ -34,21 +34,21 @@ const EmployeeNav = [
 ];
 
 export default function AppShell({ children }) {
-  const { profile, logout, isEmployee, isAdmin } = useAuth();
+  const { profile, logout, isEmployee, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Live badge counts — admin only
+  // Live badge counts — admin only, wait for auth to finish loading
   const [complaints, setComplaints] = useState([]);
   const [amcs, setAmcs] = useState([]);
   useEffect(() => {
-    if (!isAdmin) return;
+    if (authLoading || !isAdmin) return;
     const unsubs = [
       subscribeCollection("complaints", setComplaints),
       subscribeCollection("amc", setAmcs),
     ];
     return () => unsubs.forEach(u => u());
-  }, [isAdmin]);
+  }, [isAdmin, authLoading]);
 
   const openComplaints = complaints.filter(c => c.status !== "Resolved").length;
   const expiringAmcs = amcs.filter(a => a.status === "Active" && daysUntil(a.endDate) <= 30 && daysUntil(a.endDate) >= 0).length;

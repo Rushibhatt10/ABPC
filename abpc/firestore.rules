@@ -1,242 +1,88 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() {
       return request.auth != null;
     }
 
-    function adminEmail() {
-      return request.auth.token.email;
-    }
-
-    function isAdminEmail() {
-      return adminEmail() in [
-        "ankbhatt8004@gmail.com",
-        "abpestcontrol8@gmail.com",
-        "bhattakanksha029@gmail.com"
-      ];
-    }
-
-    function hasUserDoc() {
-      return signedIn() &&
-        exists(/databases/$(database)/documents/users/$(request.auth.uid));
-    }
-
-    function currentUser() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    function currentRole() {
-      return hasUserDoc() ? currentUser().role : null;
-    }
-
-    function isAdmin() {
-      return signedIn() && currentRole() == "admin";
-    }
-
-    function isViewer() {
-      return signedIn() && currentRole() == "viewer";
-    }
-
-    function isFieldTechnician() {
-      return signedIn() && currentRole() == "field_technician";
-    }
-
-    function canReadBackOffice() {
-      return isAdmin() || isViewer();
-    }
-
-    function technicianName() {
-      return hasUserDoc() && currentUser().employeeTag != null && currentUser().employeeTag != ""
-        ? currentUser().employeeTag
-        : currentUser().name;
-    }
-
-    function isAssignedJob(jobData) {
-      return isAdmin() || (
-        isFieldTechnician() &&
-        technicianName() != null &&
-        (
-          (jobData.assignedTo is list && jobData.assignedTo.hasAny([technicianName()])) ||
-          jobData.assignedTo == technicianName()
-        )
-      );
-    }
-
-    function relatedJob(jobId) {
-      return get(/databases/$(database)/documents/jobs/$(jobId)).data;
-    }
-
-    function canReadJob(jobData) {
-      return canReadBackOffice() || isAssignedJob(jobData);
-    }
-
-    function validSelfUserCreate() {
-      return request.resource.data.uid == request.auth.uid &&
-        request.resource.data.keys().hasOnly([
-          "uid", "authProvider", "email", "name", "employeeTag", "role", "roleName", "createdAt", "updatedAt"
-        ]) &&
-        (
-          (request.auth.token.firebase.sign_in_provider == "anonymous" &&
-            request.resource.data.role in ["field_technician", "viewer"]) ||
-          (request.auth.token.firebase.sign_in_provider == "google.com" &&
-            isAdminEmail() &&
-            request.resource.data.role == "admin")
-        );
-    }
-
-    function validSelfUserUpdate() {
-      return request.resource.data.uid == request.auth.uid &&
-        resource.data.uid == request.auth.uid &&
-        request.resource.data.role == resource.data.role &&
-        request.resource.data.keys().hasOnly([
-          "uid", "authProvider", "email", "name", "employeeTag", "role", "roleName", "createdAt", "updatedAt"
-        ]);
-    }
-
     match /users/{uid} {
-      allow create: if signedIn() && request.auth.uid == uid && validSelfUserCreate();
-      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
-      allow update: if signedIn() && (
-        (request.auth.uid == uid && validSelfUserUpdate()) ||
-        isAdmin()
-      );
-      allow delete: if isAdmin();
+      allow read, write: if signedIn();
     }
 
     match /services/{docId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
+      allow read, write: if signedIn();
     }
 
     match /priceList/{docId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
+      allow read, write: if signedIn();
+    }
+
+    match /phoneMappings/{phone} {
+      allow get: if true;
+      allow list: if false;
+      allow read, write: if signedIn();
+    }
+
+    match /customerSessions/{uid} {
+      allow read, write: if signedIn();
     }
 
     match /customers/{docId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
+      allow read, write: if signedIn();
     }
 
     match /jobs/{jobId} {
-      allow read: if signedIn() && canReadJob(resource.data);
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || (
-        isFieldTechnician() &&
-        isAssignedJob(resource.data) &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          "status", "checklist", "notes", "completedAt", "completedBy", "updatedAt"
-        ])
-      );
+      allow read, write: if signedIn();
     }
 
     match /subJobs/{docId} {
-      allow read: if signedIn() && canReadJob(relatedJob(resource.data.jobId));
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || (
-        isFieldTechnician() &&
-        isAssignedJob(relatedJob(resource.data.jobId)) &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          "status", "completedAt", "completedBy", "updatedAt"
-        ])
-      );
+      allow read, write: if signedIn();
     }
 
     match /reports/{docId} {
-      allow read: if signedIn() && (
-        canReadBackOffice() ||
-        (isFieldTechnician() && resource.data.EmployeeName == technicianName())
-      );
-      allow create: if isAdmin() || (
-        isFieldTechnician() &&
-        request.resource.data.EmployeeName == technicianName() &&
-        isAssignedJob(relatedJob(request.resource.data.jobId))
-      );
-      allow update, delete: if isAdmin() || (
-        isFieldTechnician() &&
-        resource.data.EmployeeName == technicianName()
-      );
+      allow read, write: if signedIn();
     }
 
     match /mediaUploads/{docId} {
-      allow read: if signedIn() && (
-        canReadBackOffice() ||
-        (isFieldTechnician() && resource.data.uploaderUid == request.auth.uid)
-      );
-      allow create: if isAdmin() || (
-        isFieldTechnician() &&
-        request.resource.data.uploaderUid == request.auth.uid
-      );
-      allow update, delete: if isAdmin() || (
-        isFieldTechnician() &&
-        resource.data.uploaderUid == request.auth.uid
-      );
+      allow read, write: if signedIn();
     }
 
     match /jobReports/{docId} {
-      allow read: if signedIn() && (
-        canReadBackOffice() ||
-        (isFieldTechnician() && isAssignedJob(relatedJob(resource.data.jobId)))
-      );
-      allow create: if isAdmin() || (
-        isFieldTechnician() &&
-        request.resource.data.employeeId == request.auth.uid &&
-        request.resource.data.employeeName == technicianName() &&
-        isAssignedJob(relatedJob(request.resource.data.jobId))
-      );
-      allow update, delete: if isAdmin() || (
-        isFieldTechnician() &&
-        resource.data.employeeId == request.auth.uid
-      );
+      allow read, write: if signedIn();
     }
 
     match /attendance/{docId} {
-      allow read: if signedIn() && (
-        canReadBackOffice() ||
-        (isFieldTechnician() && resource.data.employeeId == request.auth.uid)
-      );
-      allow create: if isAdmin() || (
-        isFieldTechnician() &&
-        request.resource.data.employeeId == request.auth.uid &&
-        request.resource.data.employeeName == technicianName() &&
-        isAssignedJob(relatedJob(request.resource.data.jobId))
-      );
-      allow update, delete: if isAdmin();
+      allow read, write: if signedIn();
     }
 
     match /invoices/{docId} {
-      allow read: if signedIn() && (
-        canReadBackOffice() ||
-        (isFieldTechnician() && isAssignedJob(relatedJob(resource.data.jobId)))
-      );
-      allow write: if isAdmin();
+      allow read, write: if signedIn();
     }
 
     match /quotations/{docId} {
-      allow read: if signedIn() && (
-        canReadBackOffice() ||
-        (isFieldTechnician() && isAssignedJob(relatedJob(resource.data.jobId)))
-      );
-      allow write: if isAdmin();
+      allow read, write: if signedIn();
     }
 
     match /amc/{docId} {
-      allow read: if signedIn() && canReadBackOffice();
-      allow write: if isAdmin();
+      allow read, write: if signedIn();
     }
 
     match /complaints/{docId} {
-      allow read: if signedIn() && canReadBackOffice();
-      allow write: if isAdmin();
+      allow read, write: if signedIn();
     }
 
     match /messages/{docId} {
-      allow read, write: if isAdmin();
+      allow read, write: if signedIn();
     }
 
     match /counters/{docId} {
-      allow read, write: if isAdmin();
+      allow read, write: if signedIn();
+    }
+
+    match /warrantySettings/{docId} {
+      allow read: if true;
+      allow write: if signedIn();
     }
 
     match /{document=**} {

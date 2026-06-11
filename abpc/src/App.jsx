@@ -30,6 +30,18 @@ const QuotationPrintPage = lazy(() => import("./pages/QuotationPrintPage.jsx"));
 const InvoicePrintPage = lazy(() => import("./pages/InvoicePrintPage.jsx"));
 const CertificatePage = lazy(() => import("./pages/CertificatePage.jsx"));
 
+import { CustomerAuthProvider } from "./customer/context/CustomerAuthContext.jsx";
+const CustomerLoginPage = lazy(() => import("./customer/pages/CustomerLoginPage.jsx"));
+const CustomerRequireAuth = lazy(() => import("./customer/components/CustomerRequireAuth.jsx"));
+const CustomerShell = lazy(() => import("./customer/components/CustomerShell.jsx"));
+const CustomerDashboard = lazy(() => import("./customer/pages/CustomerDashboard.jsx"));
+const CustomerAMCPage = lazy(() => import("./customer/pages/CustomerAMCPage.jsx"));
+const CustomerQuotationsPage = lazy(() => import("./customer/pages/CustomerQuotationsPage.jsx"));
+const CustomerInvoicesPage = lazy(() => import("./customer/pages/CustomerInvoicesPage.jsx"));
+const CustomerCertificatesPage = lazy(() => import("./customer/pages/CustomerCertificatesPage.jsx"));
+const CustomerReportsPage = lazy(() => import("./customer/pages/CustomerReportsPage.jsx"));
+
+
 function RouteFallback() {
   return <div className="p-8 text-center text-sm text-slate-500">Loading...</div>;
 }
@@ -93,6 +105,19 @@ function App() {
                 <Route path="/insects" element={<Insects />} />
                 <Route path="/video" element={<VideoPage />} />
                 <Route path="/rushzzz" element={<Rushzzz />} />
+
+                {/* Customer Portal */}
+                <Route path="/customer/login" element={<CustomerAuthProvider><CustomerLoginPage /></CustomerAuthProvider>} />
+                <Route path="/customer" element={<CustomerAuthProvider><CustomerRequireAuth><CustomerShell /></CustomerRequireAuth></CustomerAuthProvider>}>
+                  <Route index element={<CustomerDashboard />} />
+                  <Route path="dashboard" element={<CustomerDashboard />} />
+                  <Route path="amc" element={<CustomerAMCPage />} />
+                  <Route path="quotations" element={<CustomerQuotationsPage />} />
+                  <Route path="invoices" element={<CustomerInvoicesPage />} />
+                  <Route path="certificates" element={<CustomerCertificatesPage />} />
+                  <Route path="reports" element={<CustomerReportsPage />} />
+                </Route>
+                <Route path="/portal" element={<Navigate to="/customer/login" replace />} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

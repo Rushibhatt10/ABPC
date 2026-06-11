@@ -10,7 +10,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Search, Plus, X, MapPin, AlertCircle, Check } from "lucide-react";
-import { createRecord } from "../utils/firestoreHelpers";
+import { createRecord, updateRecord } from "../utils/firestoreHelpers";
+import { updatePhoneMapping } from "../customer/utils/customerHelpers";
 
 const propertyTypes = ["Residential", "Commercial", "Industrial"];
 
@@ -52,8 +53,11 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
         email: form.email.trim(),
         notes: form.notes.trim(),
       });
+      await updateRecord("customers", id, { customerId: id });
+      await updatePhoneMapping(id, form.phone);
       onSaved({
         id,
+        customerId: id,
         name: form.name.trim(),
         phone: form.phone.trim(),
         address,
@@ -314,7 +318,9 @@ export default function CustomerSearch({ customers = [], value, onChange, onCust
     ? []
     : customers.filter((c) => {
         const q = query.toLowerCase();
-        return c.name?.toLowerCase().includes(q) || c.phone?.includes(q);
+        return c.name?.toLowerCase().includes(q) ||
+          c.phone?.includes(q) ||
+          (c.customerId || c.id)?.toLowerCase().includes(q);
       }).slice(0, 8);
 
   // Close dropdown on outside click

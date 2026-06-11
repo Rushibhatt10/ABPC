@@ -54,30 +54,59 @@ export const listRecords = async (collectionName, { orderByField = "createdAt", 
 export const subscribeCollection = (collectionName, onData, { orderByField = "createdAt", direction = "asc", pageSize = 500 } = {}) => {
   const base = collection(firestoreDb, collectionName);
   const q = query(base, orderBy(orderByField, direction), limit(pageSize));
-  return onSnapshot(
-    q,
-    (snap) => {
-      onData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    },
-    (error) => {
-      console.warn(`[Firestore] Subscription error on ${collectionName}:`, error.message);
-      onData([]); // Fallback to empty array safely if permissions denied
-    }
-  );
+  let unsubscribe;
+  try {
+    unsubscribe = onSnapshot(
+      q,
+      (snap) => {
+        onData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      },
+      (error) => {
+        console.warn(`[Firestore] Subscription error on ${collectionName}:`, error.message);
+        onData([]); // Fallback to empty array safely if permissions denied
+      }
+    );
+  } catch (err) {
+    console.warn(`[Firestore] Failed to subscribe to ${collectionName}:`, err.message);
+    onData([]);
+    return () => {};
+  }
+  return unsubscribe || (() => {});
 };
 
-export const subscribeDoc = (collectionName, id, onData) =>
-  onSnapshot(doc(firestoreDb, collectionName, id), (snap) => {
-    onData(snap.exists() ? { id: snap.id, ...snap.data() } : null);
-  });
+export const subscribeDoc = (collectionName, id, onData) => {
+  let unsubscribe;
+  try {
+    unsubscribe = onSnapshot(
+      doc(firestoreDb, collectionName, id),
+      (snap) => { onData(snap.exists() ? { id: snap.id, ...snap.data() } : null); },
+      (error) => { console.warn(`[Firestore] Doc subscription error ${collectionName}/${id}:`, error.message); }
+    );
+  } catch (err) {
+    console.warn(`[Firestore] Failed to subscribe to doc ${collectionName}/${id}:`, err.message);
+    return () => {};
+  }
+  return unsubscribe || (() => {});
+};
 
-export const subscribeQuery = (queryRef, onData, onError) =>
-  onSnapshot(queryRef, (snap) => {
-    onData(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-  }, (err) => {
-    console.error("Firestore subscribeQuery error:", err.code, err.message);
-    if (onError) onError(err);
-  });
+export const subscribeQuery = (queryRef, onData, onError) => {
+  let unsubscribe;
+  try {
+    unsubscribe = onSnapshot(
+      queryRef,
+      (snap) => { onData(snap.docs.map((d) => ({ id: d.id, ...d.data() }))); },
+      (err) => {
+        console.error("Firestore subscribeQuery error:", err.code, err.message);
+        if (onError) onError(err);
+      }
+    );
+  } catch (err) {
+    console.warn("[Firestore] subscribeQuery failed to start:", err.message);
+    onData([]);
+    return () => {};
+  }
+  return unsubscribe || (() => {});
+};
 
 export const deleteRecordsByField = async (collectionName, fieldName, operator, value) => {
   if (operator !== "==") {
@@ -98,7 +127,7 @@ export const deleteAllCollectionRecords = async (collectionName) => {
 
 export const deleteAllBusinessData = async () => {
   // NOTE: "reports" and "mediaUploads" are intentionally excluded — they must be deleted individually
-  const collections = ["amc", "customers", "invoices", "jobs", "quotations", "services", "counters", "users", "messages", "subJobs", "priceList"];
+  const collections = ["amc", "customers", "invoices", "jobs", "quotations", "services", "counters", "users", "messages", "subJobs", "priceList", "warrantySettings"];
   const results = {};
   for (const name of collections) {
     results[name] = await deleteAllCollectionRecords(name);

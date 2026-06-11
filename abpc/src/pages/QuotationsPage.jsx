@@ -3,12 +3,20 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, deleteRecord, nextDocumentNumber, subscribeCollection, updateRecord } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getTodayISO, getWhatsAppNumber, toNumber } from "../utils/format";
-import { FileText, Plus, X, Trash2, ExternalLink, MessageSquare, Search, ArrowRight, FileDown } from "lucide-react";
+import { FileText, Plus, X, Trash2, ExternalLink, MessageSquare, Search, ArrowRight, FileDown, Pencil } from "lucide-react";
 import ServicePicker from "../components/ServicePicker";
 import CustomerSearch from "../components/CustomerSearch";
 import { getTermsForCategories } from "../constants/serviceTerms";
 
 const createItem = () => ({ itemName: "", quantity: "", unit: "job", unitPrice: "" });
+const emptyForm = () => ({
+  customerId: "",
+  date: getTodayISO(),
+  items: [],
+  methodology: "",
+  paymentTerms: "",
+  terms: "",
+});
 
 export default function QuotationsPage() {
   const { isEmployee } = useAuth();
@@ -20,15 +28,9 @@ export default function QuotationsPage() {
   const [deletingId, setDeletingId] = useState("");
   const [search, setSearch] = useState("");
   const [msg, setMsg] = useState({ type: "", text: "" });
+  const [editingQuotation, setEditingQuotation] = useState(null);
 
-  const [form, setForm] = useState({
-    customerId: "",
-    date: getTodayISO(),
-    items: [],
-    methodology: "",
-    paymentTerms: "",
-    terms: "",
-  });
+  const [form, setForm] = useState(emptyForm);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   useEffect(() => {
@@ -57,6 +59,44 @@ export default function QuotationsPage() {
   const showMsg = (type, text) => {
     setMsg({ type, text });
     setTimeout(() => setMsg({ type: "", text: "" }), 3000);
+  };
+
+  const resetForm = () => {
+    setForm(emptyForm());
+    setSelectedCustomer(null);
+    setEditingQuotation(null);
+  };
+
+  const openCreateForm = () => {
+    resetForm();
+    setShowForm(true);
+  };
+
+  const openEditForm = (quotation) => {
+    const existingCustomer = customers.find((c) => c.id === quotation.customerId) || {
+      id: quotation.customerId || "",
+      name: quotation.customerName || "",
+      phone: quotation.customerPhone || "",
+      address: quotation.customerAddress || "",
+      propertyType: quotation.propertyType || "",
+    };
+    setEditingQuotation(quotation);
+    setSelectedCustomer(existingCustomer);
+    setForm({
+      customerId: quotation.customerId || "",
+      date: quotation.date || getTodayISO(),
+      items: (quotation.items || []).map((item) => ({
+        itemName: item.itemName || "",
+        quantity: String(item.quantity ?? ""),
+        unit: item.unit || "job",
+        unitPrice: String(item.unitPrice ?? item.price ?? ""),
+        warranty: item.warranty || "",
+      })),
+      methodology: quotation.methodology || "",
+      paymentTerms: quotation.paymentTerms || "",
+      terms: quotation.terms || "",
+    });
+    setShowForm(true);
   };
 
   const handleServiceAdd = (item) => {
@@ -88,7 +128,6 @@ export default function QuotationsPage() {
     if (!customer) { showMsg("error", "Select a customer."); return; }
     setBusy(true);
     try {
-      const estimateNumber = await nextDocumentNumber("EST");
       const items = form.items
         .filter((i) => i.itemName && toNumber(i.quantity) > 0 && toNumber(i.unitPrice) > 0)
         .map((i) => ({
@@ -100,8 +139,7 @@ export default function QuotationsPage() {
           total: toNumber(i.quantity) * toNumber(i.unitPrice),
         }));
 
-      await createRecord("quotations", {
-        estimateNumber,
+      const payload = {
         date: form.date,
         customerId: customer.id,
         customerName: customer.name,
@@ -113,13 +151,23 @@ export default function QuotationsPage() {
         methodology: form.methodology,
         paymentTerms: form.paymentTerms,
         terms: form.terms,
-        status: "Draft",
-      });
+      };
 
-      setForm({ customerId: "", date: getTodayISO(), items: [], methodology: "", paymentTerms: "", terms: "" });
-      setSelectedCustomer(null);
+      if (editingQuotation) {
+        await updateRecord("quotations", editingQuotation.id, payload);
+        showMsg("success", `Quotation ${editingQuotation.estimateNumber} updated.`);
+      } else {
+        const estimateNumber = await nextDocumentNumber("EST");
+        await createRecord("quotations", {
+          ...payload,
+          estimateNumber,
+          status: "Draft",
+        });
+        showMsg("success", `Quotation ${estimateNumber} created.`);
+      }
+
+      resetForm();
       setShowForm(false);
-      showMsg("success", `Quotation ${estimateNumber} created.`);
     } catch (e) {
       showMsg("error", e.message);
     } finally {
@@ -207,7 +255,7 @@ export default function QuotationsPage() {
           <p className="text-slate-500 mt-0.5">{quotations.length} total quotations</p>
         </div>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={openCreateForm}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-var(--brand-dark) transition-colors shadow-sm w-full sm:w-auto min-h-44px active:scale-95 sm:ml-auto"
         >
           <Plus className="w-4 h-4" />
@@ -295,6 +343,13 @@ export default function QuotationsPage() {
                   <MessageSquare className="w-3 h-3" />
                   WhatsApp
                 </button>
+                <button
+                  onClick={() => openEditForm(q)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  <Pencil className="w-3 h-3" />
+                  Edit
+                </button>
                 {q.status !== "Converted to Invoice" && (
                   <button
                     onClick={() => convertToInvoice(q)}
@@ -323,8 +378,8 @@ export default function QuotationsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-full sm:max-w-2xl mx-2 sm:mx-auto max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
-              <h2 className="font-bold text-slate-900">Create Quotation</h2>
-              <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+              <h2 className="font-bold text-slate-900">{editingQuotation ? "Edit Quotation" : "Create Quotation"}</h2>
+              <button onClick={() => { setShowForm(false); resetForm(); }} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -391,9 +446,9 @@ export default function QuotationsPage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
+                <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
                 <button type="submit" disabled={busy} className="flex-1 py-2.5 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-var(--brand-dark) disabled:opacity-60">
-                  {busy ? "Creating..." : "Create Quotation"}
+                  {busy ? (editingQuotation ? "Saving..." : "Creating...") : (editingQuotation ? "Save Quotation" : "Create Quotation")}
                 </button>
               </div>
             </form>

@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { subscribeDoc } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay } from "../utils/format";
-import { Printer, ArrowLeft, Download, Share2 } from "lucide-react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import { generateA4PdfBlob } from "../utils/pdfExport";
+import { Printer, ArrowLeft, Download, Share2, ShieldCheck } from "lucide-react";
 
 export default function InvoicePrintPage() {
   const { id } = useParams();
@@ -13,6 +12,7 @@ export default function InvoicePrintPage() {
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(""); // "downloading" or "sharing"
+  const [showWarrantyCard, setShowWarrantyCard] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -28,22 +28,7 @@ export default function InvoicePrintPage() {
 
   const generatePDFBlob = async () => {
     const element = document.querySelector(".doc-page");
-    if (!element) return null;
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: "#ffffff",
-      windowWidth: 794,
-    });
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-    });
-    pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
-    return pdf.output("blob");
+    return generateA4PdfBlob(element);
   };
 
   const handleDownloadPDF = async () => {
@@ -109,6 +94,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
   );
 
   const isPaid = invoice.status === "Paid" || Number(invoice.balance) === 0;
+  const warrantyItems = invoice.items?.filter(i => i.warranty) || [];
 
   const S = {
     page: {
@@ -161,6 +147,14 @@ Thank you for choosing A.B. Pest Control! 😊`;
         <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-slate-600 border border-slate-300 transition-all active:scale-95" style={{ background: "#fff" }}>
           <Printer className="w-4 h-4" /> Print View
         </button>
+        {warrantyItems.length > 0 && (
+          <button
+            onClick={() => setShowWarrantyCard(p => !p)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-95"
+            style={{ background: showWarrantyCard ? "#16a34a" : "#f0fdf4", color: showWarrantyCard ? "#fff" : "#16a34a", border: "1.5px solid #86efac" }}>
+            <ShieldCheck className="w-4 h-4" /> {showWarrantyCard ? "Hide Warranty Card" : "Warranty Card"}
+          </button>
+        )}
       </div>
 
       <div style={{ background: "#fff", minHeight: "100vh", padding: "40px 16px" }} className="print-container">
@@ -214,6 +208,10 @@ Thank you for choosing A.B. Pest Control! 😊`;
                     <p style={S.label}>Contact Number</p>
                     <p style={S.value}>{invoice.customerPhone || "—"}</p>
                   </div>
+                </div>
+                <div style={S.field}>
+                  <p style={S.label}>Customer ID (Portal Login)</p>
+                  <p style={S.value}>{invoice.customerId || "-"}</p>
                 </div>
                 <div style={S.field}>
                   <p style={S.label}>Address</p>
@@ -302,11 +300,33 @@ Thank you for choosing A.B. Pest Control! 😊`;
               </div>
             )}
 
+            {/* WARRANTY SECTION */}
+            {invoice.items?.some(i => i.warranty) && (
+              <div style={{ marginBottom: "5mm" }}>
+                <p style={S.sectionTitle}>5. Warranty Details</p>
+                <div style={{ ...S.box, background: "rgba(22,163,74,0.04)", borderColor: "#bbf7d0" }}>
+                  {invoice.items.filter(i => i.warranty).map((item, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 0", borderBottom: i < invoice.items.filter(x => x.warranty).length - 1 ? "1px solid #dcfce7" : "none" }}>
+                      <span style={{ fontSize: 13, lineHeight: 1 }}>🛡</span>
+                      <div>
+                        <p style={{ fontSize: 10.5, fontWeight: 600, color: "#2E2A27", margin: 0 }}>{item.itemName}</p>
+                        <p style={{ fontSize: 10, color: "#16a34a", margin: "2px 0 0", fontWeight: 500 }}>{item.warranty}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <p style={{ fontSize: 8.5, color: "#6E6259", marginTop: 6, fontStyle: "italic" }}>
+                    Warranty is valid from the date of treatment as per the terms agreed upon. Structural damage, acts of nature, and reinfestation due to external sources are not covered.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* SIGNATURE */}
             <div style={S.divider} />
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6mm" }}>
-              <div style={{ textAlign: "center", minWidth: 120 }}>
-                <img src="/sign.png" alt="Signature" style={{ height: 80, width: 200, objectFit: "contain", objectPosition: "center", display: "block", margin: "0 auto 4px" }} /><div style={{ borderBottom: "1px solid #8B7E74", marginBottom: 6, width: 120 }} />
+              <div style={{ textAlign: "center", minWidth: 160 }}>
+                <img src="/sign-removebg-preview.png" alt="Signature" style={{ height: 70, width: 180, objectFit: "contain", objectPosition: "center", display: "block", margin: "0 auto 4px" }} />
+                <div style={{ borderBottom: "1.5px solid #8B7E74", marginBottom: 6, width: 160, marginLeft: "auto", marginRight: "auto" }} />
                 <p style={{ fontSize: 10, fontWeight: 600, color: "#2E2A27", letterSpacing: "0.04em" }}>Authorized Signatory</p>
                 <p style={{ fontSize: 9, color: "#8B7E74", marginTop: 2 }}>AB Pest Control</p>
               </div>
@@ -318,11 +338,142 @@ Thank you for choosing A.B. Pest Control! 😊`;
           </div>
         </div>
       </div>
-    </>
+
+      {/* WARRANTY CARD */}
+      {showWarrantyCard && warrantyItems.length > 0 && (
+        <div className="doc-page" style={{ ...S.page, marginTop: 32, pageBreakBefore: "always" }}>
+          <div style={S.outerBorder} />
+          <div style={S.innerBorder} />
+          <div style={S.watermark}>
+            <img src="/cropped_circle_image.png" alt="" style={{ width: 260, height: 260, objectFit: "contain" }} />
+          </div>
+
+          <div style={S.content}>
+            {/* HEADER */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "5mm" }}>
+              <div>
+                <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#2E2A27", letterSpacing: "0.02em", lineHeight: 1.2 }}>A.B. Pest Control</p>
+                <p style={{ fontSize: 9, color: "#8B7E74", letterSpacing: "0.18em", textTransform: "uppercase", marginTop: 3 }}>Insecticide Services</p>
+                <p style={{ fontSize: 8.5, color: "#6E6259", marginTop: 3, lineHeight: 1.6 }}>Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 9374488004</p>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ width: 52, height: 52, borderRadius: "50%", border: "1.5px solid #D8CFC4", overflow: "hidden", background: "#FAF7F2", marginLeft: "auto" }}>
+                  <img src="/cropped_circle_image.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                </div>
+              </div>
+            </div>
+
+            <div style={S.divider} />
+
+            {/* TITLE */}
+            <div style={{ textAlign: "center", margin: "6mm 0 8mm" }}>
+              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#2E2A27", lineHeight: 1.4 }}>
+                Warranty Card
+              </p>
+              <div style={{ width: 50, height: 2, background: "#16a34a", margin: "5px auto 0", borderRadius: 1 }} />
+            </div>
+
+            {/* Customer Info */}
+            <div style={{ marginBottom: "6mm" }}>
+              <p style={S.sectionTitle}>Customer Details</p>
+              <div style={S.box}>
+                <div style={S.grid2}>
+                  <div style={S.field}>
+                    <p style={S.label}>Client Name</p>
+                    <p style={S.value}>{invoice.customerName || "—"}</p>
+                  </div>
+                  <div style={S.field}>
+                    <p style={S.label}>Contact Number</p>
+                    <p style={S.value}>{invoice.customerPhone || "—"}</p>
+                  </div>
+                </div>
+                <div style={S.field}>
+                  <p style={S.label}>Address</p>
+                  <p style={S.value}>{invoice.customerAddress || "—"}</p>
+                </div>
+                <div style={S.grid2}>
+                  <div style={S.field}>
+                    <p style={S.label}>Invoice Ref</p>
+                    <p style={S.value}>{invoice.invoiceNumber || "—"}</p>
+                  </div>
+                  <div style={S.field}>
+                    <p style={S.label}>Treatment Date</p>
+                    <p style={S.value}>{formatDateDisplay(invoice.date)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Warranty Items */}
+            <div style={{ marginBottom: "6mm" }}>
+              <p style={S.sectionTitle}>Services & Warranty</p>
+              <div style={{ border: "1px solid #bbf7d0", borderRadius: 6, overflow: "hidden" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                  <thead>
+                    <tr style={{ background: "rgba(22,163,74,0.07)", borderBottom: "1px solid #bbf7d0" }}>
+                      {["#", "Service", "Warranty Period"].map((h, i) => (
+                        <th key={h} style={{ textAlign: i === 2 ? "right" : i === 0 ? "left" : "left", padding: "6px 8px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: "#16a34a", textTransform: "uppercase" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {warrantyItems.map((item, i) => (
+                      <tr key={i} style={{ borderBottom: i < warrantyItems.length - 1 ? "1px solid #dcfce7" : "none" }}>
+                        <td style={{ padding: "8px", color: "#8B7E74", fontSize: 10 }}>{i + 1}</td>
+                        <td style={{ padding: "8px", color: "#2E2A27", fontWeight: 600 }}>{item.itemName}</td>
+                        <td style={{ padding: "8px", textAlign: "right", color: "#16a34a", fontWeight: 700, fontSize: 12 }}>{item.warranty}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Warranty Terms */}
+            <div style={{ marginBottom: "6mm" }}>
+              <p style={S.sectionTitle}>Warranty Terms & Conditions</p>
+              <div style={{ ...S.box, background: "rgba(22,163,74,0.03)", borderColor: "#bbf7d0" }}>
+                {[
+                  "Warranty is valid from the date of treatment as mentioned above.",
+                  "This warranty covers re-treatment in case of re-infestation of the same pest species.",
+                  "Warranty does not cover new construction, structural damage, or damage caused by water seepage.",
+                  "Acts of nature, reinfestation due to external sources, and misuse are not covered.",
+                  "Any renovation or drilling in treated area will void the warranty.",
+                  "For warranty claims, contact AB Pest Control within the warranty period.",
+                ].map((term, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 9, color: "#16a34a", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+                    <p style={{ fontSize: 9.5, color: "#2E2A27", lineHeight: 1.6, margin: 0 }}>{term}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={S.divider} />
+
+            {/* Footer: signature + validity */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "5mm" }}>
+              <div>
+                <p style={{ fontSize: 9, color: "#8B7E74", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>Warranty Valid From</p>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "#2E2A27" }}>{formatDateDisplay(invoice.date)}</p>
+                <p style={{ fontSize: 9, color: "#6E6259", marginTop: 3 }}>As per individual service warranty periods above</p>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <img src="/sign-removebg-preview.png" alt="Signature" style={{ height: 70, width: 180, objectFit: "contain", objectPosition: "center", display: "block", margin: "0 auto 4px" }} />
+                <div style={{ borderBottom: "1.5px solid #8B7E74", marginBottom: 5, width: 160, marginLeft: "auto", marginRight: "auto" }} />
+                <p style={{ fontSize: 10, fontWeight: 600, color: "#2E2A27", letterSpacing: "0.04em" }}>Authorized Signatory</p>
+                <p style={{ fontSize: 9, color: "#8B7E74", marginTop: 2 }}>AB Pest Control</p>
+              </div>
+            </div>
+
+            <div style={{ textAlign: "center", marginTop: "6mm" }}>
+              <p style={{ fontSize: 8, color: "#8B7E74", letterSpacing: "0.06em" }}>
+                This warranty card is issued by A.B. Pest Control. Please retain for your records. · +91 9374488004
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+  </>
   );
 }
-
-
-
-
-

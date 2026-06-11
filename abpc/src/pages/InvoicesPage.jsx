@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, deleteRecord, nextDocumentNumber, subscribeCollection, updateRecord } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getTodayISO, getWhatsAppNumber, toNumber } from "../utils/format";
-import { Receipt, Plus, X, Trash2, CheckCircle2, ExternalLink, MessageSquare, Search, FileDown, Briefcase, ChevronDown, ChevronUp } from "lucide-react";
+import { Receipt, Plus, X, Trash2, CheckCircle2, ExternalLink, MessageSquare, Search, FileDown, Briefcase, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import CustomerSearch from "../components/CustomerSearch";
+import PaymentModeModal from "../components/PaymentModeModal";
 
 const defaultTerms = "Terms: 1) Payment due on completion. 2) Taxes extra if applicable.";
 
@@ -13,6 +14,8 @@ export default function InvoicesPage() {
   const [customers, setCustomers] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [jobs, setJobs] = useState([]);
+  const [warrantyOptions, setWarrantyOptions] = useState([]);
+  const [jobWarrantyOverrides, setJobWarrantyOverrides] = useState({});
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [deletingId, setDeletingId] = useState("");
@@ -22,12 +25,17 @@ export default function InvoicesPage() {
   const [selectedJobIds, setSelectedJobIds] = useState(new Set());
   const [form, setForm] = useState({ date: getTodayISO(), received: "", paymentMode: "UPI", terms: defaultTerms });
   const [showJobPicker, setShowJobPicker] = useState(true);
+  const [editingInvoice, setEditingInvoice] = useState(null);
+  const [manualItems, setManualItems] = useState([]);
+  const [showPaymentModeModal, setShowPaymentModeModal] = useState(false);
+  const [pendingInvoicePayload, setPendingInvoicePayload] = useState(null);
 
   useEffect(() => {
     const unsubs = [
       subscribeCollection("customers", setCustomers),
       subscribeCollection("invoices", setInvoices),
       subscribeCollection("jobs", setJobs),
+      subscribeCollection("warrantySettings", setWarrantyOptions),
     ];
     return () => unsubs.forEach((u) => u());
   }, []);
@@ -48,26 +56,49 @@ export default function InvoicesPage() {
 
   const selectedJobs = customerJobs.filter(j => selectedJobIds.has(j.id));
 
+  // Check if a job is a Termite job
+  const isTermiteJob = (job) => {
+    const label = (job.treatmentLabel || job.serviceType || job.serviceName || "").toLowerCase();
+    return label.includes("termite");
+  };
+
   // Build line items from selected jobs
-  const lineItems = useMemo(() =>
+  const jobLineItems = useMemo(() =>
     selectedJobs.map(j => ({
       itemName: j.treatmentLabel || j.serviceType || j.serviceName || "Service",
       quantity: j.quantity || 1,
       unit: j.unit || "unit",
       price: j.finalPrice || j.totalAmount || j.basePrice || 0,
       discount: 0,
-      warranty: j.warranty || "",
+      warranty: jobWarrantyOverrides[j.id] !== undefined ? jobWarrantyOverrides[j.id] : "",
       jobId: j.id,
       finalAmount: j.finalPrice || j.totalAmount || j.basePrice || 0,
     })),
-    [selectedJobs]
+    [selectedJobs, jobWarrantyOverrides]
   );
+
+  const lineItems = useMemo(() => {
+    if (!editingInvoice) return jobLineItems;
+    return manualItems.map((item) => {
+      const quantity = toNumber(item.quantity);
+      const price = toNumber(item.price);
+      const discount = toNumber(item.discount);
+      return {
+        ...item,
+        quantity,
+        price,
+        discount,
+        finalAmount: Math.max(quantity * price - discount, 0),
+      };
+    });
+  }, [editingInvoice, jobLineItems, manualItems]);
 
   const totals = useMemo(() => {
     const subtotal = lineItems.reduce((s, i) => s + i.finalAmount, 0);
+    const discountTotal = lineItems.reduce((s, i) => s + toNumber(i.discount), 0);
     const received = toNumber(form.received);
     const balance = Math.max(subtotal - received, 0);
-    return { subtotal, total: subtotal, received, balance };
+    return { subtotal: subtotal + discountTotal, discountTotal, total: subtotal, received, balance };
   }, [lineItems, form.received]);
 
   const filtered = useMemo(() => {
@@ -94,49 +125,135 @@ export default function InvoicesPage() {
   const resetForm = () => {
     setSelectedCustomer(null);
     setSelectedJobIds(new Set());
+    setJobWarrantyOverrides({});
     setForm({ date: getTodayISO(), received: "", paymentMode: "UPI", terms: defaultTerms });
     setShowJobPicker(true);
+    setEditingInvoice(null);
+    setManualItems([]);
+    setShowPaymentModeModal(false);
+    setPendingInvoicePayload(null);
+  };
+
+  const openEditForm = (invoice) => {
+    const existingCustomer = customers.find((c) => c.id === invoice.customerId) || {
+      id: invoice.customerId || "",
+      name: invoice.customerName || "",
+      phone: invoice.customerPhone || "",
+      address: invoice.customerAddress || "",
+    };
+    setEditingInvoice(invoice);
+    setSelectedCustomer(existingCustomer);
+    setSelectedJobIds(new Set(invoice.jobIds || []));
+    setManualItems((invoice.items || []).map((item) => ({
+      itemName: item.itemName || "",
+      quantity: String(item.quantity ?? 1),
+      unit: item.unit || "unit",
+      price: String(item.price ?? item.unitPrice ?? 0),
+      discount: String(item.discount ?? 0),
+      warranty: item.warranty || "",
+      jobId: item.jobId || "",
+    })));
+    setForm({
+      date: invoice.date || getTodayISO(),
+      received: String(invoice.received ?? 0),
+      paymentMode: invoice.paymentMode || "UPI",
+      terms: invoice.terms || "",
+    });
+    setShowJobPicker(false);
+    setShowForm(true);
+  };
+
+  const updateManualItem = (index, key, value) => {
+    setManualItems((items) => items.map((item, itemIndex) =>
+      itemIndex === index ? { ...item, [key]: value } : item
+    ));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedCustomer) { showMsg("error", "Select a customer."); return; }
     if (lineItems.length === 0) { showMsg("error", "Select at least one job."); return; }
+
+    if (editingInvoice) {
+      setBusy(true);
+      try {
+        const payload = {
+          date: form.date,
+          customerId: selectedCustomer.id,
+          customerName: selectedCustomer.name,
+          customerPhone: selectedCustomer.phone || "",
+          customerAddress: selectedCustomer.address || "",
+          items: lineItems,
+          subtotal: totals.subtotal,
+          discountTotal: totals.discountTotal,
+          total: totals.total,
+          received: totals.received,
+          balance: totals.balance,
+          paymentMode: form.paymentMode,
+          warranty: lineItems.map(i => i.warranty).filter(Boolean).join(", "),
+          terms: form.terms,
+          status: totals.balance > 0 ? "Pending" : "Paid",
+          jobIds: editingInvoice?.jobIds || [...selectedJobIds],
+        };
+
+        await updateRecord("invoices", editingInvoice.id, payload);
+        showMsg("success", `Invoice ${editingInvoice.invoiceNumber} updated.`);
+        resetForm();
+        setShowForm(false);
+      } catch (e) {
+        showMsg("error", e.message);
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
+    const payload = {
+      date: form.date,
+      customerId: selectedCustomer.id,
+      customerName: selectedCustomer.name,
+      customerPhone: selectedCustomer.phone || "",
+      customerAddress: selectedCustomer.address || "",
+      items: lineItems,
+      subtotal: totals.subtotal,
+      discountTotal: totals.discountTotal,
+      total: totals.total,
+      received: totals.received,
+      balance: totals.balance,
+      paymentMode: form.paymentMode,
+      warranty: lineItems.map(i => i.warranty).filter(Boolean).join(", "),
+      terms: form.terms,
+      status: totals.balance > 0 ? "Pending" : "Paid",
+      jobIds: editingInvoice?.jobIds || [...selectedJobIds],
+    };
+
+    setPendingInvoicePayload(payload);
+    setShowPaymentModeModal(true);
+  };
+
+  const handlePaymentModeConfirm = async (paymentMode) => {
+    setShowPaymentModeModal(false);
+    if (!pendingInvoicePayload) return;
     setBusy(true);
     try {
+      const payload = { ...pendingInvoicePayload, paymentMode };
       const invoiceNumber = await nextDocumentNumber("INV");
       const invoiceId = await createRecord("invoices", {
+        ...payload,
         invoiceNumber,
-        date: form.date,
-        customerId: selectedCustomer.id,
-        customerName: selectedCustomer.name,
-        customerPhone: selectedCustomer.phone || "",
-        customerAddress: selectedCustomer.address || "",
-        items: lineItems,
-        subtotal: totals.subtotal,
-        discountTotal: 0,
-        total: totals.total,
-        received: totals.received,
-        balance: totals.balance,
-        paymentMode: form.paymentMode,
-        warranty: lineItems.map(i => i.warranty).filter(Boolean).join(", "),
-        terms: form.terms,
-        status: totals.balance > 0 ? "Pending" : "Paid",
-        jobIds: [...selectedJobIds],
       });
 
-      // Link invoice back to each job
       await Promise.all([...selectedJobIds].map(jobId =>
         updateRecord("jobs", jobId, { invoiceId })
       ));
-
+      showMsg("success", `Invoice ${invoiceNumber} created.`);
       resetForm();
       setShowForm(false);
-      showMsg("success", `Invoice ${invoiceNumber} created.`);
     } catch (e) {
       showMsg("error", e.message);
     } finally {
       setBusy(false);
+      setPendingInvoicePayload(null);
     }
   };
 
@@ -257,6 +374,12 @@ export default function InvoicesPage() {
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-50 border border-green-200 text-xs font-semibold text-green-700 hover:bg-green-100 transition-colors">
                   <MessageSquare className="w-3 h-3" /> WhatsApp
                 </button>
+                {inv.status !== "Paid" && Number(inv.balance) > 0 && (
+                  <button onClick={() => openEditForm(inv)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
+                    <Pencil className="w-3 h-3" /> Edit
+                  </button>
+                )}
                 {inv.status !== "Paid" && (
                   <button onClick={() => markPaid(inv)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
@@ -280,7 +403,7 @@ export default function InvoicesPage() {
 
             {/* Modal header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
-              <h2 className="font-black text-slate-900">New Invoice</h2>
+              <h2 className="font-black text-slate-900">{editingInvoice ? "Edit Invoice" : "New Invoice"}</h2>
               <button onClick={() => { setShowForm(false); resetForm(); }} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
                 <X className="w-4 h-4" />
               </button>
@@ -296,7 +419,7 @@ export default function InvoicesPage() {
               </div>
 
               {/* Step 2: Jobs from this customer */}
-              {selectedCustomer && (
+              {selectedCustomer && !editingInvoice && (
                 <div>
                   <button type="button" onClick={() => setShowJobPicker(p => !p)}
                     className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-colors">
@@ -329,25 +452,83 @@ export default function InvoicesPage() {
                           {customerJobs.map(job => {
                             const checked = selectedJobIds.has(job.id);
                             const amount = job.finalPrice || job.totalAmount || job.basePrice || 0;
+                            const isTermite = isTermiteJob(job);
+                            const warrantyValue = jobWarrantyOverrides[job.id] !== undefined ? jobWarrantyOverrides[job.id] : "";
                             return (
-                              <label key={job.id}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all ${checked ? "border-var(--brand) bg-var(--brand-soft)" : "border-slate-200 bg-white hover:border-slate-300"}`}>
-                                <input type="checkbox" checked={checked} onChange={() => toggleJob(job.id)}
-                                  className="accent-var(--brand) w-4 h-4 flex-0" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-bold text-slate-800 truncate">
-                                    {job.treatmentLabel || job.serviceType || job.serviceName}
-                                  </p>
-                                  <p className="text-xs text-slate-400">{formatDateDisplay(job.scheduledDate)}{job.warranty ? ` · ${job.warranty}` : ""}</p>
-                                </div>
-                                <p className="font-black text-slate-900 text-sm flex-0">{formatCurrency(amount)}</p>
-                              </label>
+                              <div key={job.id} className={`rounded-xl border transition-all ${checked ? "border-var(--brand) bg-var(--brand-soft)" : "border-slate-200 bg-white"}`}>
+                                <label className="flex items-center gap-3 px-4 py-3 cursor-pointer">
+                                  <input type="checkbox" checked={checked} onChange={() => toggleJob(job.id)}
+                                    className="accent-var(--brand) w-4 h-4 flex-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-slate-800 truncate">
+                                      {job.treatmentLabel || job.serviceType || job.serviceName}
+                                    </p>
+                                    <p className="text-xs text-slate-400">{formatDateDisplay(job.scheduledDate)}</p>
+                                  </div>
+                                  <p className="font-black text-slate-900 text-sm flex-0">{formatCurrency(amount)}</p>
+                                </label>
+                                {checked && isTermite && (
+                                  <div className="px-4 pb-3">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs text-emerald-600 font-bold flex-shrink-0">🛡 Warranty:</span>
+                                      <input
+                                        type="text"
+                                        value={warrantyValue}
+                                        onChange={(e) => setJobWarrantyOverrides(p => ({ ...p, [job.id]: e.target.value }))}
+                                        placeholder="e.g. 5 Years, 10 Years"
+                                        className="flex-1 px-3 py-1.5 rounded-lg border border-emerald-200 bg-white text-xs font-semibold text-emerald-700 focus:outline-none focus:border-emerald-500 placeholder:text-slate-300 placeholder:font-normal"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             );
                           })}
                         </>
                       )}
                     </div>
                   )}
+                </div>
+              )}
+
+              {editingInvoice && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Editable Items</p>
+                    <button type="button"
+                      onClick={() => setManualItems((items) => [...items, { itemName: "", quantity: "1", unit: "unit", price: "0", discount: "0", warranty: "" }])}
+                      className="flex items-center gap-1 text-xs font-bold text-var(--brand)">
+                      <Plus className="w-3 h-3" /> Add Item
+                    </button>
+                  </div>
+                  {manualItems.map((item, index) => (
+                    <div key={index} className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+                      <input value={item.itemName} onChange={(e) => updateManualItem(index, "itemName", e.target.value)}
+                        placeholder="Service or item" className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-var(--brand) focus:outline-none" />
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <input type="number" min="0" step="any" value={item.quantity} onChange={(e) => updateManualItem(index, "quantity", e.target.value)}
+                          placeholder="Qty" className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-var(--brand) focus:outline-none" />
+                        <input value={item.unit} onChange={(e) => updateManualItem(index, "unit", e.target.value)}
+                          placeholder="Unit" className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-var(--brand) focus:outline-none" />
+                        <input type="number" min="0" step="any" value={item.price} onChange={(e) => updateManualItem(index, "price", e.target.value)}
+                          placeholder="Rate" className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-var(--brand) focus:outline-none" />
+                        <input type="number" min="0" step="any" value={item.discount} onChange={(e) => updateManualItem(index, "discount", e.target.value)}
+                          placeholder="Discount" className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-var(--brand) focus:outline-none" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          value={item.warranty}
+                          onChange={(e) => updateManualItem(index, "warranty", e.target.value)}
+                          placeholder="Warranty (optional, e.g. 5 Years)"
+                          className="flex-1 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-var(--brand) focus:outline-none"
+                        />
+                        <button type="button" onClick={() => setManualItems((items) => items.filter((_, itemIndex) => itemIndex !== index))}
+                          title="Remove item" className="p-2 rounded-lg text-rose-600 hover:bg-rose-50">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -408,6 +589,12 @@ export default function InvoicesPage() {
                       <p className="text-xs text-emerald-600 font-semibold mt-1">✓ Fully paid</p>
                     )}
                   </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Terms & Conditions</label>
+                    <textarea value={form.terms} onChange={(e) => setForm(p => ({ ...p, terms: e.target.value }))}
+                      rows={3} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm resize-y" />
+                  </div>
                 </>
               )}
 
@@ -418,12 +605,27 @@ export default function InvoicesPage() {
                 </button>
                 <button type="submit" disabled={busy || lineItems.length === 0}
                   className="flex-1 py-3 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-var(--brand-dark) disabled:opacity-50 transition-colors">
-                  {busy ? "Creating..." : `Create Invoice${totals.total > 0 ? ` · ${formatCurrency(totals.total)}` : ""}`}
+                  {busy
+                    ? (editingInvoice ? "Saving..." : "Creating...")
+                    : `${editingInvoice ? "Save Invoice" : "Create Invoice"}${totals.total > 0 ? ` · ${formatCurrency(totals.total)}` : ""}`}
                 </button>
               </div>
             </form>
           </div>
         </div>
+      )}
+
+      {showPaymentModeModal && (
+        <PaymentModeModal
+          title="Select payment mode"
+          defaultWarranty=""
+          showWarrantyInput={false}
+          onClose={() => {
+            setShowPaymentModeModal(false);
+            setPendingInvoicePayload(null);
+          }}
+          onConfirm={handlePaymentModeConfirm}
+        />
       )}
     </div>
   );

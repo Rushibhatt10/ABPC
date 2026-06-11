@@ -140,7 +140,7 @@ function TreatmentBlock({ tKey, tPrice, tQty, tUnit, onTKey, onPrice, onQty, onU
             <input
               type="number"
               min="0"
-              step="1"
+              step="any"
               value={tQty}
               onChange={(e) => onQty(e.target.value)}
               placeholder="Qty"
@@ -149,10 +149,10 @@ function TreatmentBlock({ tKey, tPrice, tQty, tUnit, onTKey, onPrice, onQty, onU
             <input
               type="number"
               min="0"
-              step="1"
+              step="any"
               value={tPrice}
               onChange={(e) => onPrice(e.target.value)}
-              placeholder="Price â‚¹"
+              placeholder="Price ₹"
               className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-(--brand) focus:outline-none"
             />
           </div>
@@ -161,7 +161,7 @@ function TreatmentBlock({ tKey, tPrice, tQty, tUnit, onTKey, onPrice, onQty, onU
               <p className="text-xs font-bold text-slate-700">{tmpl?.label}</p>
               <p className="text-[10px] text-slate-500">{tQty} {tUnit} Ã— â‚¹{tPrice || 0}</p>
             </div>
-            <p className="font-black text-(--brand) text-sm">â‚¹{blockTotal.toLocaleString("en-IN")}</p>
+            <p className="font-black text-(--brand) text-sm">₹{blockTotal % 1 === 0 ? blockTotal.toLocaleString("en-IN") : blockTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
         </>
       )}
@@ -819,7 +819,7 @@ function CustomerJobsPanel({ customer, jobs, subJobs, attendanceByJob, isEmploye
 }
 
 export default function JobsPage() {
-  const { profile, isEmployee } = useAuth();
+  const { profile, isEmployee, loading: authLoading } = useAuth();
   const EmployeeName = profile?.EmployeeTag || profile?.name || "";
   const location = useLocation();
 
@@ -846,6 +846,7 @@ export default function JobsPage() {
   const [attendanceJob, setAttendanceJob] = useState(null); // admin attendance view
   const [setLocationJob, setSetLocationJob] = useState(null); // admin set job location
   const [paymentModeJob, setPaymentModeJob] = useState(null); // job waiting for payment mode
+  const [warrantySettings, setWarrantySettings] = useState([]);
 
   // Auto-open rework modal when navigated from ComplaintsPage
   useEffect(() => {
@@ -861,15 +862,25 @@ export default function JobsPage() {
   }, [location.state, jobs]);
 
   useEffect(() => {
-    const jobsQ = isEmployee
+    // Don't subscribe until auth has finished loading — prevents rapid
+    // listener churn (empty → real EmployeeName) that causes the Firestore SDK
+    // "INTERNAL ASSERTION FAILED: Unexpected state" error on the watch stream.
+    if (authLoading) return;
+
+    const jobsQ = isEmployee && EmployeeName
       ? query(collection(firestoreDb, "jobs"), where("assignedTo", "array-contains", EmployeeName))
       : query(collection(firestoreDb, "jobs"), orderBy("createdAt", "desc"));
+
+    const subJobsQ = query(collection(firestoreDb, "subJobs"), orderBy("createdAt", "desc"));
+
     const unsubs = [
       subscribeQuery(jobsQ, setJobs),
-      subscribeQuery(query(collection(firestoreDb, "subJobs"), orderBy("createdAt", "desc")), setSubJobs),
+      subscribeQuery(subJobsQ, setSubJobs),
       subscribeCollection("customers", setCustomers),
       subscribeCollection("services", setServices),
+      subscribeCollection("warrantySettings", setWarrantySettings),
     ];
+
     if (isEmployee && EmployeeName) {
       unsubs.push(
         subscribeQuery(
@@ -880,8 +891,9 @@ export default function JobsPage() {
     } else {
       setAttendanceRecords([]);
     }
+
     return () => unsubs.forEach((u) => u());
-  }, [isEmployee, EmployeeName]);
+  }, [isEmployee, EmployeeName, authLoading]);
 
   const attendanceByJob = useMemo(() => {
     return attendanceRecords.reduce((acc, record) => {
@@ -994,7 +1006,7 @@ export default function JobsPage() {
     setPaymentModeJob(job);
   };
 
-  const handleGenerateInvoiceWithMode = async (paymentMode) => {
+  const handleGenerateInvoiceWithMode = async (paymentMode, warrantyValue = "") => {
     const job = paymentModeJob;
     setPaymentModeJob(null);
     if (!job) return;
@@ -1003,12 +1015,28 @@ export default function JobsPage() {
     try {
       const invoiceNumber = await nextDocumentNumber("INV");
       const total = Number(job.finalPrice || job.totalAmount || 0);
+
+      // Auto-match warranty from admin-configured warrantySettings
+      const jobLabel = (job.treatmentLabel || job.serviceType || job.serviceName || "").toLowerCase();
+      const matchedWarranty = job.warranty || (() => {
+        const exact = warrantySettings.find(w => jobLabel === w.serviceName.toLowerCase());
+        if (exact) return exact.warrantyPeriod;
+        const partial = warrantySettings.find(w =>
+          jobLabel.includes(w.serviceName.toLowerCase()) ||
+          w.serviceName.toLowerCase().includes(jobLabel) ||
+          jobLabel.includes((w.serviceName.split(" — ")[1] || "").toLowerCase()) ||
+          (w.serviceName.split(" — ")[1] || "").toLowerCase().includes(jobLabel)
+        );
+        return partial?.warrantyPeriod || "";
+      })();
+      const finalWarranty = (warrantyValue || "").trim() || matchedWarranty || "";
+
       const items = [{
         itemName: job.treatmentLabel || job.serviceType || job.serviceName || "Service",
         quantity: Number(job.quantity) || 1,
         price: Number(job.basePrice) || total,
         discount: 0,
-        warranty: job.warranty || "",
+        warranty: finalWarranty,
         finalAmount: total,
       }];
 
@@ -1027,13 +1055,17 @@ export default function JobsPage() {
         received: 0,
         balance: total,
         paymentMode,
-        warranty: job.warranty || "",
+        warranty: finalWarranty,
         terms: "Terms: 1) Payment due on completion. 2) Taxes extra if applicable.",
         status: "Pending",
         fromJob: true,
       });
 
-      await updateRecord("jobs", job.id, { invoiceId });
+      await updateRecord("jobs", job.id, {
+        invoiceId,
+        warranty: finalWarranty,
+        warrantyStartDate: job.completedAt || job.warrantyStartDate || new Date().toISOString(),
+      });
       showMsg("success", `Invoice ${invoiceNumber} created · ${paymentMode}.`);
     } catch (e) {
       showMsg("error", e.message);
@@ -1349,6 +1381,8 @@ export default function JobsPage() {
       {paymentModeJob && (
         <PaymentModeModal
           title={`Invoice for ${paymentModeJob.customerName}`}
+          defaultWarranty={paymentModeJob.warranty || ""}
+          showWarrantyInput={(paymentModeJob.treatmentLabel || paymentModeJob.serviceType || paymentModeJob.serviceName || "").toLowerCase().includes("termite")}
           onClose={() => setPaymentModeJob(null)}
           onConfirm={handleGenerateInvoiceWithMode}
         />

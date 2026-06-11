@@ -31,6 +31,7 @@ import { compressImage } from "../utils/mediaHelpers";
 import { uploadToCloudinary, uploadVideoToCloudinary } from "../utils/cloudinaryUpload";
 import { isDriveUploadConfigured, uploadFileToDrive } from "../utils/driveUpload";
 import { formatCurrency, getWhatsAppNumber } from "../utils/format";
+import { sendWhatsAppText, shareReportMedia } from "../utils/shareHelpers";
 
 const glass = {
   background: "linear-gradient(180deg, rgba(15,22,16,0.98), rgba(7,12,8,0.98))",
@@ -361,16 +362,34 @@ export default function JobVideoReportModal({ job, onClose, onSaved }) {
       handleDownload();
       return;
     }
+
+    const shared = await shareReportMedia({
+      title: "AB Pest Control Service Report",
+      text: shareMessage,
+      reports,
+    }).catch(() => false);
+
+    if (shared) {
+      return;
+    }
+
     await navigator.share({
       title: "AB Pest Control Service Report",
       text: shareMessage,
     });
   };
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
     const phone = getWhatsAppNumber(job.customerPhone);
-    const target = phone ? `https://wa.me/${phone}` : "https://wa.me/";
-    window.open(`${target}?text=${encodeURIComponent(shareMessage)}`, "_blank", "noopener,noreferrer");
+    const shared = await shareReportMedia({
+      title: "AB Pest Control Service Report",
+      text: shareMessage,
+      reports,
+    }).catch(() => false);
+
+    if (!shared) {
+      sendWhatsAppText(phone, shareMessage);
+    }
   };
 
   return (

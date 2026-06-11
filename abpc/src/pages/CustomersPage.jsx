@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, deleteRecord, deleteRecordsByField, updateRecord, subscribeCollection } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay } from "../utils/format";
-import { Users, Plus, Search, Phone, MapPin, Edit2, Trash2, X, ChevronRight, Home, Building2, Factory } from "lucide-react";
+import { Users, Plus, Search, Phone, MapPin, Edit2, Trash2, X, ChevronRight, Home, Building2, Factory, Copy, BadgeCheck } from "lucide-react";
+import { updatePhoneMapping, removePhoneMapping } from "../customer/utils/customerHelpers";
+
 
 const propertyTypes = ["Residential", "Commercial", "Industrial"];
 const propertyIcons = { Residential: Home, Commercial: Building2, Industrial: Factory };
@@ -162,8 +164,9 @@ function CustomerModal({ customer, onClose, onSave, saving }) {
   );
 }
 
-function CustomerDetail({ customer, jobs, quotations, invoices, onEdit, onDelete, deleting }) {
+function CustomerDetail({ customer, jobs, quotations, invoices, onEdit, onDelete, deleting, onCopyId }) {
   const Icon = propertyIcons[customer.propertyType] || Home;
+  const portalCustomerId = customer.customerId || customer.id;
   const customerJobs = jobs.filter((j) => j.customerId === customer.id);
   const customerQuotes = quotations.filter((q) => q.customerId === customer.id);
   const customerInvoices = invoices.filter((i) => i.customerId === customer.id);
@@ -195,6 +198,19 @@ function CustomerDetail({ customer, jobs, quotations, invoices, onEdit, onDelete
       </div>
 
       <div className="space-y-2 text-sm">
+        <div className="flex items-center gap-2 text-slate-600">
+          <BadgeCheck className="w-3.5 h-3.5 text-[var(--brand)]" />
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Customer ID</span>
+          <code className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">{portalCustomerId}</code>
+          <button
+            type="button"
+            onClick={() => onCopyId(portalCustomerId)}
+            className="p-1 rounded-md text-slate-400 hover:bg-slate-100 hover:text-[var(--brand)]"
+            title="Copy Customer ID"
+          >
+            <Copy className="w-3.5 h-3.5" />
+          </button>
+        </div>
         <div className="flex items-center gap-2 text-slate-600">
           <Phone className="w-3.5 h-3.5 text-slate-400" />
           <a href={`tel:${customer.phone}`} className="hover:text-[var(--brand)]">{customer.phone}</a>
@@ -270,7 +286,7 @@ export default function CustomersPage() {
     const unsubs = [
       subscribeCollection("customers", (list) => {
         setCustomers(list);
-        if (!selected && list.length > 0) setSelected(list[list.length - 1]);
+        setSelected((current) => current || list[list.length - 1] || null);
       }),
       subscribeCollection("jobs", setJobs),
       subscribeCollection("quotations", setQuotations),
@@ -279,11 +295,27 @@ export default function CustomersPage() {
     return () => unsubs.forEach((u) => u());
   }, []);
 
+  useEffect(() => {
+    const customersMissingId = customers.filter((customer) => !customer.customerId);
+    if (customersMissingId.length === 0) return;
+
+    Promise.all(customersMissingId.map(async (customer) => {
+      await updateRecord("customers", customer.id, { customerId: customer.id });
+      await updatePhoneMapping(customer.id, customer.phone);
+    })).catch((error) => {
+      console.error("Failed to assign customer IDs:", error);
+      setMsg({ type: "error", text: "Some existing customer IDs could not be assigned." });
+    });
+  }, [customers]);
+
   const filtered = useMemo(() => {
     if (!search) return [...customers].reverse();
     const q = search.toLowerCase();
     return [...customers].reverse().filter(
-      (c) => c.name?.toLowerCase().includes(q) || c.phone?.includes(q) || c.address?.toLowerCase().includes(q)
+      (c) => c.name?.toLowerCase().includes(q) ||
+        c.phone?.includes(q) ||
+        c.address?.toLowerCase().includes(q) ||
+        (c.customerId || c.id)?.toLowerCase().includes(q)
     );
   }, [customers, search]);
 
@@ -297,12 +329,15 @@ export default function CustomersPage() {
     try {
       if (editCustomer) {
         await updateRecord("customers", editCustomer.id, form);
+        await updatePhoneMapping(editCustomer.id, form.phone, editCustomer.phone);
         showMsg("success", "Customer updated.");
       } else {
         const id = await createRecord("customers", form);
-        const newC = { id, ...form };
+        await updateRecord("customers", id, { customerId: id });
+        await updatePhoneMapping(id, form.phone);
+        const newC = { id, customerId: id, ...form };
         setSelected(newC);
-        showMsg("success", "Customer added.");
+        showMsg("success", `Customer added. Customer ID: ${id}`);
       }
       setShowModal(false);
       setEditCustomer(null);
@@ -313,11 +348,21 @@ export default function CustomersPage() {
     }
   };
 
+  const handleCopyId = async (customerId) => {
+    try {
+      await navigator.clipboard.writeText(customerId);
+      showMsg("success", "Customer ID copied.");
+    } catch {
+      showMsg("error", "Could not copy Customer ID.");
+    }
+  };
+
   const handleDelete = async () => {
     if (!selected) return;
     if (!window.confirm(`Delete "${selected.name}" and all linked data?`)) return;
     setDeleting(true);
     try {
+      await removePhoneMapping(selected.id, selected.phone);
       await Promise.all([
         deleteRecordsByField("jobs", "customerId", "==", selected.id),
         deleteRecordsByField("quotations", "customerId", "==", selected.id),
@@ -380,7 +425,7 @@ export default function CustomersPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search customers..."
+              placeholder="Search name, phone, address, or Customer ID..."
               className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white"
             />
           </div>
@@ -409,6 +454,7 @@ export default function CustomersPage() {
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-slate-800 text-sm truncate">{c.name}</p>
                         <p className="text-xs text-slate-400 truncate">{c.phone}</p>
+                        <p className="text-[10px] font-semibold text-[var(--brand)] truncate">ID: {c.customerId || c.id}</p>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs text-slate-400">{c.propertyType}</span>
@@ -433,6 +479,7 @@ export default function CustomersPage() {
               onEdit={() => { setEditCustomer(selected); setShowModal(true); }}
               onDelete={handleDelete}
               deleting={deleting}
+              onCopyId={handleCopyId}
             />
           ) : (
             <div className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 text-center">

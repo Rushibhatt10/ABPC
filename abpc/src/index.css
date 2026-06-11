@@ -1048,3 +1048,116 @@ button:active:not(:disabled) {
     background: white !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════
+   CUSTOMER PORTAL — PRINT FIX
+   The CustomerShell uses overflow-hidden / overflow-y-auto
+   which clip the doc-page during window.print().
+   These rules unclip every ancestor so the full A4 page
+   renders correctly.
+   ═══════════════════════════════════════════════════════ */
+@media print {
+  /* Unclip the customer shell root flex container */
+  .flex.h-screen,
+  [class*="overflow-hidden"],
+  [class*="overflow-y-auto"],
+  [class*="overflow-y-scroll"] {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Hide the customer sidebar, top header, and nav entirely */
+  aside,
+  header,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Make the main scroll area and its wrapper full-width block */
+  main,
+  .flex-1 {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* The wrapper div around Outlet content */
+  .max-w-7xl {
+    max-width: 210mm !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+  }
+
+  /* Hide everything in the page except the doc-page card */
+  .space-y-6 > *:not(:has(.doc-page)),
+  .space-y-6 > .no-print,
+  .grid > .no-print {
+    display: none !important;
+  }
+
+  /* The doc-page itself — full A4 */
+  .doc-page {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 14mm 16mm !important;
+    background: white !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    position: relative !important;
+  }
+
+  /* All content inside doc-page stays white/black */
+  .doc-page,
+  .doc-page * {
+    background: white !important;
+    color: #1e293b !important;
+    box-shadow: none !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Preserve colour on status badges and totals */
+  .doc-page .text-rose-500,
+  .doc-page .text-rose-600 { color: #e11d48 !important; }
+  .doc-page .text-emerald-600 { color: #059669 !important; }
+  .doc-page .text-amber-600 { color: #d97706 !important; }
+  .doc-page .text-slate-400 { color: #94a3b8 !important; }
+  .doc-page .text-slate-500 { color: #64748b !important; }
+  .doc-page .text-slate-800 { color: #1e293b !important; }
+  .doc-page .text-slate-900 { color: #0f172a !important; }
+}
+
+/* Hide scrollbar for reel slider */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Smooth reel scrolling */
+.reels-container {
+  scroll-behavior: smooth;
+}
+
+/* Reel card hover */
+.reel-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.reel-card:hover {
+  transform: translateY(-4px);
+}

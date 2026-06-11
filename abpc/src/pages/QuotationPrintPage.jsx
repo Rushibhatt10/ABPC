@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { subscribeDoc } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay } from "../utils/format";
+import { generateA4PdfBlob } from "../utils/pdfExport";
 import { Printer, ArrowLeft, Download, Share2 } from "lucide-react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 
 export default function QuotationPrintPage() {
   const { id } = useParams();
@@ -26,23 +25,8 @@ export default function QuotationPrintPage() {
   }, [loading, quotation]);
 
   const generatePDFBlob = async () => {
-    const element = document.querySelector(".doc-page");
-    if (!element) return null;
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: "#ffffff",
-      windowWidth: 794,
-    });
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-    });
-    pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
-    return pdf.output("blob");
+    const element = document.querySelector(".print-container") || document.querySelector(".doc-page");
+    return generateA4PdfBlob(element);
   };
 
   const handleDownloadPDF = async () => {
@@ -209,6 +193,10 @@ Thank you for choosing A.B. Pest Control! 😊`;
                   </div>
                 </div>
                 <div style={S.field}>
+                  <p style={S.label}>Customer ID</p>
+                  <p style={S.value}>{quotation.customerId || "-"}</p>
+                </div>
+                <div style={S.field}>
                   <p style={S.label}>Address</p>
                   <p style={S.value}>{quotation.customerAddress || "—"}</p>
                 </div>
@@ -270,20 +258,10 @@ Thank you for choosing A.B. Pest Control! 😊`;
               </div>
             </div>
 
-            {/* METHODOLOGY */}
-            {quotation.methodology && (
-              <div style={{ marginBottom: "4mm" }}>
-                <p style={S.sectionTitle}>4. Methodology</p>
-                <div style={S.box}>
-                  <p style={{ fontSize: 10, color: "#2E2A27", lineHeight: 1.7, whiteSpace: "pre-line" }}>{quotation.methodology}</p>
-                </div>
-              </div>
-            )}
-
             {/* PAYMENT TERMS */}
             {quotation.paymentTerms && (
               <div style={{ marginBottom: "4mm" }}>
-                <p style={S.sectionTitle}>5. Payment Terms</p>
+                <p style={S.sectionTitle}>4. Payment Terms</p>
                 <div style={S.box}>
                   <p style={{ fontSize: 10, color: "#2E2A27", lineHeight: 1.7, whiteSpace: "pre-line" }}>{quotation.paymentTerms}</p>
                 </div>
@@ -293,7 +271,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
             {/* TERMS */}
             {quotation.terms && (
               <div style={{ marginBottom: "5mm" }}>
-                <p style={S.sectionTitle}>6. Terms & Conditions</p>
+                <p style={S.sectionTitle}>5. Terms & Conditions</p>
                 <div style={S.box}>
                   <p style={{ fontSize: 10, color: "#2E2A27", lineHeight: 1.7, whiteSpace: "pre-line" }}>{quotation.terms}</p>
                 </div>
@@ -303,8 +281,9 @@ Thank you for choosing A.B. Pest Control! 😊`;
             {/* SIGNATURE */}
             <div style={S.divider} />
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6mm" }}>
-              <div style={{ textAlign: "center", minWidth: 120 }}>
-                <img src="/sign.png" alt="Signature" style={{ height: 80, width: 200, objectFit: "contain", objectPosition: "center", display: "block", margin: "0 auto 4px" }} /><div style={{ borderBottom: "1px solid #8B7E74", marginBottom: 6, width: 120 }} />
+              <div style={{ textAlign: "center", minWidth: 160 }}>
+                <img src="/sign-removebg-preview.png" alt="Signature" style={{ height: 70, width: 180, objectFit: "contain", objectPosition: "center", display: "block", margin: "0 auto 4px" }} />
+                <div style={{ borderBottom: "1.5px solid #8B7E74", marginBottom: 6, width: 160, marginLeft: "auto", marginRight: "auto" }} />
                 <p style={{ fontSize: 10, fontWeight: 600, color: "#2E2A27", letterSpacing: "0.04em" }}>Authorized Signatory</p>
                 <p style={{ fontSize: 9, color: "#8B7E74", marginTop: 2 }}>AB Pest Control</p>
               </div>
@@ -315,6 +294,28 @@ Thank you for choosing A.B. Pest Control! 😊`;
 
           </div>
         </div>
+
+        {quotation.methodology && (
+          <div className="doc-page" style={S.page}>
+            <div style={S.outerBorder} />
+            <div style={S.innerBorder} />
+            <div style={S.watermark}>
+              <img src="/cropped_circle_image.png" alt="" style={{ width: 260, height: 260, objectFit: "contain" }} />
+            </div>
+
+            <div style={S.content}>
+              <div style={{ textAlign: "center", marginBottom: "6mm" }}>
+                <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#2E2A27", lineHeight: 1.4 }}>
+                  6. Methodology
+                </p>
+                <div style={{ width: 50, height: 2, background: "#8B7E74", margin: "5px auto 0", borderRadius: 1 }} />
+              </div>
+              <div style={S.box}>
+                <p style={{ fontSize: 10, color: "#2E2A27", lineHeight: 1.7, whiteSpace: "pre-line" }}>{quotation.methodology}</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

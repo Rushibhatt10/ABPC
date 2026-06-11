@@ -21,6 +21,7 @@ import { collection, orderBy, query, where } from "firebase/firestore";
 import { firestoreDb } from "../firebase/firestore";
 import { subscribeQuery } from "../utils/firestoreHelpers";
 import { formatCurrency, getWhatsAppNumber } from "../utils/format";
+import { sendWhatsAppText, shareReportMedia } from "../utils/shareHelpers";
 
 const G = {
   modal: { background: "rgba(10,12,10,0.96)", border: "1px solid rgba(76,122,45,0.18)", backdropFilter: "blur(32px)", WebkitBackdropFilter: "blur(32px)" },
@@ -120,13 +121,22 @@ export default function JobReportsAdminView({ job, onClose }) {
 
   const message = buildMessage(job, reports);
 
-  const handleSendWhatsApp = () => {
+  const handleSendWhatsApp = async () => {
     const phone = getWhatsAppNumber(job.customerPhone);
     if (!phone) {
       alert("No phone number for this customer.");
       return;
     }
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+
+    const shared = await shareReportMedia({
+      title: "AB Pest Control Service Report",
+      text: message,
+      reports,
+    }).catch(() => false);
+
+    if (!shared) {
+      sendWhatsAppText(phone, message);
+    }
   };
 
   const handleCopy = async () => {

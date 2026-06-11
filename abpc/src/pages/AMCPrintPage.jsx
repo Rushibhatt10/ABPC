@@ -335,8 +335,9 @@ export default function AMCPrintPage() {
             {/* ── SIGNATURE SECTION ── */}
             <div style={S.divider} />
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6mm" }}>
-              <div style={{ textAlign: "center", minWidth: 120 }}>
-                <img src="/sign.png" alt="Signature" style={{ height: 80, width: 200, objectFit: "contain", objectPosition: "center", display: "block", margin: "0 auto 4px" }} /><div style={{ borderBottom: "1px solid #8B7E74", marginBottom: 6, width: 120 }} />
+              <div style={{ textAlign: "center", minWidth: 160 }}>
+                <img src="/sign-removebg-preview.png" alt="Signature" style={{ height: 70, width: 180, objectFit: "contain", objectPosition: "center", display: "block", margin: "0 auto 4px" }} />
+                <div style={{ borderBottom: "1px solid #8B7E74", marginBottom: 6, width: 160, marginLeft: "auto", marginRight: "auto" }} />
                 <p style={{ fontSize: 10, fontWeight: 600, color: "#2E2A27", letterSpacing: "0.04em" }}>Authorized Signatory</p>
                 <p style={{ fontSize: 9, color: "#8B7E74", marginTop: 2 }}>AB Pest Control</p>
               </div>

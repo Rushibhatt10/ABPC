@@ -1,9 +1,13 @@
-export const formatCurrency = (value) =>
-  new Intl.NumberFormat("en-IN", {
+export const formatCurrency = (value) => {
+  const num = Number(value || 0);
+  const hasFraction = num % 1 !== 0;
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(Number(value || 0));
+    minimumFractionDigits: hasFraction ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(num);
+};
 
 const pad = (value) => String(value).padStart(2, "0");
 

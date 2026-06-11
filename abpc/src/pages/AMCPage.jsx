@@ -216,7 +216,7 @@ export default function AMCPage() {
   };
 
   // Step 2: create invoice with chosen mode
-  const handleGenerateInvoiceWithMode = async (paymentMode) => {
+  const handleGenerateInvoiceWithMode = async (paymentMode, warrantyValue = "") => {
     const amc = paymentModeAmc;
     setPaymentModeAmc(null);
     if (!amc) return;
@@ -230,12 +230,13 @@ export default function AMCPage() {
       const dur = DURATIONS.find(d => d.months === amc.durationMonths) || DURATIONS[3];
       const serviceNames = amc.services?.map(s => s.itemName).join(", ") || "AMC Services";
 
+      const finalWarranty = (warrantyValue || "").trim();
       const items = [{
         itemName: `AMC — ${serviceNames} (${dur.label} · ${dur.visitLabel})`,
         quantity: 1,
         price: total,
         discount: 0,
-        warranty: "",
+        warranty: finalWarranty,
         finalAmount: total,
       }];
 
@@ -254,7 +255,7 @@ export default function AMCPage() {
         received: advance,
         balance,
         paymentMode,
-        warranty: "",
+        warranty: finalWarranty,
         terms: `AMC Terms: 50% advance paid. Balance ₹${balance.toLocaleString("en-IN")} due on completion of first visit. ${dur.visitLabel} included over ${dur.label}.`,
         status: "Partial",
         fromAMC: true,

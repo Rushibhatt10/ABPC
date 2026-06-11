@@ -13,8 +13,9 @@ const MODES = [
   { value: "Card",          label: "Card",          icon: CreditCard,  color: "#e4572e", bg: "rgba(228,87,46,0.1)",   border: "rgba(228,87,46,0.3)" },
 ];
 
-export default function PaymentModeModal({ onConfirm, onClose, title = "Generate Invoice" }) {
+export default function PaymentModeModal({ onConfirm, onClose, title = "Generate Invoice", defaultWarranty = "", showWarrantyInput = true }) {
   const [selected, setSelected] = useState("UPI");
+  const [warranty, setWarranty] = useState(defaultWarranty);
 
   return (
     <div className="fixed inset-0 z-300 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -63,13 +64,29 @@ export default function PaymentModeModal({ onConfirm, onClose, title = "Generate
           })}
         </div>
 
+        {showWarrantyInput && (
+          <div className="px-5 pb-3">
+            <label className="block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 mb-1.5">
+              Warranty (optional)
+            </label>
+            <input
+              type="text"
+              value={warranty}
+              onChange={(e) => setWarranty(e.target.value)}
+              placeholder="e.g. 5 Years or 1 Year"
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
+            />
+            <p className="text-[11px] text-slate-400 mt-1.5">This will appear on the invoice and in the customer portal.</p>
+          </div>
+        )}
+
         {/* Confirm */}
         <div className="px-5 pb-5 flex gap-3">
           <button type="button" onClick={onClose}
             className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">
             Cancel
           </button>
-          <button type="button" onClick={() => onConfirm(selected)}
+          <button type="button" onClick={() => onConfirm(selected, warranty)}
             className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95"
             style={{ background: "linear-gradient(135deg,#1F3D1F,#4C7A2D)", boxShadow: "0 0 16px rgba(76,122,45,0.3)" }}
             onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 24px rgba(76,122,45,0.5)"}

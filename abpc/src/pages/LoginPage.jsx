@@ -5,9 +5,9 @@ import { useAuth } from "../context/AuthContext";
 import Logo from "../components/Logo";
 
 const EMPLOYEE_PASSWORD_MAP = {
-  "nakul123":   "nakul",
-  "divyesh123": "divyesh",
-  "sagar123":   "sagar",
+  "nakul8004":   "nakul",
+  "divyesh8004": "divyesh",
+  "sagar8004":   "sagar",
 };
 
 const glass = {
