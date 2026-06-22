@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCustomerAuth } from "../context/customerAuthState";
-import { Phone, LogIn, ShieldAlert, UserRound } from "lucide-react";
+import { Phone, LogIn, ShieldAlert, UserRound, Check } from "lucide-react";
 import Logo from "../../components/Logo";
 
 const magicLinkParams = new URLSearchParams(window.location.search);
@@ -122,17 +122,34 @@ export default function CustomerLoginPage() {
                     required
                     autoComplete="tel"
                     value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="Enter 10-digit mobile number"
-                    className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl outline-none focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand-soft)] transition-all text-base"
+                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    maxLength={10}
+                    pattern="\d{10}"
+                    inputMode="numeric"
+                    placeholder="10-digit mobile number (no +91)"
+                    className="w-full pl-10 pr-10 py-3 border border-slate-200 rounded-xl outline-none focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand-soft)] transition-all text-base"
                   />
+                  {phoneNumber.length === 10 && (
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <Check className="h-4 w-4 text-emerald-500" />
+                    </div>
+                  )}
                 </div>
+                {phoneNumber.length > 0 && phoneNumber.length < 10 && (
+                  <p className="text-xs text-slate-400 mt-1.5 ml-1">
+                    {10 - phoneNumber.length} more digit{10 - phoneNumber.length !== 1 ? "s" : ""} needed
+                  </p>
+                )}
+                {phoneNumber.length === 10 && (
+                  <p className="text-xs text-emerald-600 mt-1.5 ml-1 font-semibold">✓ Valid number</p>
+                )}
               </div>
 
               <div>
                 <button
                   type="submit"
-                  className="w-full primary-btn flex items-center justify-center gap-2"
+                  disabled={phoneNumber.length !== 10 || !customerId.trim()}
+                  className="w-full primary-btn flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <LogIn className="w-4 h-4" />
                   Access Portal

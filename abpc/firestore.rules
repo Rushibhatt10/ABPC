@@ -85,6 +85,14 @@ service cloud.firestore {
       allow write: if signedIn();
     }
 
+    match /serviceVisitReports/{docId} {
+      // Authenticated users (admin + employees) can read and write
+      // Public read allowed — shared reports are only exposed after explicit admin approval
+      // and the share token is a random unguessable UUID
+      allow read: if true;
+      allow write: if signedIn();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

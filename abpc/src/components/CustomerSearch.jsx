@@ -37,6 +37,10 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (dupWarning) return;
+    if (form.phone.length !== 10) {
+      alert("Please enter a valid 10-digit mobile number (without +91).");
+      return;
+    }
     const address = buildAddress(form);
     if (!address) {
       alert("Please fill at least Society/Area and City.");
@@ -91,13 +95,30 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
 
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Phone *</label>
-            <input
-              value={form.phone}
-              onChange={(e) => { f("phone")(e); checkDuplicate(e.target.value); }}
-              required
-              placeholder="10-digit mobile number"
-              className={inputCls}
-            />
+            <div className="relative">
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                  f("phone")({ target: { value: digits } });
+                  checkDuplicate(digits);
+                }}
+                required
+                maxLength={10}
+                pattern="\d{10}"
+                inputMode="numeric"
+                placeholder="10-digit mobile number (no +91)"
+                className={inputCls}
+                style={{ paddingRight: form.phone.length === 10 ? "2.5rem" : undefined }}
+              />
+              {form.phone.length === 10 && !dupWarning && (
+                <Check className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500 pointer-events-none" />
+              )}
+            </div>
+            {form.phone.length > 0 && form.phone.length < 10 && (
+              <p className="text-xs text-slate-400 mt-1">{10 - form.phone.length} more digit{10 - form.phone.length !== 1 ? "s" : ""} needed</p>
+            )}
             {dupWarning && (
               <p className="flex items-center gap-1 text-xs text-amber-600 mt-1 font-semibold">
                 <AlertCircle className="w-3 h-3" />
@@ -163,7 +184,7 @@ function AddCustomerModal({ customers, onClose, onSaved }) {
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
             <button
               type="submit"
-              disabled={saving || !!dupWarning}
+              disabled={saving || !!dupWarning || form.phone.length !== 10}
               className="flex-1 py-2.5 rounded-xl bg-(--brand) text-white text-sm font-bold hover:bg-(--brand-dark) disabled:opacity-60"
             >
               {saving ? "Saving..." : "Add Customer"}

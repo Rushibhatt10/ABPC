@@ -71,7 +71,20 @@ function CustomerModal({ customer, onClose, onSave, saving }) {
           {/* Phone */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Phone *</label>
-            <input value={form.phone} onChange={f("phone")} required placeholder="10-digit mobile number" className={inputCls} />
+            <input
+              type="tel"
+              value={form.phone}
+              onChange={(e) => f("phone")({ target: { value: e.target.value.replace(/\D/g, "").slice(0, 10) } })}
+              required
+              maxLength={10}
+              pattern="\d{10}"
+              inputMode="numeric"
+              placeholder="10-digit mobile number"
+              className={inputCls}
+            />
+            {form.phone && form.phone.length > 0 && form.phone.length < 10 && (
+              <p className="text-xs text-slate-400 mt-1">{10 - form.phone.length} more digits needed</p>
+            )}
           </div>
           {/* Email */}
           <div>

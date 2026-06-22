@@ -17,9 +17,9 @@ function daysUntil(dateStr) {
 const adminNav = [
   { label: "Dashboard",   to: "/admin",             icon: LayoutDashboard, end: true },
   { label: "Customers",   to: "/admin/customers",   icon: Users },
+  { label: "Quotations",  to: "/admin/quotations",   icon: FileText },
   { label: "Jobs",        to: "/admin/jobs",         icon: Briefcase },
   { label: "Invoices",    to: "/admin/invoices",     icon: Receipt },
-  { label: "Quotations",  to: "/admin/quotations",   icon: FileText },
   { label: "AMC",         to: "/admin/amc",          icon: CalendarClock },
   { label: "Payments",    to: "/admin/payments",     icon: TrendingUp },
   { label: "WhatsApp",    to: "/admin/whatsapp",     icon: MessageSquare },

@@ -440,7 +440,7 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
                         <FileText className="w-3 h-3" /> View Report
                       </button>
                     )}
-                    <button onClick={() => onOpenReport?.(job)}
+                    <button onClick={() => onOpenVideoReport?.(job)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
                       style={{ background: "rgba(76,122,45,0.15)", border: "1px solid rgba(76,122,45,0.3)", color: "#6DBF4A" }}
                       onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 16px rgba(76,122,45,0.5)"}
@@ -477,7 +477,7 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
                     <FileText className="w-3 h-3" /> View Report
                   </button>
                 )}
-                <button onClick={() => onOpenReport?.(job)}
+                 <button onClick={() => onOpenVideoReport?.(job)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
                   style={{ background: "rgba(76,122,45,0.15)", border: "1px solid rgba(76,122,45,0.3)", color: "#6DBF4A" }}
                   onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 16px rgba(76,122,45,0.5)"}
@@ -1348,7 +1348,7 @@ export default function JobsPage() {
         <JobReportModal
           job={reportJob}
           onClose={() => setReportJob(null)}
-          onSaved={() => { setReportJob(null); }}
+          onSaved={() => { setReportJob(null); showMsg("success", "Service Visit Report submitted successfully."); }}
         />
       )}
       {videoReportJob && (
