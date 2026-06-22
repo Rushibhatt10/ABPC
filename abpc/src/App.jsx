@@ -29,6 +29,7 @@ const AMCPrintPage = lazy(() => import("./pages/AMCPrintPage.jsx"));
 const QuotationPrintPage = lazy(() => import("./pages/QuotationPrintPage.jsx"));
 const InvoicePrintPage = lazy(() => import("./pages/InvoicePrintPage.jsx"));
 const CertificatePage = lazy(() => import("./pages/CertificatePage.jsx"));
+const SharedReportPage = lazy(() => import("./pages/SharedReportPage.jsx"));
 
 import { CustomerAuthProvider } from "./customer/context/CustomerAuthContext.jsx";
 const CustomerLoginPage = lazy(() => import("./customer/pages/CustomerLoginPage.jsx"));
@@ -105,6 +106,7 @@ function App() {
                 <Route path="/insects" element={<Insects />} />
                 <Route path="/video" element={<VideoPage />} />
                 <Route path="/rushzzz" element={<Rushzzz />} />
+                <Route path="/shared-report/:shareToken" element={<SharedReportPage />} />
 
                 {/* Customer Portal */}
                 <Route path="/customer/login" element={<CustomerAuthProvider><CustomerLoginPage /></CustomerAuthProvider>} />

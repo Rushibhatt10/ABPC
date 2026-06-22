@@ -361,6 +361,7 @@ export default function NewJobPage() {
               <input
                 className="field-input"
                 min="0"
+                step="any"
                 onChange={(event) => setForm((prev) => ({ ...prev, areaSqft: event.target.value }))}
                 placeholder="Area (sq ft)"
                 type="number"
@@ -369,6 +370,7 @@ export default function NewJobPage() {
               <input
                 className="field-input"
                 min="0"
+                step="any"
                 onChange={(event) => setForm((prev) => ({ ...prev, unitPrice: event.target.value }))}
                 placeholder="Price / sq ft"
                 type="number"
@@ -379,6 +381,7 @@ export default function NewJobPage() {
             <input
               className="field-input"
               min="0"
+              step="any"
               onChange={(event) => setForm((prev) => ({ ...prev, fixedPrice: event.target.value }))}
               placeholder="Fixed price"
               type="number"

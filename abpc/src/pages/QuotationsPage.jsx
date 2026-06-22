@@ -8,7 +8,7 @@ import ServicePicker from "../components/ServicePicker";
 import CustomerSearch from "../components/CustomerSearch";
 import { getTermsForCategories } from "../constants/serviceTerms";
 
-const createItem = () => ({ itemName: "", quantity: "", unit: "job", unitPrice: "" });
+const createItem = () => ({ itemName: "", quantity: "", unit: "job", unitPrice: "", discountPct: "" });
 const emptyForm = () => ({
   customerId: "",
   date: getTodayISO(),
@@ -44,7 +44,11 @@ export default function QuotationsPage() {
   const customer = selectedCustomer;
 
   const total = useMemo(() =>
-    form.items.reduce((s, i) => s + toNumber(i.quantity) * toNumber(i.unitPrice), 0),
+    form.items.reduce((s, i) => {
+      const gross = toNumber(i.quantity) * toNumber(i.unitPrice);
+      const disc = Math.min(Math.max(toNumber(i.discountPct), 0), 100);
+      return s + gross * (1 - disc / 100);
+    }, 0),
     [form.items]
   );
 
@@ -256,7 +260,7 @@ export default function QuotationsPage() {
         </div>
         <button
           onClick={openCreateForm}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-var(--brand-dark) transition-colors shadow-sm w-full sm:w-auto min-h-44px active:scale-95 sm:ml-auto"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm w-full sm:w-auto min-h-44px active:scale-95 sm:ml-auto"
         >
           <Plus className="w-4 h-4" />
           New Quotation
@@ -292,7 +296,7 @@ export default function QuotationsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search quotations..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm bg-white"
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white"
         />
       </div>
 
@@ -324,7 +328,7 @@ export default function QuotationsPage() {
               <div className="flex flex-wrap gap-2">
                 <Link
                   to={`/admin/quotations/${q.id}`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:border-var(--brand) hover:text-var(--brand) transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors"
                 >
                   <ExternalLink className="w-3 h-3" />
                   View
@@ -395,7 +399,7 @@ export default function QuotationsPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Date</label>
-                  <input type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm min-h-42px" />
+                  <input type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm min-h-42px" />
                 </div>
               </div>
 
@@ -406,11 +410,11 @@ export default function QuotationsPage() {
                 <div className="space-y-2">
                   {form.items.map((item, idx) => (
                     <div key={idx} className="bg-slate-50 rounded-xl p-3 space-y-2">
-                      <input value={item.itemName} onChange={(e) => updateItem(idx, "itemName", e.target.value)} placeholder="Item name" className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none" />
+                      <input value={item.itemName} onChange={(e) => updateItem(idx, "itemName", e.target.value)} placeholder="Item name" className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
                       <div className="grid grid-cols-3 gap-2">
-                        <input type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} placeholder="Qty" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none" />
-                        <input value={item.unit} onChange={(e) => updateItem(idx, "unit", e.target.value)} placeholder="Unit" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none" />
-                        <input type="number" value={item.unitPrice} onChange={(e) => updateItem(idx, "unitPrice", e.target.value)} placeholder="Price ₹" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-var(--brand) focus:outline-none" />
+                        <input type="number" value={item.quantity} onChange={(e) => updateItem(idx, "quantity", e.target.value)} placeholder="Qty" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+                        <input value={item.unit} onChange={(e) => updateItem(idx, "unit", e.target.value)} placeholder="Unit" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
+                        <input type="number" value={item.unitPrice} onChange={(e) => updateItem(idx, "unitPrice", e.target.value)} placeholder="Price ₹" min="0" className="px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
                       </div>
                       <button type="button" onClick={() => setForm((p) => ({ ...p, items: p.items.filter((_, i) => i !== idx) }))} className="text-xs text-rose-500 hover:text-rose-700 font-semibold">Remove</button>
                     </div>
@@ -418,7 +422,7 @@ export default function QuotationsPage() {
                 </div>
               )}
 
-              <div className="bg-var(--brand-soft) rounded-xl p-4 flex items-center justify-between">
+              <div className="bg-[var(--brand-soft)] rounded-xl p-4 flex items-center justify-between">
                 <span className="font-bold text-slate-800">Total</span>
                 <span className="font-black text-xl text-slate-900">{formatCurrency(total)}</span>
               </div>
@@ -439,7 +443,7 @@ export default function QuotationsPage() {
                       onChange={(e) => setForm((p) => ({ ...p, [f.key]: e.target.value }))}
                       placeholder={f.placeholder}
                       rows={2}
-                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm resize-none min-h-42px"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-none min-h-42px"
                     />
                   </div>
                 ))}
@@ -447,7 +451,7 @@ export default function QuotationsPage() {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
-                <button type="submit" disabled={busy} className="flex-1 py-2.5 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-var(--brand-dark) disabled:opacity-60">
+                <button type="submit" disabled={busy} className="flex-1 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] disabled:opacity-60">
                   {busy ? (editingQuotation ? "Saving..." : "Creating...") : (editingQuotation ? "Save Quotation" : "Create Quotation")}
                 </button>
               </div>

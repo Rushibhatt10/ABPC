@@ -3,7 +3,7 @@ import { useLocation, Link } from "react-router-dom";
 import { collection, orderBy, query, where } from "firebase/firestore";
 import { firestoreDb } from "../firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { createRecord, subscribeCollection, subscribeQuery, updateRecord, nextDocumentNumber } from "../utils/firestoreHelpers";
+import { createRecord, deleteRecord, subscribeCollection, subscribeQuery, updateRecord, nextDocumentNumber } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getTodayISO } from "../utils/format";
 import { EmployeeS } from "../constants/authProfiles";
 import MapLink from "../components/MapLink";
@@ -23,7 +23,7 @@ import {
   Briefcase, Plus, X, CheckCircle2, Clock,
   User, Calendar, MapPin, ChevronDown, ChevronUp,
   RefreshCw, History, Search, Link2, UploadCloud, FileText, Receipt,
-  Users, ChevronRight, ArrowLeft, Video, BarChart2,
+  Users, ChevronRight, ArrowLeft, Video, BarChart2, Trash2,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import FileSaver from "file-saver";
@@ -188,7 +188,7 @@ function TreatmentBlock({ tKey, tPrice, tQty, tUnit, onTKey, onPrice, onQty, onU
  *   onOpenAttendance?: (job: Record<string, any>) => void,
  * }} props
  */
-function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone, onRaiseRework, busy, onJobUpdated, onGenerateInvoice, onOpenReport, onOpenVideoReport, onOpenAdminReports, onOpenCheckIn, onSetLocation, onOpenAttendance }) {
+function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone, onRaiseRework, busy, onJobUpdated, onGenerateInvoice, onOpenReport, onOpenVideoReport, onOpenAdminReports, onOpenCheckIn, onSetLocation, onOpenAttendance, latestReportStatus = null }) {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const attendanceRecord = attendanceByJob[job.id];
@@ -397,14 +397,45 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
               onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
               <Users className="w-3 h-3" /> Attendance
             </button>
+            {/* Delete Job — admin only */}
+            <button
+              onClick={async () => {
+                if (!window.confirm(`Delete job for ${job.customerName}? This cannot be undone.`)) return;
+                try {
+                  await deleteRecord("jobs", job.id);
+                } catch (e) {
+                  alert("Failed to delete job: " + e.message);
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 ml-auto"
+              style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#F87171" }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(239,68,68,0.3)"}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+              <Trash2 className="w-3 h-3" /> Delete
+            </button>
           </div>
         )}
             {/* Employee: actions gated behind check-in */}
         {isEmployee && (
           <div className="flex gap-2 mt-3 flex-wrap">
 
-            {/* Not checked in yet */}
-            {!checkedIn && job.status !== "completed" && (
+            {/* Report Rejected alert — shown to employee */}
+            {isEmployee && latestReportStatus?.status?.toLowerCase() === "rejected" && (
+              <div className="w-full mt-1 mb-1 px-3 py-2.5 rounded-xl border border-red-400/40"
+                style={{ background: "rgba(239,68,68,0.1)" }}>
+                <p className="text-[10px] font-black uppercase tracking-wider mb-0.5" style={{ color: "#F87171" }}>
+                  ⚠ Report Rejected — Resubmit Required
+                </p>
+                {latestReportStatus.reason && (
+                  <p className="text-[10px] italic" style={{ color: "#FCA5A5" }}>
+                    Admin: "{latestReportStatus.reason}"
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Check In button — pending or in_progress without check-in */}
+            {!checkedIn && (job.status === "pending" || job.status === "in_progress") && (
               <button onClick={() => onOpenCheckIn?.(job)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
                 style={{ background: "rgba(76,122,45,0.15)", border: "1px solid rgba(76,122,45,0.35)", color: "#6DBF4A" }}
@@ -414,76 +445,42 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
               </button>
             )}
 
-            {/* Checked in badge + unlocked work */}
-            {checkedIn && job.status !== "completed" && (
+            {/* Report + Video — shown when checked in OR in_progress OR completed */}
+            {(checkedIn || job.status === "in_progress" || job.status === "completed") && (
               <>
-                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
-                  style={{ background: "rgba(76,122,45,0.12)", border: "1px solid rgba(76,122,45,0.3)", color: "#6DBF4A" }}>
-                  <CheckCircle2 className="w-3 h-3" />
-                  Checked In
-                  {checkInTime && (
-                    <span className="ml-1 font-normal" style={{ opacity: 0.6 }}>
-                      {new Date(checkInTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  )}
-                </span>
-                {completedCount > 0 ? (
-                  <>
-                    {!job.reportImage && !job.reportAudio && !job.reportNote ? (
-                      <button onClick={() => onOpenReport?.(job)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
-                        <FileText className="w-3 h-3" /> Complete Report
-                      </button>
-                    ) : (
-                      <button onClick={() => onOpenReport?.(job)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
-                        <FileText className="w-3 h-3" /> View Report
-                      </button>
-                    )}
-                    <button onClick={() => onOpenVideoReport?.(job)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
-                      style={{ background: "rgba(76,122,45,0.15)", border: "1px solid rgba(76,122,45,0.3)", color: "#6DBF4A" }}
-                      onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 16px rgba(76,122,45,0.5)"}
-                      onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
-                      <Video className="w-3 h-3" /> Add Video
-                    </button>
-                    {completedCount < jobSubJobs.length && (
-                      <span className="flex items-center px-2 py-1 rounded-xl text-[10px] font-semibold"
-                        style={{ background: "rgba(228,87,46,0.12)", color: "#E4572E", border: "1px solid rgba(228,87,46,0.2)" }}>
-                        {completedCount}/{jobSubJobs.length} tasks done
+                {checkedIn && job.status !== "completed" && (
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
+                    style={{ background: "rgba(76,122,45,0.12)", border: "1px solid rgba(76,122,45,0.3)", color: "#6DBF4A" }}>
+                    <CheckCircle2 className="w-3 h-3" />
+                    Checked In
+                    {checkInTime && (
+                      <span className="ml-1 font-normal" style={{ opacity: 0.6 }}>
+                        {new Date(checkInTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     )}
-                  </>
-                ) : (
-                  <span className="flex items-center px-2 py-1 rounded-xl text-[10px] font-semibold"
-                    style={{ background: "rgba(76,122,45,0.08)", color: "rgba(109,191,74,0.7)", border: "1px solid rgba(76,122,45,0.15)" }}>
-                    Expand tasks below to start
                   </span>
                 )}
-              </>
-            )}
-
-            {/* Completed job */}
-            {job.status === "completed" && (
-              <>
-                {!job.reportImage && !job.reportAudio && !job.reportNote ? (
-                  <button onClick={() => onOpenReport?.(job)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
-                    <FileText className="w-3 h-3" /> Complete Report
-                  </button>
-                ) : (
-                  <button onClick={() => onOpenReport?.(job)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
-                    <FileText className="w-3 h-3" /> View Report
-                  </button>
-                )}
-                 <button onClick={() => onOpenVideoReport?.(job)}
+                <button onClick={() => onOpenReport?.(job)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
+                  <FileText className="w-3 h-3" /> Report
+                </button>
+                <button onClick={() => onOpenVideoReport?.(job)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all"
                   style={{ background: "rgba(76,122,45,0.15)", border: "1px solid rgba(76,122,45,0.3)", color: "#6DBF4A" }}
                   onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 16px rgba(76,122,45,0.5)"}
                   onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
                   <Video className="w-3 h-3" /> Add Video
                 </button>
+                {jobSubJobs.length > 0 && job.status !== "completed" && (
+                  <span className="flex items-center px-2 py-1 rounded-xl text-[10px] font-semibold"
+                    style={{
+                      background: "rgba(76,122,45,0.08)",
+                      color: completedCount === jobSubJobs.length ? "#6DBF4A" : "#E4572E",
+                      border: completedCount === jobSubJobs.length ? "1px solid rgba(76,122,45,0.2)" : "1px solid rgba(228,87,46,0.2)"
+                    }}>
+                    {completedCount}/{jobSubJobs.length} tasks done
+                  </span>
+                )}
               </>
             )}
 
@@ -810,7 +807,8 @@ function CustomerJobsPanel({ customer, jobs, subJobs, attendanceByJob, isEmploye
             <JobCard key={job.id} job={job} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={isEmployee}
               onMarkSubDone={onMarkSubDone} onRaiseRework={onRaiseRework}
               onGenerateInvoice={onGenerateInvoice} busy={busy} onJobUpdated={() => {}}
-              onOpenReport={onOpenReport} onOpenVideoReport={onOpenVideoReport} onOpenAdminReports={onOpenAdminReports} onSetLocation={onSetLocation} onOpenAttendance={onOpenAttendance} />
+              onOpenReport={onOpenReport} onOpenVideoReport={onOpenVideoReport} onOpenAdminReports={onOpenAdminReports} onSetLocation={onSetLocation} onOpenAttendance={onOpenAttendance}
+              latestReportStatus={null} />
           ))}
         </div>
       )}
@@ -847,6 +845,20 @@ export default function JobsPage() {
   const [setLocationJob, setSetLocationJob] = useState(null); // admin set job location
   const [paymentModeJob, setPaymentModeJob] = useState(null); // job waiting for payment mode
   const [warrantySettings, setWarrantySettings] = useState([]);
+  const [visitReports, setVisitReports] = useState([]);
+
+  // Map jobId → latest report status (for rejection alert on job card)
+  const jobReportStatusMap = useMemo(() => {
+    const map = {};
+    visitReports.forEach(r => {
+      const existing = map[r.jobId];
+      const thisNum = r.reportNumber || 0;
+      if (!existing || thisNum > (existing.reportNumber || 0)) {
+        map[r.jobId] = { status: r.reportStatus || "", reason: r.adminRemarks || "", reportNumber: thisNum };
+      }
+    });
+    return map;
+  }, [visitReports]);
 
   // Auto-open rework modal when navigated from ComplaintsPage
   useEffect(() => {
@@ -877,8 +889,9 @@ export default function JobsPage() {
       subscribeQuery(jobsQ, setJobs),
       subscribeQuery(subJobsQ, setSubJobs),
       subscribeCollection("customers", setCustomers),
-      subscribeCollection("services", setServices),
+      subscribeCollection("services", setServices),   
       subscribeCollection("warrantySettings", setWarrantySettings),
+      subscribeCollection("serviceVisitReports", setVisitReports),
     ];
 
     if (isEmployee && EmployeeName) {
@@ -1309,7 +1322,8 @@ export default function JobsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filtered.map((job) => (
             <JobCard key={job.id} job={job} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={isEmployee}
-              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onOpenCheckIn={setCheckInJob} />
+              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onOpenCheckIn={setCheckInJob}
+              latestReportStatus={jobReportStatusMap[job.id] || null} />
           ))}
         </div>
       ) : (
@@ -1317,13 +1331,15 @@ export default function JobsPage() {
           {jobChains.map(({ original, reworks }) => (
             <div key={original.id}>
               <JobCard job={original} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={false}
-                onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob} />
+                onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob}
+                latestReportStatus={jobReportStatusMap[original.id] || null} />
               {reworks.length > 0 && (
                 <div className="ml-6 mt-2 space-y-2 border-l-2 border-violet-200 pl-4">
                   <p className="text-xs font-bold text-violet-500 uppercase tracking-wider mb-2">Rework Jobs ({reworks.length})</p>
                   {reworks.map((rw) => (
                     <JobCard key={rw.id} job={rw} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={false}
-                      onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob} />
+                      onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob}
+                      latestReportStatus={jobReportStatusMap[rw.id] || null} />
                   ))}
                 </div>
               )}
@@ -1331,7 +1347,8 @@ export default function JobsPage() {
           ))}
           {filtered.filter(j => j.parentJobId && !jobChains.find(c => c.original.id === j.parentJobId)).map((job) => (
             <JobCard key={job.id} job={job} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={false}
-              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob} />
+              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob}
+              latestReportStatus={jobReportStatusMap[job.id] || null} />
           ))}
         </div>
       )}

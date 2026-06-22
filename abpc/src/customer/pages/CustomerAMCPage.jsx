@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { useCustomerAuth } from "../context/customerAuthState";
 import { subscribeQuery } from "../../utils/firestoreHelpers";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query } from "firebase/firestore";
 import { firestoreDb } from "../../firebase/firestore";
 import { formatCurrency, formatDateDisplay } from "../../utils/format";
 import { CalendarClock, Shield, CheckCircle2, Clock, Calendar, HelpCircle } from "lucide-react";
+import { matchesCustomerRecord } from "../utils/customerRecordMatch";
 
 const DURATIONS_MAP = {
   1: { label: "1 Month", visits: 1 },
@@ -14,14 +15,16 @@ const DURATIONS_MAP = {
 };
 
 export default function CustomerAMCPage() {
-  const { activeCustomerId } = useCustomerAuth();
+  const { activeCustomerId, activeCustomer } = useCustomerAuth();
   const [amcs, setAmcs] = useState([]);
 
   useEffect(() => {
     if (!activeCustomerId) return;
-    const q = query(collection(firestoreDb, "amc"), where("customerId", "==", activeCustomerId));
-    return subscribeQuery(q, setAmcs);
-  }, [activeCustomerId]);
+    const q = query(collection(firestoreDb, "amc"));
+    return subscribeQuery(q, (records) => {
+      setAmcs(records.filter((record) => matchesCustomerRecord(record, activeCustomerId, activeCustomer)));
+    });
+  }, [activeCustomerId, activeCustomer]);
 
   const sortedAmcs = useMemo(() => {
     return [...amcs].sort((a, b) => new Date(b.startDate) - new Date(a.startDate));

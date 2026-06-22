@@ -199,7 +199,7 @@ function EmployeeDashboard({ profile }) {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder="જોબ ID અથવા કસ્ટમર નામ સર્ચ કરો..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm bg-white" />
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white" />
       </div>
 
       {/* Day filter */}
@@ -210,7 +210,7 @@ function EmployeeDashboard({ profile }) {
           { key: "all", label: "બધા" },
         ].map(t => (
           <button key={t.key} onClick={() => setDayFilter(t.key)}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${dayFilter === t.key ? "bg-var(--brand) text-white" : "bg-white border border-slate-200 text-slate-600"
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${dayFilter === t.key ? "bg-[var(--brand)] text-white" : "bg-white border border-slate-200 text-slate-600"
               }`}>
             {t.label}
           </button>

@@ -304,7 +304,7 @@ export default function InvoicesPage() {
           <p className="text-slate-500 mt-0.5">{invoices.length} total invoices</p>
         </div>
         <button onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-var(--brand-dark) transition-colors shadow-sm w-full sm:w-auto min-h-44px active:scale-95 sm:ml-auto">
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] transition-colors shadow-sm w-full sm:w-auto min-h-44px active:scale-95 sm:ml-auto">
           <Plus className="w-4 h-4" /> New Invoice
         </button>
       </div>
@@ -333,7 +333,7 @@ export default function InvoicesPage() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search invoices..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm bg-white" />
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm bg-white" />
       </div>
 
       {/* Invoice list */}
@@ -363,7 +363,7 @@ export default function InvoicesPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <Link to={`/admin/invoices/${inv.id}`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:border-var(--brand) hover:text-var(--brand) transition-colors">
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors">
                   <ExternalLink className="w-3 h-3" /> View
                 </Link>
                 <Link to={`/admin/invoices/${inv.id}`}
@@ -427,7 +427,7 @@ export default function InvoicesPage() {
                       <Briefcase className="w-4 h-4 text-slate-400" />
                       <span>Completed Jobs ({customerJobs.length})</span>
                       {selectedJobIds.size > 0 && (
-                        <span className="px-2 py-0.5 rounded-full bg-var(--brand) text-white text-[10px] font-bold">{selectedJobIds.size} selected</span>
+                        <span className="px-2 py-0.5 rounded-full bg-[var(--brand)] text-white text-[10px] font-bold">{selectedJobIds.size} selected</span>
                       )}
                     </div>
                     {showJobPicker ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
@@ -444,7 +444,7 @@ export default function InvoicesPage() {
                         <>
                           <div className="flex gap-2 mb-1">
                             <button type="button" onClick={() => setSelectedJobIds(new Set(customerJobs.map(j => j.id)))}
-                              className="text-xs font-bold text-var(--brand) hover:underline">Select all</button>
+                              className="text-xs font-bold text-[var(--brand)] hover:underline">Select all</button>
                             <span className="text-slate-300">·</span>
                             <button type="button" onClick={() => setSelectedJobIds(new Set())}
                               className="text-xs font-bold text-slate-400 hover:underline">Clear</button>
@@ -455,10 +455,10 @@ export default function InvoicesPage() {
                             const isTermite = isTermiteJob(job);
                             const warrantyValue = jobWarrantyOverrides[job.id] !== undefined ? jobWarrantyOverrides[job.id] : "";
                             return (
-                              <div key={job.id} className={`rounded-xl border transition-all ${checked ? "border-var(--brand) bg-var(--brand-soft)" : "border-slate-200 bg-white"}`}>
+                              <div key={job.id} className={`rounded-xl border transition-all ${checked ? "border-[var(--brand)] bg-[var(--brand-soft)]" : "border-slate-200 bg-white"}`}>
                                 <label className="flex items-center gap-3 px-4 py-3 cursor-pointer">
                                   <input type="checkbox" checked={checked} onChange={() => toggleJob(job.id)}
-                                    className="accent-var(--brand) w-4 h-4 flex-0" />
+                                    className="accent-[var(--brand)] w-4 h-4 flex-0" />
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-bold text-slate-800 truncate">
                                       {job.treatmentLabel || job.serviceType || job.serviceName}
@@ -497,30 +497,30 @@ export default function InvoicesPage() {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Editable Items</p>
                     <button type="button"
                       onClick={() => setManualItems((items) => [...items, { itemName: "", quantity: "1", unit: "unit", price: "0", discount: "0", warranty: "" }])}
-                      className="flex items-center gap-1 text-xs font-bold text-var(--brand)">
+                      className="flex items-center gap-1 text-xs font-bold text-[var(--brand)]">
                       <Plus className="w-3 h-3" /> Add Item
                     </button>
                   </div>
                   {manualItems.map((item, index) => (
                     <div key={index} className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
                       <input value={item.itemName} onChange={(e) => updateManualItem(index, "itemName", e.target.value)}
-                        placeholder="Service or item" className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-var(--brand) focus:outline-none" />
+                        placeholder="Service or item" className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-[var(--brand)] focus:outline-none" />
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         <input type="number" min="0" step="any" value={item.quantity} onChange={(e) => updateManualItem(index, "quantity", e.target.value)}
-                          placeholder="Qty" className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-var(--brand) focus:outline-none" />
+                          placeholder="Qty" className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-[var(--brand)] focus:outline-none" />
                         <input value={item.unit} onChange={(e) => updateManualItem(index, "unit", e.target.value)}
-                          placeholder="Unit" className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-var(--brand) focus:outline-none" />
+                          placeholder="Unit" className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-[var(--brand)] focus:outline-none" />
                         <input type="number" min="0" step="any" value={item.price} onChange={(e) => updateManualItem(index, "price", e.target.value)}
-                          placeholder="Rate" className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-var(--brand) focus:outline-none" />
+                          placeholder="Rate" className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-[var(--brand)] focus:outline-none" />
                         <input type="number" min="0" step="any" value={item.discount} onChange={(e) => updateManualItem(index, "discount", e.target.value)}
-                          placeholder="Discount" className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-var(--brand) focus:outline-none" />
+                          placeholder="Discount" className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-[var(--brand)] focus:outline-none" />
                       </div>
                       <div className="flex items-center gap-2">
                         <input
                           value={item.warranty}
                           onChange={(e) => updateManualItem(index, "warranty", e.target.value)}
                           placeholder="Warranty (optional, e.g. 5 Years)"
-                          className="flex-1 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-var(--brand) focus:outline-none"
+                          className="flex-1 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:border-[var(--brand)] focus:outline-none"
                         />
                         <button type="button" onClick={() => setManualItems((items) => items.filter((_, itemIndex) => itemIndex !== index))}
                           title="Remove item" className="p-2 rounded-lg text-rose-600 hover:bg-rose-50">
@@ -563,12 +563,12 @@ export default function InvoicesPage() {
                     <div>
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Date</label>
                       <input type="date" value={form.date} onChange={(e) => setForm(p => ({ ...p, date: e.target.value }))}
-                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm" />
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm" />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Payment Mode</label>
                       <select value={form.paymentMode} onChange={(e) => setForm(p => ({ ...p, paymentMode: e.target.value }))}
-                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm">
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm">
                         {["UPI", "Cash", "Bank Transfer", "Cheque", "Card"].map(m => <option key={m}>{m}</option>)}
                       </select>
                     </div>
@@ -580,7 +580,7 @@ export default function InvoicesPage() {
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
                       <input type="number" value={form.received} onChange={(e) => setForm(p => ({ ...p, received: e.target.value }))}
                         placeholder="0" min="0"
-                        className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm" />
+                        className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm" />
                     </div>
                     {totals.balance > 0 && (
                       <p className="text-xs text-amber-600 font-semibold mt-1">Balance due: {formatCurrency(totals.balance)}</p>
@@ -593,7 +593,7 @@ export default function InvoicesPage() {
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Terms & Conditions</label>
                     <textarea value={form.terms} onChange={(e) => setForm(p => ({ ...p, terms: e.target.value }))}
-                      rows={3} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-var(--brand) focus:outline-none text-sm resize-y" />
+                      rows={3} className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm resize-y" />
                   </div>
                 </>
               )}
@@ -604,7 +604,7 @@ export default function InvoicesPage() {
                   Cancel
                 </button>
                 <button type="submit" disabled={busy || lineItems.length === 0}
-                  className="flex-1 py-3 rounded-xl bg-var(--brand) text-white text-sm font-bold hover:bg-var(--brand-dark) disabled:opacity-50 transition-colors">
+                  className="flex-1 py-3 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] disabled:opacity-50 transition-colors">
                   {busy
                     ? (editingInvoice ? "Saving..." : "Creating...")
                     : `${editingInvoice ? "Save Invoice" : "Create Invoice"}${totals.total > 0 ? ` · ${formatCurrency(totals.total)}` : ""}`}

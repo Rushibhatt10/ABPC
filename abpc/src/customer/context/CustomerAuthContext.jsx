@@ -94,6 +94,13 @@ export function CustomerAuthProvider({ children }) {
       let verifiedPhone = "";
       let customerIds = [];
 
+      if (!firebaseAuth.currentUser?.isAnonymous) {
+        if (firebaseAuth.currentUser) {
+          await signOut(firebaseAuth);
+        }
+        await signInAnonymously(firebaseAuth);
+      }
+
       const customerDoc = await getRecord("customers", cleanCustomerId);
       const customerPhone = customerDoc?.phone?.replace(/\D/g, "") || "";
       const customerPhoneMatches = customerPhone && phoneCandidates.includes(customerPhone);
@@ -117,12 +124,8 @@ export function CustomerAuthProvider({ children }) {
         throw new Error("Customer ID and phone number do not match our records.");
       }
 
-      if (firebaseAuth.currentUser) {
-        await signOut(firebaseAuth);
-      }
-
-      const credential = await signInAnonymously(firebaseAuth);
-      const uid = credential.user.uid;
+      const user = firebaseAuth.currentUser || (await signInAnonymously(firebaseAuth)).user;
+      const uid = user.uid;
 
       const sessionRef = doc(firestoreDb, "customerSessions", uid);
       await setDoc(sessionRef, {

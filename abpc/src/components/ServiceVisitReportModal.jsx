@@ -170,10 +170,16 @@ export default function ServiceVisitReportModal({ job, onClose, onSaved }) {
     pendingActivities,
     reportNumber,
     hasChangesRequested,
+    isRejected,
+    rejectionReason,
   } = useMemo(() => {
     const nextNum = reports.length + 1;
     const sortedReports = [...reports].sort((a, b) => (b.reportNumber || 0) - (a.reportNumber || 0));
-    const changesReq = sortedReports[0]?.reportStatus === "changes_requested" || sortedReports[0]?.status === "changes_requested";
+    const latestReport = sortedReports[0];
+    const latestStatus = (latestReport?.reportStatus || latestReport?.status || "").toLowerCase();
+    const changesReq = latestStatus === "changes_requested";
+    const rejected = latestStatus === "rejected";
+    const reason = rejected ? (latestReport?.adminRemarks || "No reason provided.") : "";
 
     const reportedIds = new Set();
     reports.forEach((rep) => {
@@ -211,6 +217,8 @@ export default function ServiceVisitReportModal({ job, onClose, onSaved }) {
       pendingActivities: pending,
       reportNumber: nextNum,
       hasChangesRequested: changesReq,
+      isRejected: rejected,
+      rejectionReason: reason,
     };
   }, [subJobs, reports]);
 
@@ -523,8 +531,8 @@ export default function ServiceVisitReportModal({ job, onClose, onSaved }) {
     }
 
     const hasCompleted = newlyCompletedActivities.length > 0;
-    if (!hasCompleted && !hasChangesRequested) {
-      setErr("Submission blocked: No newly completed activities since the last report.");
+    if (!hasCompleted && !hasChangesRequested && mediaQueue.length === 0 && !employeeRemarks.trim()) {
+      setErr("Please complete at least one task, add media, or write remarks before submitting.");
       return;
     }
 
@@ -626,8 +634,14 @@ export default function ServiceVisitReportModal({ job, onClose, onSaved }) {
   const progressPercent = Math.round((totalCompleted / (subJobs.length || 1)) * 100);
   const pendingUploads = mediaQueue.some((m) => m.status === "pending" || m.status === "uploading");
   const hasUploadErrors = mediaQueue.some((m) => m.status === "error");
-  // Allow submit when there are newly completed activities OR when admin requested changes (re-submission)
-  const canSubmit = (newlyCompletedActivities.length > 0 || hasChangesRequested) && !hasUploadErrors;
+  // Allow submit: at least one newly completed activity OR media attached OR remarks written
+  const canSubmit = (
+    newlyCompletedActivities.length > 0 ||
+    hasChangesRequested ||
+    isRejected ||
+    mediaQueue.length > 0 ||
+    employeeRemarks.trim().length > 0
+  ) && !hasUploadErrors;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4">
@@ -659,7 +673,39 @@ export default function ServiceVisitReportModal({ job, onClose, onSaved }) {
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-5 space-y-6" style={{ scrollbarWidth: "none" }}>
-          
+
+          {/* ── Rejection Alert ── */}
+          {isRejected && (
+            <div className="p-4 rounded-2xl border border-red-500/40"
+              style={{ background: "rgba(239,68,68,0.1)" }}>
+              <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: "#F87171" }}>
+                ⚠ Report Rejected by Admin
+              </p>
+              <p className="text-xs mb-2" style={{ color: "#FCA5A5" }}>
+                Your previous report was rejected. Please review the reason below, fix the issues, and resubmit.
+              </p>
+              {rejectionReason && (
+                <div className="px-3 py-2 rounded-xl bg-black/20 border border-red-500/20">
+                  <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "#F87171" }}>Admin Reason:</p>
+                  <p className="text-xs italic" style={{ color: "#FECACA" }}>"{rejectionReason}"</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Changes Requested Alert ── */}
+          {hasChangesRequested && !isRejected && (
+            <div className="p-4 rounded-2xl border border-amber-500/40"
+              style={{ background: "rgba(245,158,11,0.1)" }}>
+              <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: "#FCD34D" }}>
+                ✎ Admin Requested Changes
+              </p>
+              <p className="text-xs" style={{ color: "#FDE68A" }}>
+                Please address admin's feedback and resubmit your report.
+              </p>
+            </div>
+          )}
+
           {/* Progress Section */}
           <div className="p-4 rounded-2xl bg-white/5 border" style={{ borderColor: colors.border }}>
             <div className="flex justify-between items-center mb-2">

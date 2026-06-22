@@ -74,7 +74,7 @@ export default function LoginPage() {
                 type="password"
                 required
                 className="w-full bg-slate-50 border-2 border-slate-100 p-5 rounded-2xl outline-none focus:border-slate-900 focus:bg-white transition-all font-bold text-center tracking-[1em] text-lg text-slate-900 placeholder:tracking-normal placeholder:font-medium placeholder:text-slate-300"
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢"
+                placeholder="••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />

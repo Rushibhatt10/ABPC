@@ -92,7 +92,7 @@ export default function SettingsPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 activeTab === tab.key
-                  ? "bg-var(--brand) text-white shadow-sm"
+                  ? "bg-[var(--brand)] text-white shadow-sm"
                   : "bg-white border border-slate-200 text-slate-600 hover:border-slate-300"
               }`}
             >
@@ -107,14 +107,14 @@ export default function SettingsPage() {
         <div className="space-y-4">
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-var(--brand) flex items-center justify-center text-white text-xl font-black">
+              <div className="w-16 h-16 rounded-2xl bg-[var(--brand)] flex items-center justify-center text-white text-xl font-black">
                 {profile?.avatar || profile?.name?.slice(0, 2).toUpperCase()}
               </div>
               <div>
                 <h2 className="text-xl font-black text-slate-900">{profile?.name}</h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <Shield className="w-3.5 h-3.5 text-var(--brand)" />
-                  <span className="text-sm font-semibold text-var(--brand)">{profile?.roleName}</span>
+                  <Shield className="w-3.5 h-3.5 text-[var(--brand)]" />
+                  <span className="text-sm font-semibold text-[var(--brand)]">{profile?.roleName}</span>
                 </div>
                 {isPricingAdmin && (
                   <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
@@ -159,7 +159,7 @@ export default function SettingsPage() {
             <div className="space-y-3">
               {admins.map((p) => (
                 <div key={p.key} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
-                  <div className="w-9 h-9 rounded-xl bg-var(--brand) flex items-center justify-center text-white text-xs font-black flex-0">
+                  <div className="w-9 h-9 rounded-xl bg-[var(--brand)] flex items-center justify-center text-white text-xs font-black flex-0">
                     {p.avatar}
                   </div>
                   <div className="flex-1">
@@ -167,8 +167,8 @@ export default function SettingsPage() {
                     <p className="text-xs text-slate-400">{p.roleName}</p>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Shield className="w-3.5 h-3.5 text-var(--brand)" />
-                    <span className="text-xs font-semibold text-var(--brand)">Admin</span>
+                    <Shield className="w-3.5 h-3.5 text-[var(--brand)]" />
+                    <span className="text-xs font-semibold text-[var(--brand)]">Admin</span>
                   </div>
                 </div>
               ))}
@@ -300,16 +300,16 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="bg-var(--brand-soft) rounded-2xl border border-emerald-200 p-5">
-            <h3 className="font-bold text-var(--brand-dark) mb-3">Features</h3>
+          <div className="bg-[var(--brand-soft)] rounded-2xl border border-emerald-200 p-5">
+            <h3 className="font-bold text-[var(--brand-dark)] mb-3">Features</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
                 "CRM", "Job Management", "Workforce Tracking", "Billing",
                 "Payments", "WhatsApp", "Analytics", "Reports",
                 "Pricing", "Quotations", "Invoices", "Role-based Access",
               ].map((f) => (
-                <div key={f} className="flex items-center gap-1.5 text-sm text-var(--brand-dark)">
-                  <div className="w-1.5 h-1.5 rounded-full bg-var(--brand) flex-0" />
+                <div key={f} className="flex items-center gap-1.5 text-sm text-[var(--brand-dark)]">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand)] flex-0" />
                   {f}
                 </div>
               ))}

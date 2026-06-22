@@ -1,15 +1,15 @@
-﻿import { useEffect, useRef } from "react";
-import { ArrowLeft, Phone } from "lucide-react";
+import { useContext, useEffect, useRef } from "react";
+import { ArrowLeft, Camera, MessageCircle, Moon, Phone, Sun } from "lucide-react";
 import gsap from "gsap";
 import { useNavigate } from "react-router-dom";
+import { ThemeContext } from "../context/ThemeContext.jsx";
 
 const PROFILE_CARDS = [
   {
     src: "/rushi.jpeg",
     title: "Rushi Bhatt",
-    subtitle: "Ahmedabad — Engineering Student",
-    desc: "I don't just learn fast — I apply faster.",
-    premium: true,
+    subtitle: "Ahmedabad - Engineering Student",
+    desc: "I don't just learn fast - I apply faster.",
     tag: "RUSHZZZ",
   },
   {
@@ -17,30 +17,32 @@ const PROFILE_CARDS = [
     title: "Bhatt Legacy",
     subtitle: "With Co-Founder Ankit Bhatt",
     desc: "Blending modern thinking with years of real-world expertise.",
-    premium: true,
     tag: "BHATT LEGACY",
   },
 ];
 
 export default function RushzzzPage() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  const isDark = theme === "dark";
   const pageRef = useRef(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
+      gsap.set("[data-card]", { opacity: 1 });
+
       gsap.from("[data-img]", {
-        y: 40,
+        y: 34,
         opacity: 0,
-        duration: 1.2,
+        duration: 0.9,
         ease: "power3.out",
-        stagger: 0.15,
+        stagger: 0.12,
       });
 
       gsap.from("[data-card]", {
-        y: 30,
-        opacity: 0,
-        duration: 0.9,
-        delay: 0.2,
+        y: 24,
+        duration: 0.75,
+        delay: 0.15,
         ease: "power3.out",
       });
     }, pageRef);
@@ -51,169 +53,161 @@ export default function RushzzzPage() {
   return (
     <div
       ref={pageRef}
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden"
+      className={`min-h-screen overflow-hidden transition-colors duration-700 ${
+        isDark ? "bg-black text-white" : "bg-[#faf9f6] text-[#0c0c0c]"
+      }`}
     >
-      {/* Bright gradient backdrop glow */}
-      <div className="pointer-events-none fixed inset-0 top-0 h-96 bg-gradient-to-b from-cyan-500/20 via-transparent to-transparent blur-3xl" />
-      <div className="pointer-events-none fixed bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-violet-500/20 via-transparent to-transparent blur-3xl" />
+      <div className={`pointer-events-none fixed inset-0 ${isDark ? "bg-black" : "bg-[#faf9f6]"}`} />
 
-      {/* BACK BUTTON */}
       <button
         onClick={() => navigate(-1)}
-        className="fixed top-6 left-6 z-50 p-3 rounded-full border border-cyan-300/40 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-cyan-300/80 transition shadow-lg"
+        aria-label="Go back"
+        className={`fixed left-5 top-5 z-50 flex h-12 w-12 items-center justify-center rounded-full border shadow-sm transition ${
+          isDark
+            ? "border-white/25 bg-black text-white hover:border-[#8AA844] hover:text-[#8AA844]"
+            : "border-black/15 bg-white/80 text-black backdrop-blur-xl hover:border-[#8AA844] hover:text-[#4C7A2D]"
+        }`}
       >
-        <ArrowLeft size={18} className="text-cyan-300" />
+        <ArrowLeft size={19} />
       </button>
 
+      <button
+        onClick={toggleTheme}
+        aria-label="Toggle theme"
+        className={`fixed right-5 top-5 z-50 flex h-12 w-12 items-center justify-center rounded-full border shadow-sm transition hover:rotate-90 hover:scale-105 ${
+          isDark
+            ? "border-white/15 bg-white/10 text-white hover:bg-white/20"
+            : "border-black/10 bg-black/5 text-black hover:bg-black/10"
+        }`}
+      >
+        {isDark ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
 
-      {/* MOBILE */}
-      <div className="flex snap-x snap-mandatory overflow-x-auto pt-20 md:hidden px-4 gap-4">
+      <div className="relative z-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pt-20 md:hidden">
         {PROFILE_CARDS.map((card) => (
-          <MobileCard key={card.title} {...card} />
+          <MobileCard key={card.title} {...card} isDark={isDark} />
         ))}
       </div>
 
-      {/* DESKTOP */}
-      <div className="hidden md:grid grid-cols-2 min-h-screen gap-12 px-12 py-12 items-center">
+      <div className="relative z-10 hidden min-h-screen grid-cols-2 items-center gap-12 px-12 py-12 md:grid">
         {PROFILE_CARDS.map((card) => (
-          <DesktopCard key={card.title} {...card} />
+          <DesktopCard key={card.title} {...card} isDark={isDark} />
         ))}
       </div>
     </div>
   );
 }
 
-/* ===== MOBILE ===== */
-function MobileCard({ src, title, subtitle, desc, premium, tag }) {
+function MobileCard({ src, title, subtitle, desc, tag, isDark }) {
   return (
-    <section className="min-w-full snap-center flex flex-col gap-6 px-3 pb-10">
-      <div className="h-[50vh] flex items-center justify-center rounded-2xl overflow-hidden shadow-2xl">
-        <img
-          src={src}
-          alt={title}
-          data-img
-          className="w-full h-full object-cover"
-        />
+    <section className="flex min-w-full snap-center flex-col gap-6 px-3 pb-10">
+      <div
+        className={`flex h-[50vh] items-center justify-center overflow-hidden rounded-2xl border shadow-2xl ${
+          isDark ? "border-white/15 bg-[#030303]" : "border-black/10 bg-white"
+        }`}
+      >
+        <img src={src} alt={title} data-img className="h-full w-full object-cover" />
       </div>
-      <CardContent title={title} subtitle={subtitle} desc={desc} premium={premium} tag={tag} />
+      <CardContent title={title} subtitle={subtitle} desc={desc} tag={tag} isDark={isDark} />
     </section>
   );
 }
 
-/* ===== DESKTOP ===== */
-function DesktopCard({ src, title, subtitle, desc, premium, tag }) {
+function DesktopCard({ src, title, subtitle, desc, tag, isDark }) {
   return (
     <section className="flex flex-col items-center justify-center gap-8">
-      <div className="h-[65vh] w-full flex items-center justify-center rounded-3xl overflow-hidden shadow-2xl">
+      <div
+        className={`flex h-[65vh] w-full items-center justify-center overflow-hidden rounded-2xl border shadow-2xl ${
+          isDark ? "border-white/15 bg-[#030303]" : "border-black/10 bg-white"
+        }`}
+      >
         <img
           src={src}
           alt={title}
           data-img
-          className="w-full h-full object-cover transition duration-500 hover:scale-105"
+          className="h-full w-full object-cover transition duration-500 hover:scale-105"
         />
       </div>
-      <CardContent title={title} subtitle={subtitle} desc={desc} premium={premium} tag={tag} />
+      <CardContent title={title} subtitle={subtitle} desc={desc} tag={tag} isDark={isDark} />
     </section>
   );
 }
 
-/* ===== CARD ===== */
-function CardContent({ title, subtitle, desc, premium, tag }) {
+function CardContent({ title, subtitle, desc, tag, isDark }) {
   return (
     <div
       data-card
-      className="
-        w-full max-w-md mx-auto
-        relative
-        overflow-hidden
-        rounded-3xl
-        border border-cyan-300/50
-        bg-gradient-to-br from-slate-800/90 via-slate-800/80 to-slate-900/90
-        px-8 py-8
-        shadow-[0_20px_70px_rgba(6,182,212,0.25)]
-        backdrop-blur-2xl
-        transition-all duration-300
-        hover:-translate-y-3
-        hover:border-cyan-300/80
-        hover:shadow-[0_30px_100px_rgba(6,182,212,0.35)]
-      "
+      className={`relative mx-auto w-full max-w-md overflow-hidden rounded-2xl px-8 py-8 opacity-100 transition-all duration-300 hover:-translate-y-2 ${
+        isDark
+          ? "border border-white/18 bg-[#050505] text-white shadow-[0_24px_90px_rgba(0,0,0,0.95)] hover:border-[#8AA844]/70"
+          : "border border-black/10 bg-white text-[#0c0c0c] shadow-[0_18px_60px_rgba(12,12,12,0.08)] hover:border-[#8AA844]/70"
+      }`}
     >
-
-
       <div className="flex flex-wrap items-center gap-3">
-        <span className="rounded-full bg-cyan-500/20 border border-cyan-400/40 px-3 py-1 text-[11px] uppercase tracking-[0.35em] text-cyan-100 font-semibold">
+        <span
+          className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.28em] ${
+            isDark
+              ? "border-[#8AA844]/60 bg-[#8AA844]/12 text-[#E9F6D0]"
+              : "border-[#8AA844]/40 bg-[#8AA844]/12 text-[#4C7A2D]"
+          }`}
+        >
           {tag}
         </span>
       </div>
 
-      <h1 className="mt-6 text-4xl font-bold tracking-tight text-white md:text-5xl drop-shadow-lg">
+      <h1 className={`mt-6 text-4xl font-black tracking-normal md:text-5xl ${isDark ? "text-white" : "text-[#0c0c0c]"}`}>
         {title}
       </h1>
 
-      <p className="mt-4 text-base uppercase tracking-[0.22em] text-cyan-200 font-semibold">
+      <p className={`mt-4 text-base font-black uppercase tracking-[0.16em] ${isDark ? "text-[#D7F2A0]" : "text-[#4C7A2D]"}`}>
         {subtitle}
       </p>
 
       {title === "Rushi Bhatt" && (
-        <p className="mt-4 text-sm tracking-[0.32em] text-slate-300">
-          Part of the Bhatt legacy — Nephew of Co-Founder Ankit Bhatt
+        <p className={`mt-4 text-sm font-semibold leading-6 tracking-[0.12em] ${isDark ? "text-zinc-100" : "text-black/75"}`}>
+          Part of the Bhatt legacy - Nephew of Co-Founder Ankit Bhatt
         </p>
       )}
 
-      <p className="mt-6 text-base leading-8 text-slate-100 font-medium">
-        {desc}
-      </p>
+      <p className={`mt-6 text-base font-bold leading-8 ${isDark ? "text-white" : "text-[#0c0c0c]"}`}>{desc}</p>
 
       {title === "Rushi Bhatt" && (
         <div className="mt-8 flex items-center gap-4">
-          <a
-            href="tel:9727062513"
-            title="Call"
-            className="inline-flex h-14 w-14 items-center justify-center rounded-full border-2 border-cyan-400/60 bg-gradient-to-br from-cyan-400/30 to-blue-500/30 text-cyan-200 transition hover:scale-110 hover:border-cyan-300 hover:bg-cyan-400/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.4)]"
-          >
+          <SocialLink href="tel:9727062513" label="Call Rushi Bhatt" isDark={isDark} accent="orange">
             <Phone size={20} />
-          </a>
-          <a
-            href="https://wa.me/919727062513"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="WhatsApp"
-            className="inline-flex h-14 w-14 items-center justify-center rounded-full border-2 border-green-400/60 bg-gradient-to-br from-green-400/30 to-emerald-500/30 transition hover:scale-110 hover:border-green-300 hover:bg-green-400/40 hover:shadow-[0_0_20px_rgba(34,197,94,0.4)]"
-          >
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
-              alt="WhatsApp"
-              className="h-6 w-6"
-            />
-          </a>
-          <a
-            href="https://www.instagram.com/rushzzz10/?utm_source=ig_web_button_share_sheet"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Instagram"
-            className="inline-flex h-14 w-14 items-center justify-center rounded-full border-2 border-pink-400/60 bg-gradient-to-br from-pink-400/30 to-rose-500/30 transition hover:scale-110 hover:border-pink-300 hover:bg-pink-400/40 hover:shadow-[0_0_20px_rgba(244,63,94,0.4)]"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              className="h-6 w-6 text-pink-200"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="2.5" y="2.5" width="19" height="19" rx="5" />
-              <path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
-              <path d="M17.5 6.5h.01" />
-            </svg>
-          </a>
+          </SocialLink>
+          <SocialLink href="https://wa.me/919727062513" label="Message Rushi Bhatt on WhatsApp" isDark={isDark} accent="green">
+            <MessageCircle size={21} />
+          </SocialLink>
+          <SocialLink href="https://www.instagram.com/rushzzz10/?utm_source=ig_web_button_share_sheet" label="Open Rushi Bhatt on Instagram" isDark={isDark} accent="orange">
+            <Camera size={21} />
+          </SocialLink>
         </div>
       )}
 
-      <div className="mt-8 h-2 w-24 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 shadow-lg" />
-
-      <p className="mt-4 text-xs tracking-[0.35em] text-slate-300 uppercase font-semibold">Profile</p>
+      <div className="mt-8 h-1.5 w-24 rounded-full bg-[#8AA844]" />
+      <p className={`mt-4 text-xs font-black uppercase tracking-[0.28em] ${isDark ? "text-zinc-100" : "text-black/60"}`}>
+        Profile
+      </p>
     </div>
+  );
+}
+
+function SocialLink({ href, label, isDark, accent, children }) {
+  const accentClass = accent === "green" ? "hover:border-[#8AA844]" : "hover:border-[#F04925]";
+
+  return (
+    <a
+      href={href}
+      target={href.startsWith("http") ? "_blank" : undefined}
+      rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+      title={label}
+      aria-label={label}
+      className={`inline-flex h-14 w-14 items-center justify-center rounded-full border transition hover:scale-105 ${accentClass} ${
+        isDark ? "border-white/25 bg-white/5 text-white" : "border-black/15 bg-black/5 text-black"
+      }`}
+    >
+      {children}
+    </a>
   );
 }

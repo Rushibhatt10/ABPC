@@ -5,6 +5,7 @@ import { collection, query, where } from "firebase/firestore";
 import { firestoreDb } from "../../firebase/firestore";
 import { formatCurrency, formatDateDisplay, toDateObject } from "../../utils/format";
 import { parseWarrantyDays } from "../../utils/warranty";
+import { matchesCustomerRecord } from "../utils/customerRecordMatch";
 import {
   Calendar, CreditCard, FileText, Bell, CheckCircle2,
   Clock, Shield, ArrowRight, User
@@ -35,20 +36,19 @@ export default function CustomerDashboard() {
       collection(firestoreDb, "quotations"),
       where("customerId", "==", activeCustomerId)
     );
-    const amcsQ = query(
-      collection(firestoreDb, "amc"),
-      where("customerId", "==", activeCustomerId)
-    );
+    const amcsQ = query(collection(firestoreDb, "amc"));
 
     const unsubs = [
       subscribeQuery(jobsQ, setJobs),
       subscribeQuery(invoicesQ, setInvoices),
       subscribeQuery(quotationsQ, setQuotations),
-      subscribeQuery(amcsQ, setAmcs)
+      subscribeQuery(amcsQ, (records) => {
+        setAmcs(records.filter((record) => matchesCustomerRecord(record, activeCustomerId, activeCustomer)));
+      })
     ];
 
     return () => unsubs.forEach(unsub => unsub());
-  }, [activeCustomerId]);
+  }, [activeCustomerId, activeCustomer]);
 
   // Compute stats
   const activeAmc = useMemo(() => {

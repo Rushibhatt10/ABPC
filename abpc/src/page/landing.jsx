@@ -324,7 +324,7 @@ useEffect(() => {
  {link.label}
  </span>
  </div>
- <span className={`text-xl opacity-0 group-hover:opacity-40 transition-all duration-300 -translate-x-2 group-hover:translate-x-0`}>â†’</span>
+ <span className={`text-xl opacity-0 group-hover:opacity-40 transition-all duration-300 -translate-x-2 group-hover:translate-x-0`}>→</span>
  </button>
  ))}
  </div>
