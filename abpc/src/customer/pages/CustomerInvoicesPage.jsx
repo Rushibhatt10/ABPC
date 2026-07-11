@@ -203,9 +203,10 @@ export default function CustomerInvoicesPage() {
                 {/* Logo & Header */}
                 <div className="flex justify-between items-start gap-4 flex-wrap border-b border-slate-100 pb-4">
                   <div>
-                    <h2 className="text-xl font-black text-slate-900">AB PEST CONTROL</h2>
+                    <h2 className="text-xl font-black text-slate-900">AB PEST CONTROL INSECTICIDE SERVICES INSECTISIDE SERVICES</h2>
                     <p className="text-xs text-slate-400 leading-normal">
                       Est. 1980 · Surat, Gujarat<br/>
+                      Website: abpestcontrol.in<br/>
                       Email: abpestcontrol@gmail.com<br/>
                       Phone: +91 93744 88004
                     </p>

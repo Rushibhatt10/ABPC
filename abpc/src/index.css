@@ -1,5 +1,54 @@
 @import "tailwindcss";
 
+/* Self-hosted fonts — eliminates render-blocking Google Fonts */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/inter-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/inter-latin-500-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/inter-latin-600-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Bebas Neue";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/bebas-neue-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/montserrat-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/montserrat-latin-700-normal.woff2") format("woff2");
+}
+
 :root {
   /* Premium SaaS Theme - Light */
   --bg-soft: #F8FAFC;
@@ -22,9 +71,15 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg-soft);
   background-image: 
     radial-gradient(at 0% 0%, rgba(76, 122, 45, 0.03) 0px, transparent 50%),
@@ -32,6 +87,51 @@ body {
   background-attachment: fixed;
   color: var(--text-main);
   font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* iOS safe-area + bottom nav clearance */
+.safe-bottom-pad {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.font-bebas {
+  font-family: "Bebas Neue", Impact, "Arial Narrow", sans-serif;
+}
+
+.font-montserrat {
+  font-family: "Montserrat", "Segoe UI", Arial, sans-serif;
+}
+
+/* Mobile performance & touch UX */
+@media (max-width: 768px) {
+  body {
+    background-attachment: scroll;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 a {
@@ -737,8 +837,8 @@ a {
   }
 
   @page {
-    size: A4;
-    margin: 5mm;
+    size: A4 portrait;
+    margin: 0;
   }
 
   /* Reset document pages with high specificity */
@@ -748,8 +848,9 @@ a {
   body .print-page {
     width: 210mm !important;
     min-height: 297mm !important;
+    height: auto !important;
     margin: 0 auto !important;
-    padding: 14mm 16mm !important;
+    padding: 12mm 14mm !important;
     background: #ffffff !important;
     box-shadow: none !important;
     page-break-after: always;
@@ -1027,8 +1128,9 @@ button:active:not(:disabled) {
   .cert-page {
     width: 210mm !important;
     min-height: 297mm !important;
+    height: auto !important;
     margin: 0 !important;
-    padding: 14mm 16mm !important;
+    padding: 12mm 14mm !important;
     box-shadow: none !important;
     background: white !important;
     overflow: visible !important;
@@ -1108,8 +1210,9 @@ button:active:not(:disabled) {
     opacity: 1 !important;
     width: 210mm !important;
     min-height: 297mm !important;
+    height: auto !important;
     margin: 0 !important;
-    padding: 14mm 16mm !important;
+    padding: 12mm 14mm !important;
     background: white !important;
     box-shadow: none !important;
     border: none !important;

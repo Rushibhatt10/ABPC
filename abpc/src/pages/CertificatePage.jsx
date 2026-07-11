@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { subscribeDoc } from "../utils/firestoreHelpers";
 import { formatDateDisplay } from "../utils/format";
 import { Printer, ArrowLeft, Download, Share2 } from "lucide-react";
-import html2canvas from "html2canvas";
+import html2canvas from "../utils/html2canvasLib.js";
 import jsPDF from "jspdf";
 
 export default function CertificatePage() {
@@ -180,7 +180,7 @@ Please let us know if you have any concerns or need a follow-up visit. We're alw
                   Shop No 4, Hanuman Char Rasta, Gopipura, Surat
                 </p>
                 <p style={{ fontSize: 8, color: "#6E6259", margin: 0 }}>
-                  +91 9374488004 · abpestcontrol@gmail.com
+                  +91 9374488004 · abpestcontrol@gmail.com · abpestcontrol.in
                 </p>
               </div>
               {/* Logo */}

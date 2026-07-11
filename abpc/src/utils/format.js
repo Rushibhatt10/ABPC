@@ -26,6 +26,13 @@ export const formatDateDisplay = (value) => {
   return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(date);
 };
 
+export const formatDateTime = (value) => {
+  if (!value) return "-";
+  const date = toDateObject(value);
+  if (!date) return "-";
+  return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(date);
+};
+
 export const toDateObject = (value) => {
   if (!value) return null;
   if (value instanceof Date) return value;
@@ -77,3 +84,8 @@ export const toNumber = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 };
+
+export const roundMoney = (value) => Math.round((Number(value) || 0) * 100) / 100;
+
+/** Use on currency / quantity number inputs */
+export const DECIMAL_INPUT_STEP = "0.01";

@@ -106,9 +106,9 @@ Amount: ${formatCurrency(job.finalPrice || job.totalAmount || 0)}
 Work Report:
 ${summary}${photoLinks ? `\n\nService Photos:\n${photoLinks}` : ""}${videoLinks ? `\n\nService Videos:\n${videoLinks}` : ""}${audioLinks ? `\n\nService Audio:\n${audioLinks}` : ""}${driveLinks ? `\n\nDrive Files:\n${driveLinks}` : ""}
 
-Thank you for choosing AB Pest Control.
+Thank you for choosing AB PEST CONTROL INSECTISIDE SERVICES.
 
-AB Pest Control
+AB PEST CONTROL INSECTISIDE SERVICES
 +91 93744 88004`;
 };
 
@@ -364,7 +364,7 @@ export default function JobVideoReportModal({ job, onClose, onSaved }) {
     }
 
     const shared = await shareReportMedia({
-      title: "AB Pest Control Service Report",
+      title: "AB PEST CONTROL INSECTISIDE SERVICES - Service Report",
       text: shareMessage,
       reports,
     }).catch(() => false);
@@ -374,7 +374,7 @@ export default function JobVideoReportModal({ job, onClose, onSaved }) {
     }
 
     await navigator.share({
-      title: "AB Pest Control Service Report",
+      title: "AB PEST CONTROL INSECTISIDE SERVICES - Service Report",
       text: shareMessage,
     });
   };
@@ -382,7 +382,7 @@ export default function JobVideoReportModal({ job, onClose, onSaved }) {
   const handleWhatsApp = async () => {
     const phone = getWhatsAppNumber(job.customerPhone);
     const shared = await shareReportMedia({
-      title: "AB Pest Control Service Report",
+      title: "AB PEST CONTROL INSECTISIDE SERVICES - Service Report",
       text: shareMessage,
       reports,
     }).catch(() => false);

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { subscribeDoc } from "../utils/firestoreHelpers";
 import { formatDateDisplay } from "../utils/format";
 import { Printer, ArrowLeft, Download, Share2 } from "lucide-react";
-import html2canvas from "html2canvas";
+import html2canvas from "../utils/html2canvasLib.js";
 import jsPDF from "jspdf";
 
 function addMonths(dateStr, months) {
@@ -197,7 +197,7 @@ export default function AMCPrintPage() {
                   Insecticide Services
                 </p>
                 <p style={{ fontSize: 8.5, color: "#6E6259", marginTop: 3, lineHeight: 1.6 }}>
-                  Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 93744 88004
+                  Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 93744 88004 · abpestcontrol.in
                 </p>
               </div>
               <div style={{ textAlign: "right" }}>
@@ -346,7 +346,7 @@ export default function AMCPrintPage() {
             {/* Footer note */}
             <div style={{ textAlign: "center", marginTop: "5mm" }}>
               <p style={{ fontSize: 8, color: "#8B7E74", letterSpacing: "0.06em" }}>
-                This is a legally binding agreement. Please read all terms before signing.
+                This is a legally binding agreement. Please read all terms before signing. · abpestcontrol.in
               </p>
             </div>
 

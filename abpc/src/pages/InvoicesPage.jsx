@@ -578,7 +578,7 @@ export default function InvoicesPage() {
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Amount Received</label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
-                      <input type="number" value={form.received} onChange={(e) => setForm(p => ({ ...p, received: e.target.value }))}
+                      <input type="number" min="0" step="0.01" value={form.received} onChange={(e) => setForm(p => ({ ...p, received: e.target.value }))}
                         placeholder="0" min="0"
                         className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm" />
                     </div>

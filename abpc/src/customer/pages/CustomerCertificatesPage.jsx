@@ -6,7 +6,7 @@ import { firestoreDb } from "../../firebase/firestore";
 import { formatDateDisplay, toDateObject } from "../../utils/format";
 import { getWarrantyDays, getWarrantyLabel } from "../../utils/warranty";
 import { Award, Eye, Download, Printer, X, Award as CertIcon } from "lucide-react";
-import html2canvas from "html2canvas";
+import html2canvas from "../../utils/html2canvasLib.js";
 import jsPDF from "jspdf";
 
 export default function CustomerCertificatesPage() {
@@ -224,7 +224,7 @@ export default function CustomerCertificatesPage() {
                     </p>
                     <p style={{ fontSize: 8, color: "#6E6259", margin: "5px 0 0", lineHeight: 1.5 }}>
                       Shop No 4, Hanuman Char Rasta, Gopipura, Surat<br/>
-                      +91 9374488004 · abpestcontrol@gmail.com
+                      +91 9374488004 · abpestcontrol@gmail.com · abpestcontrol.in
                     </p>
                   </div>
                   <div style={{ width: 52, height: 52, borderRadius: "50%", border: "1.5px solid #D8CFC4", overflow: "hidden", background: "#FAF7F2" }}>

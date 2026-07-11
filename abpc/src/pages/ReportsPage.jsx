@@ -297,7 +297,7 @@ export default function ReportsPage() {
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AB Pest Control - Reports</title>
+  <title>AB PEST CONTROL INSECTISIDE SERVICES - Reports</title>
   <style>
     @page { size: A4; margin: 0; }
     @media print {
@@ -329,7 +329,7 @@ export default function ReportsPage() {
 </head>
 <body>
   <div class="print-page">
-    <h1>AB Pest Control - Job Reports</h1>
+    <h1>AB PEST CONTROL INSECTISIDE SERVICES - Job Reports</h1>
     <p>Generated on: ${new Date().toLocaleString("en-IN")}</p>
     <table>
       <thead>

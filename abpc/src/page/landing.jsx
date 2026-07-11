@@ -1,16 +1,13 @@
 import { useState, useEffect, useRef, useContext } from"react";
 import { Link, useNavigate } from"react-router-dom";
-import { Phone, Sun, Moon, ArrowRight, X, Mail, MapPin, Star, Navigation, Bookmark, Clock } from"lucide-react";
+import { Phone, Sun, Moon, ArrowRight, X, Mail, MapPin, Navigation } from"lucide-react";
 import { ThemeContext } from"../context/ThemeContext.jsx";
-import gsap from"gsap";
-import { ScrollTrigger } from"gsap/ScrollTrigger";
-import Lenis from"lenis";
 import Logo from"../components/Logo.jsx";
 import PremiumServices from"../components/PremiumServices.jsx";
+import ResponsiveImage from"../components/ResponsiveImage.jsx";
+import LazyMapEmbed from"../components/LazyMapEmbed.jsx";
 import { createRecord } from"../utils/firestoreHelpers";
-import InsectEdgePopups from "../components/InsectEdgePopups";
-
-gsap.registerPlugin(ScrollTrigger);
+import { isTouchDevice } from"../hooks/useMobile.js";
 
 const HamburgerIcon = ({ open }) => (
   <div className="flex flex-col justify-center items-end gap-1.5 w-26px h-6 cursor-pointer group">

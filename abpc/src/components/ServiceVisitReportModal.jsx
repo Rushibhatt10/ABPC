@@ -20,6 +20,7 @@ import { firestoreDb } from "../firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { subscribeQuery } from "../utils/firestoreHelpers";
 import { compressImage, validateFileSize, uid } from "../utils/mediaHelpers";
+import { confirmIncompleteSubJobs } from "../utils/jobHelpers";
 
 const glass = {
   background: "linear-gradient(180deg, rgba(15,22,16,0.98), rgba(7,12,8,0.98))",
@@ -536,6 +537,13 @@ export default function ServiceVisitReportModal({ job, onClose, onSaved }) {
       return;
     }
 
+    if (pendingActivities.length > 0) {
+      const pendingAsSubJobs = pendingActivities.map((act) => ({ title: act.title }));
+      if (!confirmIncompleteSubJobs(pendingAsSubJobs, "submit this report without completing all sub-tasks")) {
+        return;
+      }
+    }
+
     setBusy(true);
     setErr("");
 
@@ -604,6 +612,15 @@ export default function ServiceVisitReportModal({ job, onClose, onSaved }) {
           allowVideos: true,
           allowVoiceNotes: true,
           allowDownload: false,
+        },
+        jobSnapshot: {
+          customerName: job.customerName || "",
+          customerId: job.customerId || "",
+          customerPhone: job.customerPhone || "",
+          treatmentLabel: job.treatmentLabel || "",
+          serviceType: job.serviceType || job.serviceName || "",
+          pestType: job.pestType || "",
+          address: job.address || job.customerAddress || "",
         },
       };
 

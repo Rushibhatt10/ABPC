@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { collection, query, where } from "firebase/firestore";
 import { firestoreDb } from "../firebase/firestore";
 import { subscribeQuery } from "../utils/firestoreHelpers";
 import {
+  buildCustomerPortalLoginPath,
+  CUSTOMER_PORTAL_FEATURES,
+} from "../constants/customerPortal";
+import {
+  LogIn,
   ShieldAlert,
   Calendar,
   CheckCircle,
@@ -13,7 +18,6 @@ import {
   Mic,
   Video,
   ExternalLink,
-  ChevronRight,
   User,
   Activity,
   Award,
@@ -92,6 +96,10 @@ export default function SharedReportPage() {
   const allowVideos = shareSettings?.allowVideos ?? true;
   const allowVoiceNotes = shareSettings?.allowVoiceNotes ?? true;
   const allowDownload = shareSettings?.allowDownload ?? false;
+  const customerLoginPath = buildCustomerPortalLoginPath(
+    jobSnapshot?.customerId,
+    jobSnapshot?.customerPhone
+  );
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex flex-col selection:bg-green-400 selection:text-black">
@@ -103,7 +111,7 @@ export default function SharedReportPage() {
             AB
           </div>
           <div>
-            <span className="font-black text-sm tracking-wide text-white block">AB PEST CONTROL</span>
+            <span className="font-black text-sm tracking-wide text-white block">AB PEST CONTROL INSECTISIDE SERVICES</span>
             <span className="text-[9px] text-green-400 tracking-widest font-black uppercase">Service Visit Report</span>
           </div>
         </div>
@@ -156,7 +164,12 @@ export default function SharedReportPage() {
               <div className="space-y-2 pb-2 border-b border-white/5">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-neutral-400">Treatment Milestones Completed</span>
-                  <span className="font-black text-green-400">{report.progressSnapshot.percentage}%</span>
+                  <div className="flex flex-col items-end">
+                    <span className="font-black text-green-400">{report.progressSnapshot.percentage}%</span>
+                    <span className="text-[10px] text-neutral-500">
+                      {report.progressSnapshot.completedActivities} / {report.progressSnapshot.totalActivities} Tasks Done
+                    </span>
+                  </div>
                 </div>
                 <div className="w-full bg-neutral-800 rounded-full h-2 overflow-hidden">
                   <div className="h-full bg-green-400 transition-all duration-300" style={{ width: `${report.progressSnapshot.percentage}%` }} />
@@ -292,6 +305,43 @@ export default function SharedReportPage() {
           )}
         </section>
 
+        {/* Customer Portal Login */}
+        <section className="bg-gradient-to-b from-neutral-900/80 to-neutral-950 border border-green-500/20 rounded-3xl p-6 sm:p-8 space-y-5">
+          <div className="space-y-2">
+            <span className="text-[10px] text-green-400 font-black uppercase tracking-widest">Customer Portal</span>
+            <h3 className="text-base sm:text-lg font-black text-white leading-snug">
+              Check the Status of the Work Done by AB Pest Control Insecticide Service
+            </h3>
+          </div>
+
+          <div className="space-y-3 text-xs sm:text-sm text-neutral-300 leading-relaxed">
+            <p>Dear Customer,</p>
+            <p>
+              Thank you for choosing <strong className="text-white">AB Pest Control Insecticide Service</strong>.
+            </p>
+            <p>
+              You can securely log in using the button below to view the complete status of your service, including:
+            </p>
+            <ul className="space-y-3 pl-1">
+              {CUSTOMER_PORTAL_FEATURES.map((feature) => (
+                <li key={feature} className="flex items-start gap-2.5">
+                  <span className="text-green-400 shrink-0 mt-0.5">▪️</span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+            <p>Click below to access your Customer Portal and track your service anytime.</p>
+          </div>
+
+          <Link
+            to={customerLoginPath}
+            className="flex items-center justify-center gap-2 w-full py-3.5 px-5 rounded-2xl text-sm font-black text-black bg-green-400 hover:bg-green-300 transition-colors shadow-lg shadow-green-500/20"
+          >
+            <LogIn className="w-4 h-4" />
+            Login to Your Customer Portal
+          </Link>
+        </section>
+
       </main>
 
       {/* Lightbox fullscreen preview */}
@@ -339,7 +389,7 @@ export default function SharedReportPage() {
 
       {/* Footer Branding */}
       <footer className="mt-14 border-t border-neutral-900 py-8 px-6 text-center text-[10px] text-neutral-500 space-y-1 bg-black/30">
-        <p>© {new Date().getFullYear()} AB Pest Control. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} AB PEST CONTROL INSECTISIDE SERVICES · abpestcontrol.in</p>
         <p className="tracking-wide">SERVICE VISIT REPORT • SECURED TRANSMISSION</p>
       </footer>
     </div>

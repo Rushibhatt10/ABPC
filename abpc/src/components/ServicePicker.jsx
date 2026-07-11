@@ -131,10 +131,10 @@ export default function ServicePicker({ onAdd, addLabel = "Add Item" }) {
             className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none bg-white">
             {UNITS.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
           </select>
-          <input type="number" min="0" step="1" value={quantity}
+          <input type="number" min="0" step="0.01" value={quantity}
             onChange={(e) => setQuantity(e.target.value)} placeholder="Qty"
             className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
-          <input type="number" min="0" step="1" value={price}
+          <input type="number" min="0" step="0.01" value={price}
             onChange={(e) => setPrice(e.target.value)} placeholder="Price ₹"
             className="px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none" />
         </div>

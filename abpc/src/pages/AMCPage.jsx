@@ -4,7 +4,7 @@ import {
   createRecord, deleteRecord, subscribeCollection,
   updateRecord, nextDocumentNumber,
 } from "../utils/firestoreHelpers";
-import { formatCurrency, formatDateDisplay, getTodayISO } from "../utils/format";
+import { formatCurrency, formatDateDisplay, getTodayISO, roundMoney } from "../utils/format";
 import {
   CalendarClock, Plus, X, Trash2, Search, AlertCircle,
   Clock, FileText, Receipt, CheckCircle2, RefreshCw, MapPin,
@@ -13,6 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 import ServicePicker from "../components/ServicePicker";
 import CustomerSearch from "../components/CustomerSearch";
 import PaymentModeModal from "../components/PaymentModeModal";
+import { confirmIncompleteAmcVisits } from "../utils/jobHelpers";
 
 // Duration → visits mapping
 // Quarterly = 12 months, 4 visits, one every 3 months
@@ -35,12 +36,20 @@ function daysUntil(dateStr) {
 }
 
 /** Inline visit log panel — shown below AMC card actions */
-function VisitLogPanel({ amc, dur, onLog, onClose }) {
+function VisitLogPanel({ amc, dur, onLog, onComplete, onClose }) {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [completing, setCompleting] = useState(false);
   const visits = amc.visitLog || [];
   const remaining = Math.max(0, dur.visits - visits.length);
+
+  const handleComplete = async () => {
+    if (!confirmIncompleteAmcVisits(visits.length, dur.visits, "mark this AMC as completed")) return;
+    setCompleting(true);
+    await onComplete(amc);
+    setCompleting(false);
+  };
 
   const handleLog = async () => {
     if (!date) return;
@@ -94,10 +103,24 @@ function VisitLogPanel({ amc, dur, onLog, onClose }) {
           </button>
         </div>
       )}
-      {remaining === 0 && (
+      {remaining === 0 && amc.status !== "Completed" && (
         <p className="text-xs text-emerald-700 font-semibold text-center py-1">
           ✓ All {dur.visits} visits completed
         </p>
+      )}
+      {amc.status === "Active" && (
+        <button
+          type="button"
+          onClick={handleComplete}
+          disabled={completing}
+          className="w-full py-2 rounded-xl text-xs font-bold text-white transition-all disabled:opacity-50"
+          style={{ background: remaining > 0 ? "linear-gradient(135deg,#B45309,#D97706)" : "linear-gradient(135deg,#1F3D1F,#4C7A2D)" }}
+        >
+          {completing ? "…" : remaining > 0 ? `Complete AMC (${remaining} visit(s) remaining)` : "Mark AMC as Completed"}
+        </button>
+      )}
+      {amc.status === "Completed" && (
+        <p className="text-xs text-emerald-700 font-semibold text-center py-1">✓ AMC marked as completed</p>
       )}
     </div>
   );
@@ -146,7 +169,7 @@ export default function AMCPage() {
 
   const selectedDuration = DURATIONS.find(d => d.months === form.durationMonths) || DURATIONS[3];
   const totalAmt = parseFloat(form.totalAmount) || 0;
-  const advanceAmt = Math.round(totalAmt * 0.5);
+  const advanceAmt = roundMoney(totalAmt * 0.5);
   const balanceAmt = totalAmt - advanceAmt;
 
   const handleSubmit = async (e) => {
@@ -209,6 +232,18 @@ export default function AMCPage() {
     }
   };
 
+  const completeAmc = async (amc) => {
+    try {
+      await updateRecord("amc", amc.id, {
+        status: "Completed",
+        completedAt: new Date().toISOString(),
+      });
+      showMsg("success", `AMC for ${amc.customerName} marked as completed.`);
+    } catch (err) {
+      showMsg("error", err.message);
+    }
+  };
+
   // Step 1: open payment mode picker
   const handleGenerateInvoice = (amc) => {
     if (!Number(amc.totalAmount)) { showMsg("error", "Set AMC amount first."); return; }
@@ -224,7 +259,7 @@ export default function AMCPage() {
     try {
       const invoiceNumber = await nextDocumentNumber("INV");
       const total = Number(amc.totalAmount || 0);
-      const advance = Number(amc.advanceAmount || Math.round(total * 0.5));
+      const advance = Number(amc.advanceAmount || roundMoney(total * 0.5));
       const balance = total - advance;
 
       const dur = DURATIONS.find(d => d.months === amc.durationMonths) || DURATIONS[3];
@@ -361,7 +396,7 @@ export default function AMCPage() {
             const isExpiringSoon = days >= 0 && days <= 30;
             const dur = DURATIONS.find(d => d.months === amc.durationMonths) || DURATIONS[3];
             const total = Number(amc.totalAmount || 0);
-            const advance = Number(amc.advanceAmount || Math.round(total * 0.5));
+            const advance = Number(amc.advanceAmount || roundMoney(total * 0.5));
             const balance = Number(amc.balanceAmount ?? (total - advance));
 
             return (
@@ -470,7 +505,7 @@ export default function AMCPage() {
 
                 {/* Visit log panel */}
                 {visitLogAmc?.id === amc.id && (
-                  <VisitLogPanel amc={amc} dur={dur} onLog={logVisit} onClose={() => setVisitLogAmc(null)} />
+                  <VisitLogPanel amc={amc} dur={dur} onLog={logVisit} onComplete={completeAmc} onClose={() => setVisitLogAmc(null)} />
                 )}
               </div>
             );
@@ -531,7 +566,7 @@ export default function AMCPage() {
               {/* Total Amount */}
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Total AMC Amount (₹) *</label>
-                <input type="number" min="0" step="1" value={form.totalAmount}
+                <input type="number" min="0" step="0.01" value={form.totalAmount}
                   onChange={(e) => setForm((p) => ({ ...p, totalAmount: e.target.value }))}
                   placeholder="Enter total contract amount"
                   className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm min-h-[42px]" />

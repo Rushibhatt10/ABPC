@@ -132,7 +132,7 @@ export default function ServiceCalculator({ services = [], isAdmin = false, onCh
             <input
               className="calc-input"
               type="number"
-              step="1"
+              step="0.01"
               min="0"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
@@ -155,7 +155,7 @@ export default function ServiceCalculator({ services = [], isAdmin = false, onCh
             <input
               className="calc-input"
               type="number"
-              step="1"
+              step="0.01"
               min="0"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}

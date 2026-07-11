@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { subscribeDoc } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay } from "../utils/format";
 import { generateA4PdfBlob } from "../utils/pdfExport";
+import { getDocPageStyles, PRINT_DOCUMENT_CSS } from "../constants/printDocument";
 import { Printer, ArrowLeft, Download, Share2, ShieldCheck } from "lucide-react";
 
 export default function InvoicePrintPage() {
@@ -27,7 +28,7 @@ export default function InvoicePrintPage() {
   }, [loading, invoice]);
 
   const generatePDFBlob = async () => {
-    const element = document.querySelector(".doc-page");
+    const element = document.querySelector(".print-container");
     return generateA4PdfBlob(element);
   };
 
@@ -96,31 +97,13 @@ Thank you for choosing A.B. Pest Control! 😊`;
   const isPaid = invoice.status === "Paid" || Number(invoice.balance) === 0;
   const warrantyItems = invoice.items?.filter(i => i.warranty) || [];
 
-  const S = {
-    page: {
-      width: "100%", maxWidth: "210mm", minHeight: "297mm",
-      background: "#ffffff", margin: "0 auto",
-      padding: "14mm 16mm", boxSizing: "border-box",
-      fontFamily: "'Inter', sans-serif", color: "#2E2A27",
-      position: "relative", boxShadow: "0 8px 40px rgba(0,0,0,0.10)",
-    },
-    outerBorder: { position: "absolute", inset: "8mm", border: "1.5px solid #D8CFC4", pointerEvents: "none" },
-    innerBorder: { position: "absolute", inset: "11mm", border: "0.5px solid #D8CFC4", pointerEvents: "none" },
-    watermark: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", opacity: 0.04, pointerEvents: "none", zIndex: 0 },
-    content: { position: "relative", zIndex: 1 },
-    divider: { borderTop: "1px solid #D8CFC4", margin: "5mm 0" },
-    sectionTitle: { fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#8B7E74", marginBottom: 8 },
-    label: { fontSize: 9, color: "#8B7E74", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 2 },
-    value: { fontSize: 12, fontWeight: 500, color: "#2E2A27", lineHeight: 1.5 },
-    grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4mm", marginBottom: "4mm" },
-    field: { marginBottom: "3mm" },
-    box: { border: "1px solid #E6DFD6", borderRadius: 4, padding: "4mm", background: "rgba(0,0,0,0.02)" },
-  };
+  const S = getDocPageStyles();
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+        ${PRINT_DOCUMENT_CSS}
       `}</style>
 
       {/* Action bar */}
@@ -157,7 +140,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
         )}
       </div>
 
-      <div style={{ background: "#fff", minHeight: "100vh", padding: "40px 16px" }} className="print-container">
+      <div style={{ background: "#f4f1ec", minHeight: "100vh", padding: "24px 16px" }} className="print-container">
         <div className="doc-page" style={S.page}>
           <div style={S.outerBorder} />
           <div style={S.innerBorder} />
@@ -172,7 +155,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
               <div>
                 <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#2E2A27", letterSpacing: "0.02em", lineHeight: 1.2 }}>A.B. Pest Control</p>
                 <p style={{ fontSize: 9, color: "#8B7E74", letterSpacing: "0.18em", textTransform: "uppercase", marginTop: 3 }}>Insecticide Services</p>
-                <p style={{ fontSize: 8.5, color: "#6E6259", marginTop: 3, lineHeight: 1.6 }}>Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 9374488004</p>
+                <p style={{ fontSize: 8.5, color: "#6E6259", marginTop: 3, lineHeight: 1.6 }}>Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 9374488004 · abpestcontrol.in</p>
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ width: 52, height: 52, borderRadius: "50%", border: "1.5px solid #D8CFC4", overflow: "hidden", background: "#FAF7F2", marginLeft: "auto" }}>
@@ -196,7 +179,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
             </div>
 
             {/* SECTION 1: BILL TO */}
-            <div style={{ marginBottom: "5mm" }}>
+            <div style={{ marginBottom: "4mm" }}>
               <p style={S.sectionTitle}>1. Bill To</p>
               <div style={S.box}>
                 <div style={S.grid2}>
@@ -231,7 +214,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
             </div>
 
             {/* SECTION 2: SERVICES */}
-            <div style={{ marginBottom: "5mm" }}>
+            <div style={{ marginBottom: "4mm" }}>
               <p style={S.sectionTitle}>2. Services</p>
               <div style={S.box}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
@@ -263,7 +246,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
             </div>
 
             {/* SECTION 3: PAYMENT SUMMARY */}
-            <div style={{ marginBottom: "5mm" }}>
+            <div style={{ marginBottom: "4mm" }}>
               <p style={S.sectionTitle}>3. Payment Summary</p>
               <div style={S.box}>
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -292,7 +275,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
 
             {/* TERMS */}
             {invoice.terms && (
-              <div style={{ marginBottom: "5mm" }}>
+              <div style={{ marginBottom: "4mm" }}>
                 <p style={S.sectionTitle}>4. Terms & Conditions</p>
                 <div style={S.box}>
                   <p style={{ fontSize: 10, color: "#2E2A27", lineHeight: 1.7, whiteSpace: "pre-line" }}>{invoice.terms}</p>
@@ -302,7 +285,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
 
             {/* WARRANTY SECTION */}
             {invoice.items?.some(i => i.warranty) && (
-              <div style={{ marginBottom: "5mm" }}>
+              <div style={{ marginBottom: "4mm" }}>
                 <p style={S.sectionTitle}>5. Warranty Details</p>
                 <div style={{ ...S.box, background: "rgba(22,163,74,0.04)", borderColor: "#bbf7d0" }}>
                   {invoice.items.filter(i => i.warranty).map((item, i) => (
@@ -323,16 +306,16 @@ Thank you for choosing A.B. Pest Control! 😊`;
 
             {/* SIGNATURE */}
             <div style={S.divider} />
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6mm" }}>
-              <div style={{ textAlign: "center", minWidth: 160 }}>
-                <img src="/sign-removebg-preview.png" alt="Signature" style={{ height: 70, width: 180, objectFit: "contain", objectPosition: "center", display: "block", margin: "0 auto 4px" }} />
-                <div style={{ borderBottom: "1.5px solid #8B7E74", marginBottom: 6, width: 160, marginLeft: "auto", marginRight: "auto" }} />
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "4mm" }}>
+              <div style={{ textAlign: "center", minWidth: 150 }}>
+                <img src="/sign-removebg-preview.png" alt="Signature" style={{ height: 52, width: 150, objectFit: "contain", objectPosition: "center", display: "block", margin: "0 auto 3px" }} />
+                <div style={{ borderBottom: "1.5px solid #8B7E74", marginBottom: 4, width: 140, marginLeft: "auto", marginRight: "auto" }} />
                 <p style={{ fontSize: 10, fontWeight: 600, color: "#2E2A27", letterSpacing: "0.04em" }}>Authorized Signatory</p>
                 <p style={{ fontSize: 9, color: "#8B7E74", marginTop: 2 }}>AB Pest Control</p>
               </div>
             </div>
-            <div style={{ textAlign: "center", marginTop: "5mm" }}>
-              <p style={{ fontSize: 8, color: "#8B7E74", letterSpacing: "0.06em" }}>Thank you for your business. This is a computer-generated invoice.</p>
+            <div style={{ textAlign: "center", marginTop: "3mm", paddingBottom: "2mm" }}>
+              <p style={{ fontSize: 8, color: "#8B7E74", letterSpacing: "0.06em" }}>Thank you for your business. abpestcontrol.in · This is a computer-generated invoice.</p>
             </div>
 
           </div>
@@ -341,7 +324,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
 
       {/* WARRANTY CARD */}
       {showWarrantyCard && warrantyItems.length > 0 && (
-        <div className="doc-page" style={{ ...S.page, marginTop: 32, pageBreakBefore: "always" }}>
+        <div className="doc-page" style={{ ...S.page, marginTop: 24, pageBreakBefore: "always" }}>
           <div style={S.outerBorder} />
           <div style={S.innerBorder} />
           <div style={S.watermark}>
@@ -354,7 +337,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
               <div>
                 <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#2E2A27", letterSpacing: "0.02em", lineHeight: 1.2 }}>A.B. Pest Control</p>
                 <p style={{ fontSize: 9, color: "#8B7E74", letterSpacing: "0.18em", textTransform: "uppercase", marginTop: 3 }}>Insecticide Services</p>
-                <p style={{ fontSize: 8.5, color: "#6E6259", marginTop: 3, lineHeight: 1.6 }}>Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 9374488004</p>
+                <p style={{ fontSize: 8.5, color: "#6E6259", marginTop: 3, lineHeight: 1.6 }}>Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 9374488004 · abpestcontrol.in</p>
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ width: 52, height: 52, borderRadius: "50%", border: "1.5px solid #D8CFC4", overflow: "hidden", background: "#FAF7F2", marginLeft: "auto" }}>

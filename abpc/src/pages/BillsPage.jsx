@@ -497,6 +497,7 @@ export default function BillsPage() {
                     <input
                       className="field-input"
                       min="0"
+                      step="0.01"
                       onChange={(event) => handleQuotationItemChange(index, "quantity", event.target.value)}
                       placeholder="Qty"
                       type="number"
@@ -511,6 +512,7 @@ export default function BillsPage() {
                     <input
                       className="field-input"
                       min="0"
+                      step="0.01"
                       onChange={(event) => handleQuotationItemChange(index, "unitPrice", event.target.value)}
                       placeholder="Price"
                       type="number"
@@ -718,6 +720,7 @@ export default function BillsPage() {
                     <input
                       className="field-input"
                       min="0"
+                      step="0.01"
                       onChange={(event) => handleInvoiceItemChange(index, "quantity", event.target.value)}
                       placeholder="Qty"
                       type="number"
@@ -726,6 +729,7 @@ export default function BillsPage() {
                     <input
                       className="field-input"
                       min="0"
+                      step="0.01"
                       onChange={(event) => handleInvoiceItemChange(index, "price", event.target.value)}
                       placeholder="Price"
                       type="number"
@@ -734,6 +738,7 @@ export default function BillsPage() {
                     <input
                       className="field-input"
                       min="0"
+                      step="0.01"
                       onChange={(event) => handleInvoiceItemChange(index, "discount", event.target.value)}
                       placeholder="Discount"
                       type="number"
@@ -782,6 +787,7 @@ export default function BillsPage() {
               <input
                 className="field-input"
                 min="0"
+                step="0.01"
                 onChange={(event) => setInvoiceForm((prev) => ({ ...prev, received: event.target.value }))}
                 placeholder="Received amount"
                 type="number"

@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { subscribeDoc } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay } from "../utils/format";
 import { generateA4PdfBlob } from "../utils/pdfExport";
+import { getDocPageStyles, PRINT_DOCUMENT_CSS } from "../constants/printDocument";
 import { Printer, ArrowLeft, Download, Share2 } from "lucide-react";
 
 export default function QuotationPrintPage() {
@@ -90,31 +91,13 @@ Thank you for choosing A.B. Pest Control! 😊`;
 
   const total = quotation.totalAmount || quotation.items?.reduce((s, i) => s + (i.total || 0), 0) || 0;
 
-  const S = {
-    page: {
-      width: "100%", maxWidth: "210mm", minHeight: "297mm",
-      background: "#ffffff", margin: "0 auto",
-      padding: "14mm 16mm", boxSizing: "border-box",
-      fontFamily: "'Inter', sans-serif", color: "#2E2A27",
-      position: "relative", boxShadow: "0 8px 40px rgba(0,0,0,0.10)",
-    },
-    outerBorder: { position: "absolute", inset: "8mm", border: "1.5px solid #D8CFC4", pointerEvents: "none" },
-    innerBorder: { position: "absolute", inset: "11mm", border: "0.5px solid #D8CFC4", pointerEvents: "none" },
-    watermark: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", opacity: 0.04, pointerEvents: "none", zIndex: 0 },
-    content: { position: "relative", zIndex: 1 },
-    divider: { borderTop: "1px solid #D8CFC4", margin: "5mm 0" },
-    sectionTitle: { fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#8B7E74", marginBottom: 8 },
-    label: { fontSize: 9, color: "#8B7E74", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 2 },
-    value: { fontSize: 12, fontWeight: 500, color: "#2E2A27", lineHeight: 1.5 },
-    grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4mm", marginBottom: "4mm" },
-    field: { marginBottom: "3mm" },
-    box: { border: "1px solid #E6DFD6", borderRadius: 4, padding: "4mm", background: "rgba(0,0,0,0.02)" },
-  };
+  const S = getDocPageStyles();
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+        ${PRINT_DOCUMENT_CSS}
       `}</style>
 
       {/* Action bar */}
@@ -143,7 +126,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
         </button>
       </div>
 
-      <div style={{ background: "#fff", minHeight: "100vh", padding: "40px 16px" }} className="print-container">
+      <div style={{ background: "#f4f1ec", minHeight: "100vh", padding: "24px 16px" }} className="print-container">
         <div className="doc-page" style={S.page}>
           <div style={S.outerBorder} />
           <div style={S.innerBorder} />
@@ -158,7 +141,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
               <div>
                 <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#2E2A27", letterSpacing: "0.02em", lineHeight: 1.2 }}>A.B. Pest Control</p>
                 <p style={{ fontSize: 9, color: "#8B7E74", letterSpacing: "0.18em", textTransform: "uppercase", marginTop: 3 }}>Insecticide Services</p>
-                <p style={{ fontSize: 8.5, color: "#6E6259", marginTop: 3, lineHeight: 1.6 }}>Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 9374488004 </p>
+                <p style={{ fontSize: 8.5, color: "#6E6259", marginTop: 3, lineHeight: 1.6 }}>Shop No 4, Hanuman Char Rasta, Gopipura, Surat · +91 9374488004 · abpestcontrol.in </p>
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ width: 52, height: 52, borderRadius: "50%", border: "1.5px solid #D8CFC4", overflow: "hidden", background: "#FAF7F2", marginLeft: "auto" }}>
@@ -289,7 +272,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
               </div>
             </div>
             <div style={{ textAlign: "center", marginTop: "5mm" }}>
-              <p style={{ fontSize: 8, color: "#8B7E74", letterSpacing: "0.06em" }}>This quotation is valid for 15 days from the date of issue.</p>
+              <p style={{ fontSize: 8, color: "#8B7E74", letterSpacing: "0.06em" }}>This quotation is valid for 15 days from the date of issue. · abpestcontrol.in</p>
             </div>
 
           </div>

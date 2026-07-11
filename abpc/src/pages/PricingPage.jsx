@@ -42,9 +42,9 @@ function ServiceRow({ service, isPricingAdmin, onSave }) {
                   <input
                     type="number"
                     min="0"
-                    step="1"
+                    step="0.01"
                     value={prices[unit] ?? ""}
-                    onChange={(e) => setPrices((p) => ({ ...p, [unit]: Number(e.target.value) }))}
+                    onChange={(e) => setPrices((p) => ({ ...p, [unit]: parseFloat(e.target.value) || 0 }))}
                     style={{
                       width: "80px",
                       padding: "2px 6px",

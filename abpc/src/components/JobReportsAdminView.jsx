@@ -34,6 +34,13 @@ import { subscribeQuery, updateRecord } from "../utils/firestoreHelpers";
 import { formatCurrency, getWhatsAppNumber } from "../utils/format";
 import { sendWhatsAppText, shareReportMedia } from "../utils/shareHelpers";
 import { uid } from "../utils/mediaHelpers";
+import { confirmIncompleteSubJobs, getPendingSubJobs } from "../utils/jobHelpers";
+import {
+  buildEmailShareMessage,
+  buildServiceVisitReportWhatsApp,
+  buildSharedReportUrl,
+  buildWhatsAppShareMessage,
+} from "../utils/shareMessages";
 
 const G = {
   modal: { background: "rgba(10,12,10,0.96)", border: "1px solid rgba(76,122,45,0.18)", backdropFilter: "blur(32px)", WebkitBackdropFilter: "blur(32px)" },
@@ -69,30 +76,59 @@ const WaIcon = () => (
   </svg>
 );
 
-const buildWhatsAppShareMessage = (customerName, serviceType, shareUrl) => {
-  return `Hello ${customerName || "Customer"},
+const buildReportMessage = (job, reports) => {
+  const summary = reports.length
+    ? reports
+        .map((r, i) => {
+          const photoCount = (r.photoUrls || r.imageUrls || []).length;
+          const parts = [`${i + 1}. ${r.employeeName || "Team"}: ${r.note || "Work completed."}`];
+          if (photoCount) parts.push(`Photos: ${photoCount}`);
+          if (r.videoUrl) parts.push(`Video: ${r.videoUrl}`);
+          if (r.audioUrl || r.voiceNote) parts.push(`Audio: ${r.audioUrl || r.voiceNote}`);
+          return parts.join("\n   ");
+        })
+        .join("\n")
+    : "Service completed as per schedule.";
 
-Here is the Service Visit Report and work proof for your treatment:
-Service: ${serviceType || "Pest Control"}
-Secure Share Link: ${shareUrl}
+  const photoLinks = reports
+    .flatMap((r) => r.photoUrls || r.imageUrls || [])
+    .map((url, i) => `Photo ${i + 1}: ${url}`)
+    .join("\n");
 
-Thank you for choosing AB Pest Control.
+  const videoLinks = reports
+    .filter((r) => r.videoUrl)
+    .map((r, i) => `Video ${i + 1}: ${r.videoUrl}`)
+    .join("\n");
 
-AB Pest Control
-+91 93744 88004`;
-};
+  const audioLinks = reports
+    .filter((r) => r.audioUrl || r.voiceNote)
+    .map((r, i) => `Audio ${i + 1}: ${r.audioUrl || r.voiceNote}`)
+    .join("\n");
 
-const buildEmailShareMessage = (customerName, serviceType, shareUrl) => {
-  return `Subject: Service Visit Report - AB Pest Control
+  const driveLinks = reports
+    .flatMap((r) => r.driveFiles || [])
+    .filter((file) => file.url)
+    .map((file, i) => `Drive ${i + 1}: ${file.url}`)
+    .join("\n");
 
-Hello ${customerName || "Customer"},
+  return `Hello ${job.customerName || "Customer"},
 
-Please find your service completion visit report and media attachments at the following secure URL:
-${shareUrl}
+Your pest control service has been completed successfully.
 
-Thank you,
-AB Pest Control
-+91 93744 88004`;
+Job Details:
+Service: ${job.treatmentLabel || job.serviceType || "Pest Control"}
+Date: ${new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })}
+
+Work Summary:
+${summary}
+
+Attachments:
+${[photoLinks, videoLinks, audioLinks, driveLinks].filter(Boolean).join("\n\n")}
+
+Thank you for choosing AB PEST CONTROL INSECTISIDE SERVICES.
+
+AB PEST CONTROL INSECTISIDE SERVICES
++91 93744 88004 · abpestcontrol.in`.trim();
 };
 
 export default function JobReportsAdminView({ job, onClose }) {
@@ -103,6 +139,7 @@ export default function JobReportsAdminView({ job, onClose }) {
   const [activeTab, setActiveTab] = useState("visit_reports"); // visit_reports | job_reports
   const [jobReports, setJobReports] = useState([]);
   const [visitReports, setVisitReports] = useState([]);
+  const [subJobs, setSubJobs] = useState([]);
 
   // States for reviews
   const [adminNotes, setAdminNotes] = useState({});
@@ -147,12 +184,24 @@ export default function JobReportsAdminView({ job, onClose }) {
     });
   }, [job.id]);
 
+  useEffect(() => {
+    const q = query(collection(firestoreDb, "subJobs"), where("jobId", "==", job.id));
+    return subscribeQuery(q, setSubJobs);
+  }, [job.id]);
+
   const handleUpdateStatus = async (reportId, status) => {
     const note = (adminNotes[reportId] || "").trim();
 
     if (status === "rejected" && !note) {
       alert("Admin remarks are required to Reject a report.");
       return;
+    }
+
+    if (status === "approved") {
+      const pending = getPendingSubJobs(subJobs, job.id);
+      if (!confirmIncompleteSubJobs(pending, "approve this report and mark the job as completed")) {
+        return;
+      }
     }
 
     try {
@@ -163,6 +212,17 @@ export default function JobReportsAdminView({ job, onClose }) {
         reviewedByAdminId: adminId,
         reviewedByAdminName: adminName,
       });
+
+      if (status === "approved" && job.status !== "completed") {
+        const pending = getPendingSubJobs(subJobs, job.id);
+        await updateRecord("jobs", job.id, {
+          status: "completed",
+          completedAt: new Date().toISOString(),
+          completedBy: adminName,
+          completedWithPendingSubJobs: pending.length > 0,
+        });
+      }
+
       alert(`Report status updated to "${status.toUpperCase().replace("_", " ")}".`);
     } catch (e) {
       alert("Failed to update status: " + e.message);
@@ -198,7 +258,7 @@ export default function JobReportsAdminView({ job, onClose }) {
     if (!sharingReport) return;
     
     const token = sharingReport.shareSettings?.shareToken || uid();
-    const publicUrl = `${window.location.origin}/shared-report/${token}`;
+    const publicUrl = buildSharedReportUrl(token);
     const expiry = new Date();
     expiry.setDate(expiry.getDate() + parseInt(sharingConfig.expiryDays || 7));
 
@@ -246,14 +306,14 @@ export default function JobReportsAdminView({ job, onClose }) {
     setTimeout(() => setShareLinkCopied(false), 2000);
   };
 
-  const handleWhatsAppShare = (url, customerName) => {
-    const msg = buildWhatsAppShareMessage(customerName, job.treatmentLabel || job.serviceType, url);
+  const handleWhatsAppShare = (url, customerName, report) => {
+    const msg = buildWhatsAppShareMessage(customerName, job.treatmentLabel || job.serviceType, url, report, job);
     const phone = getWhatsAppNumber(job.customerPhone);
     sendWhatsAppText(phone, msg);
   };
 
-  const handleEmailShare = (url, customerName) => {
-    const msg = buildEmailShareMessage(customerName, job.treatmentLabel || job.serviceType, url);
+  const handleEmailShare = (url, customerName, report) => {
+    const msg = buildEmailShareMessage(customerName, job.treatmentLabel || job.serviceType, url, job, report);
     const mailto = `mailto:${job.customerEmail || ""}?subject=Service%20Visit%20Report&body=${encodeURIComponent(msg)}`;
     window.open(mailto, "_blank");
   };
@@ -529,6 +589,32 @@ export default function JobReportsAdminView({ job, onClose }) {
                           className="w-full h-16 bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                         />
 
+                        {currentStatus !== "approved" && currentStatus !== "rejected" && (
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateStatus(report.id, "approved")}
+                              className="flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 bg-green-500 text-black hover:bg-green-600 transition-colors"
+                            >
+                              <ThumbsUp className="w-3.5 h-3.5" /> Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateStatus(report.id, "changes_requested")}
+                              className="flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 transition-colors"
+                            >
+                              <AlertTriangle className="w-3.5 h-3.5" /> Request Changes
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateStatus(report.id, "rejected")}
+                              className="flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors"
+                            >
+                              <ThumbsDown className="w-3.5 h-3.5" /> Reject
+                            </button>
+                          </div>
+                        )}
+
                         {/* Secure Share Trigger Button */}
                         {currentStatus === "approved" && (
                           <div className="pt-2 border-t border-white/5 flex justify-between items-center">
@@ -561,13 +647,13 @@ export default function JobReportsAdminView({ job, onClose }) {
                                       {shareLinkCopied ? "Copied ✓" : "Copy Link"}
                                     </button>
                                     <button
-                                      onClick={() => handleWhatsAppShare(report.shareSettings.shareUrl, report.jobSnapshot?.customerName)}
+                                      onClick={() => handleWhatsAppShare(report.shareSettings.shareUrl, report.jobSnapshot?.customerName, report)}
                                       className="px-2 py-1 rounded bg-green-600 hover:bg-green-700 text-[9px] font-bold text-white flex items-center gap-1"
                                     >
                                       WhatsApp
                                     </button>
                                     <button
-                                      onClick={() => handleEmailShare(report.shareSettings.shareUrl, report.jobSnapshot?.customerName)}
+                                      onClick={() => handleEmailShare(report.shareSettings.shareUrl, report.jobSnapshot?.customerName, report)}
                                       className="px-2 py-1 rounded bg-sky-600 hover:bg-sky-700 text-[9px] font-bold text-white flex items-center gap-1"
                                     >
                                       Email
@@ -586,6 +672,18 @@ export default function JobReportsAdminView({ job, onClose }) {
                             )}
                           </div>
                         )}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const msg = buildServiceVisitReportWhatsApp(job, report);
+                            const phone = getWhatsAppNumber(job.customerPhone);
+                            sendWhatsAppText(phone, msg);
+                          }}
+                          className="w-full mt-2 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-2 bg-[#25D366] text-white hover:bg-[#128C7E] transition-colors shadow-lg"
+                        >
+                          <Send className="w-4 h-4" /> Share Text via WhatsApp
+                        </button>
                       </div>
 
                     </article>
@@ -698,6 +796,25 @@ export default function JobReportsAdminView({ job, onClose }) {
                     </article>
                   );
                 })}
+                
+                {jobReports.length > 0 && (
+                  <div className="mt-4 p-4 rounded-2xl" style={{ background: "rgba(37,211,102,0.1)", border: "1px solid rgba(37,211,102,0.2)" }}>
+                    <p className="text-sm font-black mb-3 text-green-400 flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" /> Share Original Reports
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const msg = buildReportMessage(job, jobReports);
+                        const phone = getWhatsAppNumber(job.customerPhone);
+                        sendWhatsAppText(phone, msg);
+                      }}
+                      className="w-full py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-2 bg-[#25D366] text-white hover:bg-[#128C7E] transition-colors shadow-lg"
+                    >
+                      <Send className="w-4 h-4" /> Share via WhatsApp
+                    </button>
+                  </div>
+                )}
               </div>
             )
           )}

@@ -5,6 +5,7 @@ import { firestoreDb } from "../firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { createRecord, deleteRecord, subscribeCollection, subscribeQuery, updateRecord, nextDocumentNumber } from "../utils/firestoreHelpers";
 import { formatCurrency, formatDateDisplay, getTodayISO } from "../utils/format";
+import { confirmIncompleteSubJobs, getPendingSubJobs } from "../utils/jobHelpers";
 import { EmployeeS } from "../constants/authProfiles";
 import MapLink from "../components/MapLink";
 import { getUnitLabel } from "../utils/pricing";
@@ -176,6 +177,7 @@ function TreatmentBlock({ tKey, tPrice, tQty, tUnit, onTKey, onPrice, onQty, onU
  *   attendanceByJob?: Record<string, Record<string, any>>,
  *   isEmployee: boolean,
  *   onMarkSubDone: (subJob: Record<string, any>) => void,
+ *   onCompleteJob: (job: Record<string, any>) => void,
  *   onRaiseRework: (job: Record<string, any>) => void,
  *   busy: boolean,
  *   onJobUpdated?: () => void,
@@ -188,7 +190,7 @@ function TreatmentBlock({ tKey, tPrice, tQty, tUnit, onTKey, onPrice, onQty, onU
  *   onOpenAttendance?: (job: Record<string, any>) => void,
  * }} props
  */
-function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone, onRaiseRework, busy, onJobUpdated, onGenerateInvoice, onOpenReport, onOpenVideoReport, onOpenAdminReports, onOpenCheckIn, onSetLocation, onOpenAttendance, latestReportStatus = null }) {
+function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone, onCompleteJob, onRaiseRework, busy, onJobUpdated, onGenerateInvoice, onOpenReport, onOpenVideoReport, onOpenAdminReports, onOpenCheckIn, onSetLocation, onOpenAttendance, latestReportStatus = null }) {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const attendanceRecord = attendanceByJob[job.id];
@@ -371,6 +373,15 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
                 <History className="w-3 h-3" /> History ({job.history.length})
               </button>
             )}
+            {job.status !== "completed" && (
+              <button onClick={() => onCompleteJob?.(job)} disabled={busy}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 disabled:opacity-60"
+                style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", color: "#34D399" }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 14px rgba(16,185,129,0.3)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                <CheckCircle2 className="w-3 h-3" /> Complete Job
+              </button>
+            )}
             {(job.status === "completed" || job.status === "in_progress") && (
               <button onClick={() => setShowAdminReports(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
@@ -480,6 +491,13 @@ function JobCard({ job, subJobs, attendanceByJob = {}, isEmployee, onMarkSubDone
                     }}>
                     {completedCount}/{jobSubJobs.length} tasks done
                   </span>
+                )}
+                {job.status !== "completed" && (checkedIn || job.status === "in_progress") && (
+                  <button onClick={() => onCompleteJob?.(job)} disabled={busy}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-60"
+                    style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", color: "#6DBF4A" }}>
+                    <CheckCircle2 className="w-3 h-3" /> Complete Job
+                  </button>
                 )}
               </>
             )}
@@ -735,7 +753,7 @@ function CreateJobModal({ customers, onClose, onSave, saving, reworkSource }) {
 }
 
 /** Customer Jobs Panel — shows all jobs for a selected customer */
-function CustomerJobsPanel({ customer, jobs, subJobs, attendanceByJob, isEmployee, onMarkSubDone, onRaiseRework, onGenerateInvoice, busy, onBack, onOpenReport, onOpenVideoReport, onOpenAdminReports, onSetLocation, onOpenAttendance }) {
+function CustomerJobsPanel({ customer, jobs, subJobs, attendanceByJob, isEmployee, onMarkSubDone, onCompleteJob, onRaiseRework, onGenerateInvoice, busy, onBack, onOpenReport, onOpenVideoReport, onOpenAdminReports, onSetLocation, onOpenAttendance }) {
   const customerJobs = useMemo(() =>
     jobs.filter((j) => j.customerId === customer.id || j.customerName === customer.name)
       .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
@@ -805,7 +823,7 @@ function CustomerJobsPanel({ customer, jobs, subJobs, attendanceByJob, isEmploye
         <div className="space-y-3">
           {filtered.map(job => (
             <JobCard key={job.id} job={job} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={isEmployee}
-              onMarkSubDone={onMarkSubDone} onRaiseRework={onRaiseRework}
+              onMarkSubDone={onMarkSubDone} onCompleteJob={onCompleteJob} onRaiseRework={onRaiseRework}
               onGenerateInvoice={onGenerateInvoice} busy={busy} onJobUpdated={() => {}}
               onOpenReport={onOpenReport} onOpenVideoReport={onOpenVideoReport} onOpenAdminReports={onOpenAdminReports} onSetLocation={onSetLocation} onOpenAttendance={onOpenAttendance}
               latestReportStatus={null} />
@@ -1102,11 +1120,31 @@ export default function JobsPage() {
         completedAt: allDone ? new Date().toISOString() : null,
         completedBy: allDone ? EmployeeName : "",
       });
-      showMsg("success", `"${sj.title}" marked done.`);
+      showMsg("success", `"${sj.title}" marked done.${allDone ? " Job completed." : ""}`);
     } catch (e) {
       showMsg("error", e.message);
     } finally {
 
+      setBusy(false);
+    }
+  };
+
+  const handleCompleteJob = async (job) => {
+    const pending = getPendingSubJobs(subJobs, job.id);
+    if (!confirmIncompleteSubJobs(pending, "mark this job as completed")) return;
+
+    setBusy(true);
+    try {
+      await updateRecord("jobs", job.id, {
+        status: "completed",
+        completedAt: new Date().toISOString(),
+        completedBy: EmployeeName,
+        completedWithPendingSubJobs: pending.length > 0,
+      });
+      showMsg("success", `Job for ${job.customerName} marked as completed.`);
+    } catch (e) {
+      showMsg("error", e.message);
+    } finally {
       setBusy(false);
     }
   };
@@ -1237,7 +1275,7 @@ export default function JobsPage() {
             subJobs={subJobs}
             attendanceByJob={attendanceByJob}
             isEmployee={false}
-            onMarkSubDone={handleMarkSubDone}
+            onMarkSubDone={handleMarkSubDone} onCompleteJob={handleCompleteJob}
             onRaiseRework={handleRaiseRework}
             onGenerateInvoice={handleGenerateInvoice}
             busy={busy}
@@ -1322,7 +1360,7 @@ export default function JobsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filtered.map((job) => (
             <JobCard key={job.id} job={job} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={isEmployee}
-              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onOpenCheckIn={setCheckInJob}
+              onMarkSubDone={handleMarkSubDone} onCompleteJob={handleCompleteJob} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onOpenCheckIn={setCheckInJob}
               latestReportStatus={jobReportStatusMap[job.id] || null} />
           ))}
         </div>
@@ -1331,14 +1369,14 @@ export default function JobsPage() {
           {jobChains.map(({ original, reworks }) => (
             <div key={original.id}>
               <JobCard job={original} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={false}
-                onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob}
+                onMarkSubDone={handleMarkSubDone} onCompleteJob={handleCompleteJob} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob}
                 latestReportStatus={jobReportStatusMap[original.id] || null} />
               {reworks.length > 0 && (
                 <div className="ml-6 mt-2 space-y-2 border-l-2 border-violet-200 pl-4">
                   <p className="text-xs font-bold text-violet-500 uppercase tracking-wider mb-2">Rework Jobs ({reworks.length})</p>
                   {reworks.map((rw) => (
                     <JobCard key={rw.id} job={rw} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={false}
-                      onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob}
+                      onMarkSubDone={handleMarkSubDone} onCompleteJob={handleCompleteJob} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob}
                       latestReportStatus={jobReportStatusMap[rw.id] || null} />
                   ))}
                 </div>
@@ -1347,7 +1385,7 @@ export default function JobsPage() {
           ))}
           {filtered.filter(j => j.parentJobId && !jobChains.find(c => c.original.id === j.parentJobId)).map((job) => (
             <JobCard key={job.id} job={job} subJobs={subJobs} attendanceByJob={attendanceByJob} isEmployee={false}
-              onMarkSubDone={handleMarkSubDone} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob}
+              onMarkSubDone={handleMarkSubDone} onCompleteJob={handleCompleteJob} onRaiseRework={handleRaiseRework} busy={busy} onJobUpdated={() => {}} onGenerateInvoice={handleGenerateInvoice} onOpenReport={setReportJob} onOpenVideoReport={setVideoReportJob} onOpenAdminReports={setAdminReportsJob} onSetLocation={setSetLocationJob} onOpenAttendance={setAttendanceJob}
               latestReportStatus={jobReportStatusMap[job.id] || null} />
           ))}
         </div>
