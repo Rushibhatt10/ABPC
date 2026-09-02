@@ -23,7 +23,7 @@ import { compressImage, validateFileSize, uid } from "../utils/mediaHelpers";
 import { confirmIncompleteSubJobs } from "../utils/jobHelpers";
 
 const glass = {
-  background: "linear-gradient(180deg, rgba(15,22,16,0.98), rgba(7,12,8,0.98))",
+  background: "linear-gradient(180deg, rgba(18,26,18,0.98), rgba(12,18,12,0.98))",
   border: "1px solid rgba(132,204,22,0.26)",
   backdropFilter: "blur(28px)",
   WebkitBackdropFilter: "blur(28px)",
@@ -32,12 +32,12 @@ const glass = {
 const colors = {
   title: "#F8FAFC",
   body: "#DCE7D6",
-  muted: "#AAB7A5",
-  subtle: "#7F8D7B",
+  muted: "#C8D9C0",
+  subtle: "#A8BDA0",
   green: "#86EFAC",
-  panel: "rgba(255,255,255,0.075)",
-  panelStrong: "rgba(255,255,255,0.11)",
-  border: "rgba(255,255,255,0.16)",
+  panel: "rgba(255,255,255,0.12)",
+  panelStrong: "rgba(255,255,255,0.25)",
+  border: "rgba(255,255,255,0.25)",
 };
 
 // Client-side helper to fetch media duration (video/audio)
