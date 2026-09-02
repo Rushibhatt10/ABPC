@@ -354,15 +354,7 @@ export default function QuotationsPage() {
                   <Pencil className="w-3 h-3" />
                   Edit
                 </button>
-                {q.status !== "Converted to Invoice" && (
-                  <button
-                    onClick={() => convertToInvoice(q)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
-                  >
-                    <ArrowRight className="w-3 h-3" />
-                    Convert to Invoice
-                  </button>
-                )}
+                {/* Convert to Invoice action removed per requirement */}
                 <button
                   onClick={() => handleDelete(q)}
                   disabled={deletingId === q.id}

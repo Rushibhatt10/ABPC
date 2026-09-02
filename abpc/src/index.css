@@ -1264,3 +1264,131 @@ button:active:not(:disabled) {
 .reel-card:hover {
   transform: translateY(-4px);
 }
+
+/* Dark report admin overlay - protect readable text from light admin overrides */
+.job-reports-admin-panel,
+.job-reports-admin-panel :where(p, span, label, div, button, input, textarea, select, a) {
+  color-scheme: dark;
+}
+
+.job-reports-admin-panel :where(
+  .text-white,
+  .text-slate-50,
+  .text-slate-100,
+  .text-slate-200,
+  .text-slate-300,
+  .text-slate-400,
+  [class*="text-white/"],
+  [class*="text-slate-"]
+) {
+  color: #f8fafc !important;
+}
+
+.job-reports-admin-panel :where(.text-slate-300, .text-slate-400, [class*="text-slate-300/"], [class*="text-slate-400/"]) {
+  color: rgba(226, 232, 240, 0.9) !important;
+}
+
+.job-reports-admin-panel :where(.text-green-400, .text-green-500) {
+  color: #86efac !important;
+}
+
+.job-reports-admin-panel :where(.text-amber-300, .text-amber-400) {
+  color: #fcd34d !important;
+}
+
+.job-reports-admin-panel :where(.text-red-300, .text-red-400) {
+  color: #fca5a5 !important;
+}
+
+.job-reports-admin-panel :where(.text-orange-400) {
+  color: #fdba74 !important;
+}
+
+.job-reports-admin-panel :where(.text-black) {
+  color: #06130a !important;
+}
+
+.job-reports-admin-panel :where(input, textarea, select) {
+  color: #f8fafc !important;
+  caret-color: #86efac;
+}
+
+.job-reports-admin-panel :where(input::placeholder, textarea::placeholder) {
+  color: rgba(203, 213, 225, 0.88) !important;
+  opacity: 1;
+}
+
+.job-reports-admin-panel select option {
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.job-reports-admin-panel :where(button.bg-green-400, button.bg-green-500, button.hover\:bg-green-500, button.hover\:bg-green-600) {
+  color: #06130a !important;
+}
+
+.job-reports-admin-panel :where(button.bg-\[\#25D366\], button.bg-green-600, button.bg-sky-600) {
+  color: #ffffff !important;
+}
+
+.job-reports-admin-panel :where(button.bg-\[\#25D366\], button.bg-green-600, button.bg-sky-600) :where(svg, span) {
+  color: #ffffff !important;
+}
+
+/* Stronger admin override: report panels are dark, so all neutral text must stay white */
+.admin-main .job-reports-admin-panel,
+.admin-main .job-reports-admin-panel :where(
+  p,
+  span,
+  div,
+  label,
+  button,
+  input,
+  textarea,
+  select,
+  a,
+  svg
+) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: currentColor;
+}
+
+.admin-main .job-reports-admin-panel :where(
+  .text-white,
+  .text-slate-50,
+  .text-slate-100,
+  .text-slate-200,
+  .text-slate-300,
+  .text-slate-400,
+  [class*="text-white/"],
+  [class*="text-slate-"]
+) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff;
+}
+
+.admin-main .job-reports-admin-panel :where(.text-green-400, .text-green-500) {
+  color: #86efac !important;
+  -webkit-text-fill-color: #86efac;
+}
+
+.admin-main .job-reports-admin-panel :where(.text-amber-300, .text-amber-400) {
+  color: #fde68a !important;
+  -webkit-text-fill-color: #fde68a;
+}
+
+.admin-main .job-reports-admin-panel :where(.text-red-300, .text-red-400) {
+  color: #fecaca !important;
+  -webkit-text-fill-color: #fecaca;
+}
+
+.admin-main .job-reports-admin-panel :where(.text-black, button.bg-green-400, button.bg-green-500) {
+  color: #06130a !important;
+  -webkit-text-fill-color: #06130a;
+}
+
+.admin-main .job-reports-admin-panel :where(input::placeholder, textarea::placeholder) {
+  color: #e2e8f0 !important;
+  -webkit-text-fill-color: #e2e8f0;
+  opacity: 1;
+}

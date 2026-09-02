@@ -8,6 +8,11 @@ import ResponsiveImage from"../components/ResponsiveImage.jsx";
 import LazyMapEmbed from"../components/LazyMapEmbed.jsx";
 import { createRecord } from"../utils/firestoreHelpers";
 import { isTouchDevice } from"../hooks/useMobile.js";
+import Lenis from"lenis";
+import gsap from"gsap";
+import { ScrollTrigger } from"gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const HamburgerIcon = ({ open }) => (
   <div className="flex flex-col justify-center items-end gap-1.5 w-26px h-6 cursor-pointer group">
@@ -140,6 +145,7 @@ useEffect(() => {
     { label: "Location", id: "location" },
     { label: "Contact", id: "contact" },
     { label: "Customer Login", url: "/customer/login" },
+    { label: "Admin", url: "/admin/login" },
     { label: "Admin", url: "/admin/login" },
   ];
 

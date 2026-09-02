@@ -569,7 +569,7 @@ export default function InvoicesPage() {
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Payment Mode</label>
                       <select value={form.paymentMode} onChange={(e) => setForm(p => ({ ...p, paymentMode: e.target.value }))}
                         className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:border-[var(--brand)] focus:outline-none text-sm">
-                        {["UPI", "Cash", "Bank Transfer", "Cheque", "Card"].map(m => <option key={m}>{m}</option>)}
+                        {["UPI", "Cheque", "Bank Transfer"].map(m => <option key={m}>{m}</option>)}
                       </select>
                     </div>
                   </div>

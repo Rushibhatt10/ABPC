@@ -205,10 +205,6 @@ Thank you for choosing A.B. Pest Control! 😊`;
                     <p style={S.label}>Invoice Date</p>
                     <p style={S.value}>{formatDateDisplay(invoice.date)}</p>
                   </div>
-                  <div style={S.field}>
-                    <p style={S.label}>Payment Mode</p>
-                    <p style={S.value}>{invoice.paymentMode || "—"}</p>
-                  </div>
                 </div>
               </div>
             </div>

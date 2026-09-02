@@ -3,14 +3,12 @@
  * User picks payment mode → confirmed → invoice is created with that mode printed on it.
  */
 import { useState } from "react";
-import { X, CreditCard, Banknote, Smartphone, Building2, CheckCircle2 } from "lucide-react";
+import { X, CreditCard, Smartphone, Building2, CheckCircle2 } from "lucide-react";
 
 const MODES = [
-  { value: "Cash",          label: "Cash",          icon: Banknote,    color: "#16a34a", bg: "rgba(22,163,74,0.1)",   border: "rgba(22,163,74,0.3)" },
   { value: "UPI",           label: "UPI",           icon: Smartphone,  color: "#7c3aed", bg: "rgba(124,58,237,0.1)",  border: "rgba(124,58,237,0.3)" },
   { value: "Cheque",        label: "Cheque",        icon: CreditCard,  color: "#0369a1", bg: "rgba(3,105,161,0.1)",   border: "rgba(3,105,161,0.3)" },
   { value: "Bank Transfer", label: "Bank Transfer", icon: Building2,   color: "#b45309", bg: "rgba(180,83,9,0.1)",    border: "rgba(180,83,9,0.3)" },
-  { value: "Card",          label: "Card",          icon: CreditCard,  color: "#e4572e", bg: "rgba(228,87,46,0.1)",   border: "rgba(228,87,46,0.3)" },
 ];
 
 export default function PaymentModeModal({ onConfirm, onClose, title = "Generate Invoice", defaultWarranty = "", showWarrantyInput = true }) {

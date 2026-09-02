@@ -26,7 +26,7 @@ export default function QuotationPrintPage() {
   }, [loading, quotation]);
 
   const generatePDFBlob = async () => {
-    const element = document.querySelector(".print-container") || document.querySelector(".doc-page");
+    const element = document.querySelector(".print-container");
     return generateA4PdfBlob(element);
   };
 
@@ -162,7 +162,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
             </div>
 
             {/* SECTION 1: QUOTATION FOR */}
-            <div style={{ marginBottom: "5mm" }}>
+            <div style={{ marginBottom: "4mm" }}>
               <p style={S.sectionTitle}>1. Quotation For</p>
               <div style={S.box}>
                 <div style={S.grid2}>
@@ -176,7 +176,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
                   </div>
                 </div>
                 <div style={S.field}>
-                  <p style={S.label}>Customer ID</p>
+                  <p style={S.label}>Customer ID (Portal Login)</p>
                   <p style={S.value}>{quotation.customerId || "-"}</p>
                 </div>
                 <div style={S.field}>
@@ -199,13 +199,13 @@ Thank you for choosing A.B. Pest Control! 😊`;
             </div>
 
             {/* SECTION 2: SERVICES */}
-            <div style={{ marginBottom: "5mm" }}>
+            <div style={{ marginBottom: "4mm" }}>
               <p style={S.sectionTitle}>2. Services</p>
               <div style={S.box}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
                   <thead>
                     <tr style={{ borderBottom: "1px solid #D8CFC4" }}>
-                      {["#", "Service", "Qty", "Unit", "Amount"].map((h, i) => (
+                      {["#", "Service", "Qty", "Rate", "Amount"].map((h, i) => (
                         <th key={h} style={{ textAlign: i >= 2 ? "right" : i === 0 ? "left" : "left", padding: "4px 6px", fontSize: 9, fontWeight: 600, letterSpacing: "0.1em", color: "#8B7E74", textTransform: "uppercase" }}>{h}</th>
                       ))}
                     </tr>
@@ -228,7 +228,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
             </div>
 
             {/* SECTION 3: TOTAL */}
-            <div style={{ marginBottom: "5mm" }}>
+            <div style={{ marginBottom: "4mm" }}>
               <p style={S.sectionTitle}>3. Summary</p>
               <div style={S.box}>
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -253,7 +253,7 @@ Thank you for choosing A.B. Pest Control! 😊`;
 
             {/* TERMS */}
             {quotation.terms && (
-              <div style={{ marginBottom: "5mm" }}>
+              <div style={{ marginBottom: "4mm" }}>
                 <p style={S.sectionTitle}>5. Terms & Conditions</p>
                 <div style={S.box}>
                   <p style={{ fontSize: 10, color: "#2E2A27", lineHeight: 1.7, whiteSpace: "pre-line" }}>{quotation.terms}</p>
@@ -263,15 +263,15 @@ Thank you for choosing A.B. Pest Control! 😊`;
 
             {/* SIGNATURE */}
             <div style={S.divider} />
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6mm" }}>
-              <div style={{ textAlign: "center", minWidth: 160 }}>
-                <img src="/sign-removebg-preview.png" alt="Signature" style={{ height: 70, width: 180, objectFit: "contain", objectPosition: "center", display: "block", margin: "0 auto 4px" }} />
-                <div style={{ borderBottom: "1.5px solid #8B7E74", marginBottom: 6, width: 160, marginLeft: "auto", marginRight: "auto" }} />
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "4mm" }}>
+              <div style={{ textAlign: "center", minWidth: 150 }}>
+                <img src="/sign-removebg-preview.png" alt="Signature" style={{ height: 52, width: 150, objectFit: "contain", objectPosition: "center", display: "block", margin: "0 auto 3px" }} />
+                <div style={{ borderBottom: "1.5px solid #8B7E74", marginBottom: 4, width: 140, marginLeft: "auto", marginRight: "auto" }} />
                 <p style={{ fontSize: 10, fontWeight: 600, color: "#2E2A27", letterSpacing: "0.04em" }}>Authorized Signatory</p>
                 <p style={{ fontSize: 9, color: "#8B7E74", marginTop: 2 }}>AB Pest Control</p>
               </div>
             </div>
-            <div style={{ textAlign: "center", marginTop: "5mm" }}>
+            <div style={{ textAlign: "center", marginTop: "3mm", paddingBottom: "2mm" }}>
               <p style={{ fontSize: 8, color: "#8B7E74", letterSpacing: "0.06em" }}>This quotation is valid for 15 days from the date of issue. · abpestcontrol.in</p>
             </div>
 

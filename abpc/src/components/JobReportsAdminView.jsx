@@ -43,18 +43,23 @@ import {
 } from "../utils/shareMessages";
 
 const G = {
-  modal: { background: "rgba(10,12,10,0.96)", border: "1px solid rgba(76,122,45,0.18)", backdropFilter: "blur(32px)", WebkitBackdropFilter: "blur(32px)" },
-  cardHi: { background: "rgba(76,122,45,0.06)", border: "1px solid rgba(76,122,45,0.2)" },
-  wa: { background: "rgba(18,140,126,0.08)", border: "1px solid rgba(37,211,102,0.2)" },
+  modal: {
+    background: "linear-gradient(135deg, rgba(8, 15, 10, 0.98), rgba(22, 32, 18, 0.96))",
+    border: "1px solid rgba(160, 198, 134, 0.24)",
+    backdropFilter: "blur(32px)",
+    WebkitBackdropFilter: "blur(32px)",
+  },
+  cardHi: { background: "rgba(122, 151, 92, 0.16)", border: "1px solid rgba(173, 208, 145, 0.28)" },
+  wa: { background: "rgba(18,140,126,0.16)", border: "1px solid rgba(37,211,102,0.34)" },
 };
 
 const colors = {
   title: "#F8FAFC",
-  body: "#DCE7D6",
-  muted: "#AAB7A5",
-  subtle: "#7F8D7B",
-  green: "#86EFAC",
-  border: "rgba(255,255,255,0.16)",
+  body: "#F3F7EA",
+  muted: "#DCE8D3",
+  subtle: "#BED3B2",
+  green: "#8EE88A",
+  border: "rgba(255,255,255,0.24)",
 };
 
 const Btn = ({ children, onClick, variant = "ghost", className = "", style = {}, ...p }) => {
@@ -319,9 +324,9 @@ export default function JobReportsAdminView({ job, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4">
+    <div className="job-reports-admin-panel fixed inset-0 z-100 flex items-end sm:items-center justify-center bg-slate-950/80 backdrop-blur-md p-0 sm:p-4">
       <div className="absolute inset-0 pointer-events-none" style={{
-        background: "radial-gradient(ellipse 60% 40% at 50% 60%, rgba(76,122,45,0.08) 0%, transparent 70%)"
+        background: "radial-gradient(ellipse 60% 40% at 50% 60%, rgba(76,122,45,0.12) 0%, transparent 70%)"
       }} />
 
       <div className="relative w-full sm:max-w-2xl sm:rounded-3xl rounded-t-3xl max-h-[92vh] flex flex-col overflow-hidden"
@@ -329,35 +334,35 @@ export default function JobReportsAdminView({ job, onClose }) {
         <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(76,122,45,0.6), transparent)" }} />
 
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 flex-shrink-0 border-b border-white/10">
+        <div className="flex items-center justify-between px-5 py-4 shrink-0 border-b border-white/15">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
               <p className="font-black text-sm" style={{ background: "linear-gradient(135deg,#6DBF4A,#4C7A2D)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                 Job Reports Dashboard
               </p>
-              <span className="flex items-center gap-1 text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+              <span className="flex items-center gap-1 text-[10px]" style={{ color: colors.subtle }}>
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block" style={{ boxShadow: "0 0 6px #4ade80" }} />
                 Live
               </span>
             </div>
-            <p className="text-xs mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.35)" }}>
+            <p className="text-xs mt-0.5 truncate" style={{ color: colors.muted }}>
               {job.customerName} - {job.treatmentLabel || job.serviceType}
             </p>
           </div>
           <button onClick={onClose}
-            className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ml-3 transition-all bg-white/6 border border-white/10 text-white/50">
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ml-3 transition-all bg-white/10 border border-white/15 text-slate-100/90">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-white/10 p-2 gap-2 bg-black/40">
+        <div className="flex border-b border-white/15 p-2 gap-2 bg-slate-950/60">
           <button
             onClick={() => setActiveTab("visit_reports")}
             className="flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5"
             style={{
               background: activeTab === "visit_reports" ? "rgba(110,191,74,0.15)" : "transparent",
-              color: activeTab === "visit_reports" ? colors.green : "rgba(255,255,255,0.4)",
+              color: activeTab === "visit_reports" ? colors.green : colors.muted,
               border: activeTab === "visit_reports" ? "1px solid rgba(110,191,74,0.3)" : "1px solid transparent",
             }}
           >
@@ -370,7 +375,7 @@ export default function JobReportsAdminView({ job, onClose }) {
             className="flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5"
             style={{
               background: activeTab === "job_reports" ? "rgba(110,191,74,0.15)" : "transparent",
-              color: activeTab === "job_reports" ? colors.green : "rgba(255,255,255,0.4)",
+              color: activeTab === "job_reports" ? colors.green : colors.muted,
               border: activeTab === "job_reports" ? "1px solid rgba(110,191,74,0.3)" : "1px solid transparent",
             }}
           >
@@ -386,16 +391,16 @@ export default function JobReportsAdminView({ job, onClose }) {
           {activeTab === "visit_reports" && (
             visitReports.length === 0 ? (
               <div className="text-center py-14">
-                <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center relative bg-white/5 border border-white/10">
-                  <FileText className="w-7 h-7 text-white/20" />
+                <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center relative bg-white/10 border border-white/15">
+                  <FileText className="w-7 h-7 text-slate-100/80" />
                 </div>
-                <p className="text-sm font-bold text-white mb-1">No visit reports submitted yet</p>
-                <p className="text-xs leading-relaxed text-white/30">
+                <p className="text-sm font-bold text-slate-100 mb-1">No visit reports submitted yet</p>
+                <p className="text-xs leading-relaxed text-slate-200/95">
                   Detailed checklist reports submitted by technicians will display here.
                 </p>
                 <div className="flex items-center justify-center gap-1.5 mt-4">
-                  <RefreshCw className="w-3 h-3 animate-spin" style={{ color: "rgba(76,122,45,0.5)" }} />
-                  <span className="text-[10px]" style={{ color: "rgba(76,122,45,0.5)" }}>Listening for updates...</span>
+                  <RefreshCw className="w-3 h-3 animate-spin" style={{ color: "rgba(110,191,74,0.8)" }} />
+                  <span className="text-[10px]" style={{ color: "rgba(110,191,74,0.8)" }}>Listening for updates...</span>
                 </div>
               </div>
             ) : (
@@ -411,18 +416,18 @@ export default function JobReportsAdminView({ job, onClose }) {
                   const st = statusColors[currentStatus] || statusColors.submitted;
 
                   return (
-                    <article key={report.id} className="rounded-2xl overflow-hidden transition-all bg-white/5 border border-white/10"
+                    <article key={report.id} className="rounded-2xl overflow-hidden transition-all bg-white/10 border border-white/15"
                       style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
                       
                       {/* Header */}
-                      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black flex-shrink-0 bg-green-500/10 border border-green-500/20 text-green-400">
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shrink-0 bg-green-500/10 border border-green-500/20 text-green-400">
                             {report.employeeName?.slice(0, 2).toUpperCase() || "AB"}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-white truncate">{report.employeeName || "Team"}</p>
-                            <p className="text-[10px] text-white/30">
+                            <p className="text-sm font-bold text-slate-100 truncate">{report.employeeName || "Team"}</p>
+                            <p className="text-[10px] text-slate-300/90">
                               {report.submittedAt ? new Date(report.submittedAt).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
                             </p>
                           </div>
@@ -431,7 +436,7 @@ export default function JobReportsAdminView({ job, onClose }) {
                           <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={{ background: st.bg, color: st.text, border: `1px solid ${st.border}` }}>
                             {currentStatus.toUpperCase().replace("_", " ")}
                           </span>
-                          <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/70">
+                          <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-slate-100/90">
                             Report #{report.reportNumber}
                           </span>
                         </div>
@@ -439,7 +444,7 @@ export default function JobReportsAdminView({ job, onClose }) {
 
                       {/* Summary Completion details */}
                       {report.progressSnapshot && (
-                        <div className="px-4 py-2 bg-white/5 border-b border-white/5 flex justify-between items-center text-xs text-white/50">
+                        <div className="px-4 py-2 bg-white/10 border-b border-white/10 flex justify-between items-center text-xs text-slate-200/90">
                           <span>Activities Progress:</span>
                           <span className="font-bold text-green-400">
                             {report.progressSnapshot.percentage || 0}% ({report.progressSnapshot.completedActivities}/{report.progressSnapshot.totalActivities})
@@ -448,14 +453,14 @@ export default function JobReportsAdminView({ job, onClose }) {
                       )}
 
                       {/* Activities checklist details */}
-                      <div className="px-4 py-3 border-b border-white/5 space-y-3.5">
+                      <div className="px-4 py-3 border-b border-white/10 space-y-3.5">
                         {/* Newly Completed */}
                         {report.newlyCompletedActivities?.length > 0 && (
                           <div>
                             <p className="text-[9px] font-black uppercase tracking-widest mb-1.5 text-green-400">Newly Completed Activities</p>
                             <div className="space-y-1">
                               {report.newlyCompletedActivities.map((act) => (
-                                <div key={act.subJobId} className="flex items-center gap-1.5 text-xs text-white/80">
+                                <div key={act.subJobId} className="flex items-center gap-1.5 text-xs text-slate-100/90">
                                   <Check className="w-3.5 h-3.5 text-green-400 shrink-0" />
                                   <span>{act.title}</span>
                                 </div>
@@ -467,10 +472,10 @@ export default function JobReportsAdminView({ job, onClose }) {
                         {/* Previously Completed */}
                         {report.previouslyReportedActivities?.length > 0 && (
                           <div>
-                            <p className="text-[9px] font-black uppercase tracking-widest mb-1.5 text-white/40">Previously Completed Activities</p>
+                            <p className="text-[9px] font-black uppercase tracking-widest mb-1.5 text-slate-300/90">Previously Completed Activities</p>
                             <div className="space-y-1 opacity-60">
                               {report.previouslyReportedActivities.map((act) => (
-                                <div key={act.subJobId} className="flex items-center gap-1.5 text-xs text-white/60">
+                                <div key={act.subJobId} className="flex items-center gap-1.5 text-xs text-slate-200/90">
                                   <CheckCircle2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                   <span>{act.title}</span>
                                 </div>
@@ -482,10 +487,10 @@ export default function JobReportsAdminView({ job, onClose }) {
                         {/* Pending */}
                         {report.pendingActivities?.length > 0 && (
                           <div>
-                            <p className="text-[9px] font-black uppercase tracking-widest mb-1.5 text-white/30">Pending Activities</p>
+                            <p className="text-[9px] font-black uppercase tracking-widest mb-1.5 text-slate-300/85">Pending Activities</p>
                             <div className="space-y-1 opacity-50">
                               {report.pendingActivities.map((act) => (
-                                <div key={act.subJobId} className="flex items-center gap-1.5 text-xs text-white/50">
+                                <div key={act.subJobId} className="flex items-center gap-1.5 text-xs text-slate-300/90">
                                   <div className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0" />
                                   <span>{act.title}</span>
                                 </div>
@@ -497,16 +502,16 @@ export default function JobReportsAdminView({ job, onClose }) {
 
                       {/* Employee Remarks */}
                       {report.employeeRemarks && (
-                        <div className="px-4 py-3 border-b border-white/5">
-                          <p className="text-[9px] font-black uppercase tracking-widest mb-1 text-white/40">Employee Remarks</p>
-                          <p className="text-xs leading-relaxed text-white/80">{report.employeeRemarks}</p>
+                        <div className="px-4 py-3 border-b border-white/10">
+                          <p className="text-[9px] font-black uppercase tracking-widest mb-1 text-slate-300/90">Employee Remarks</p>
+                          <p className="text-xs leading-relaxed text-slate-100/95">{report.employeeRemarks}</p>
                         </div>
                       )}
 
                       {/* Photos View */}
                       {report.photos?.length > 0 && (
-                        <div className="p-4 border-b border-white/5">
-                          <p className="text-[9px] font-black uppercase tracking-widest text-white/40 flex items-center gap-1.5 mb-3">
+                        <div className="p-4 border-b border-white/10">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-slate-300/90 flex items-center gap-1.5 mb-3">
                             <ImageIcon className="w-3.5 h-3.5" /> Service Photos ({report.photos.length})
                           </p>
                           <div className="grid grid-cols-3 gap-2">
@@ -519,7 +524,7 @@ export default function JobReportsAdminView({ job, onClose }) {
                                   employeeName: report.employeeName,
                                   time: photo.uploadedAt,
                                 })}
-                                className="aspect-square rounded-xl overflow-hidden bg-black border border-white/10 text-left hover:opacity-85 transition-opacity"
+                                className="aspect-square rounded-xl overflow-hidden bg-slate-900/70 border border-white/15 text-left hover:opacity-85 transition-opacity"
                               >
                                 <img src={photo.url} alt="Work Proof" className="w-full h-full object-cover" />
                               </button>
@@ -530,18 +535,18 @@ export default function JobReportsAdminView({ job, onClose }) {
 
                       {/* Videos View */}
                       {report.videos?.length > 0 && (
-                        <div className="p-4 border-b border-white/5 space-y-3">
-                          <p className="text-[9px] font-black uppercase tracking-widest text-white/40 flex items-center gap-1.5">
+                        <div className="p-4 border-b border-white/10 space-y-3">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-slate-300/90 flex items-center gap-1.5">
                             <Video className="w-3.5 h-3.5" /> Service Videos ({report.videos.length})
                           </p>
                           <div className="space-y-3">
                             {report.videos.map((vid, vIdx) => (
-                              <div key={vid.mediaId || vIdx} className="rounded-2xl overflow-hidden bg-black/40 border border-white/10 p-2 space-y-2">
-                                <video src={vid.url} controls className="w-full rounded-xl max-h-[220px] bg-black" preload="metadata" />
-                                <div className="px-2 pb-1 text-[10px] text-white/50 space-y-0.5">
-                                  <p className="font-bold truncate text-white">{vid.fileName}</p>
+                              <div key={vid.mediaId || vIdx} className="rounded-2xl overflow-hidden bg-slate-900/65 border border-white/15 p-2 space-y-2">
+                                <video src={vid.url} controls className="w-full rounded-xl max-h-55 bg-slate-950" preload="metadata" />
+                                <div className="px-2 pb-1 text-[10px] text-slate-200/95 space-y-0.5">
+                                  <p className="font-bold truncate text-slate-100">{vid.fileName}</p>
                                   <p>Size: {(vid.fileSize / (1024 * 1024)).toFixed(2)} MB • Duration: {Math.round(vid.duration || 0)}s</p>
-                                  {vid.caption && <p className="italic text-white/70 mt-1">"{vid.caption}"</p>}
+                                  {vid.caption && <p className="italic text-slate-100/90 mt-1">"{vid.caption}"</p>}
                                 </div>
                               </div>
                             ))}
@@ -551,19 +556,19 @@ export default function JobReportsAdminView({ job, onClose }) {
 
                       {/* Voice Note View */}
                       {report.voiceNotes?.length > 0 && (
-                        <div className="p-4 border-b border-white/5 space-y-3">
-                          <p className="text-[9px] font-black uppercase tracking-widest text-white/40 flex items-center gap-1.5">
+                        <div className="p-4 border-b border-white/10 space-y-3">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-slate-300/90 flex items-center gap-1.5">
                             <Mic className="w-3.5 h-3.5" /> Voice Notes & Audio ({report.voiceNotes.length})
                           </p>
                           <div className="space-y-2">
                             {report.voiceNotes.map((vn, vnIdx) => (
-                              <div key={vn.mediaId || vnIdx} className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/15 space-y-2">
-                                <div className="flex justify-between items-center text-[10px] text-white/40">
-                                  <span className="truncate max-w-[200px] text-white/70">{vn.fileName}</span>
+                              <div key={vn.mediaId || vnIdx} className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 space-y-2">
+                                <div className="flex justify-between items-center text-[10px] text-slate-300/90">
+                                  <span className="truncate max-w-50 text-slate-100/90">{vn.fileName}</span>
                                   <span>{Math.round(vn.duration || 0)}s • {(vn.fileSize / (1024 * 1024)).toFixed(2)} MB</span>
                                 </div>
                                 <audio controls src={vn.url} className="w-full" />
-                                {vn.caption && <p className="text-[10px] italic text-white/70">"{vn.caption}"</p>}
+                                {vn.caption && <p className="text-[10px] italic text-slate-100/90">"{vn.caption}"</p>}
                               </div>
                             ))}
                           </div>
@@ -572,21 +577,21 @@ export default function JobReportsAdminView({ job, onClose }) {
 
                       {/* Internal Admin Remarks */}
                       {(report.adminRemarks || report.adminNote) && (
-                        <div className="px-4 py-3 bg-white/5 border-b border-white/5">
+                        <div className="px-4 py-3 bg-white/10 border-b border-white/10">
                           <p className="text-[9px] font-black uppercase tracking-widest text-orange-400 mb-1">
                             Admin Remarks (Reviewed by {report.reviewedByAdminName || report.reviewedBy || "Admin"})
                           </p>
-                          <p className="text-xs text-white/80">{report.adminRemarks || report.adminNote}</p>
+                          <p className="text-xs text-slate-100/95">{report.adminRemarks || report.adminNote}</p>
                         </div>
                       )}
 
                       {/* Admin Actions Section */}
-                      <div className="p-4 bg-black/40 space-y-3">
+                      <div className="p-4 bg-slate-900/70 space-y-3">
                         <textarea
                           placeholder="Add admin remarks (required to reject)..."
                           value={adminNotes[report.id] || ""}
                           onChange={(e) => setAdminNotes({ ...adminNotes, [report.id]: e.target.value })}
-                          className="w-full h-16 bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
+                          className="w-full h-16 bg-white/10 border border-white/15 rounded-xl p-2.5 text-xs text-slate-100 placeholder-slate-400/90 focus:outline-none focus:border-green-500/50"
                         />
 
                         {currentStatus !== "approved" && currentStatus !== "rejected" && (
@@ -594,21 +599,21 @@ export default function JobReportsAdminView({ job, onClose }) {
                             <button
                               type="button"
                               onClick={() => handleUpdateStatus(report.id, "approved")}
-                              className="flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 bg-green-500 text-black hover:bg-green-600 transition-colors"
+                              className="flex-1 min-w-25 py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 bg-green-500 text-black hover:bg-green-600 transition-colors"
                             >
                               <ThumbsUp className="w-3.5 h-3.5" /> Approve
                             </button>
                             <button
                               type="button"
                               onClick={() => handleUpdateStatus(report.id, "changes_requested")}
-                              className="flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 transition-colors"
+                              className="flex-1 min-w-25 py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 transition-colors"
                             >
                               <AlertTriangle className="w-3.5 h-3.5" /> Request Changes
                             </button>
                             <button
                               type="button"
                               onClick={() => handleUpdateStatus(report.id, "rejected")}
-                              className="flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors"
+                              className="flex-1 min-w-25 py-2 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors"
                             >
                               <ThumbsDown className="w-3.5 h-3.5" /> Reject
                             </button>
@@ -617,7 +622,7 @@ export default function JobReportsAdminView({ job, onClose }) {
 
                         {/* Secure Share Trigger Button */}
                         {currentStatus === "approved" && (
-                          <div className="pt-2 border-t border-white/5 flex justify-between items-center">
+                          <div className="pt-2 border-t border-white/10 flex justify-between items-center">
                             {report.shareSettings?.isShared ? (
                               <div className="flex-1 space-y-2">
                                 <div className="p-2.5 rounded-xl bg-green-500/10 border border-green-500/25 flex flex-col gap-1.5">
@@ -637,12 +642,12 @@ export default function JobReportsAdminView({ job, onClose }) {
                                     type="text"
                                     readOnly
                                     value={report.shareSettings.shareUrl}
-                                    className="w-full bg-black/60 border border-white/10 rounded px-2 py-1 text-[10px] text-white/80 focus:outline-none"
+                                    className="w-full bg-slate-950/75 border border-white/15 rounded px-2 py-1 text-[10px] text-slate-100/95 focus:outline-none"
                                   />
                                   <div className="flex gap-1.5 flex-wrap">
                                     <button
                                       onClick={() => handleCopyShareLink(report.shareSettings.shareUrl)}
-                                      className="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] font-bold text-white flex items-center gap-1 border border-white/10"
+                                      className="px-2 py-1 rounded bg-white/10 hover:bg-white/15 text-[9px] font-bold text-slate-100 flex items-center gap-1 border border-white/15"
                                     >
                                       {shareLinkCopied ? "Copied ✓" : "Copy Link"}
                                     </button>
@@ -697,16 +702,16 @@ export default function JobReportsAdminView({ job, onClose }) {
           {activeTab === "job_reports" && (
             jobReports.length === 0 ? (
               <div className="text-center py-14">
-                <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center relative bg-white/5 border border-white/10">
-                  <Video className="w-7 h-7 text-white/20" />
+                <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center relative bg-white/10 border border-white/15">
+                  <Video className="w-7 h-7 text-slate-100/80" />
                 </div>
-                <p className="text-sm font-bold text-white mb-1">Waiting for reports...</p>
-                <p className="text-xs leading-relaxed text-white/30">
+                <p className="text-sm font-bold text-slate-100 mb-1">Waiting for reports...</p>
+                <p className="text-xs leading-relaxed text-slate-200/95">
                   Reports will appear here in real-time as employees submit them.
                 </p>
                 <div className="flex items-center justify-center gap-1.5 mt-4">
                   <RefreshCw className="w-3 h-3 animate-spin" style={{ color: "rgba(76,122,45,0.5)" }} />
-                  <span className="text-[10px]" style={{ color: "rgba(76,122,45,0.5)" }}>Listening for updates...</span>
+                  <span className="text-[10px]" style={{ color: "rgba(110,191,74,0.85)" }}>Listening for updates...</span>
                 </div>
               </div>
             ) : (
@@ -718,13 +723,13 @@ export default function JobReportsAdminView({ job, onClose }) {
                       style={{ ...G.cardHi, boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
                       <div className="flex items-center justify-between px-4 py-3 border-b border-green-400/10">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black flex-shrink-0"
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shrink-0"
                             style={{ background: "linear-gradient(135deg,rgba(76,122,45,0.3),rgba(76,122,45,0.15))", color: "#6DBF4A", border: "1px solid rgba(76,122,45,0.3)" }}>
                             {report.employeeName?.slice(0, 2).toUpperCase() || "AB"}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-white truncate">{report.employeeName || "Team"}</p>
-                            <p className="text-[10px] text-white/30">
+                            <p className="text-sm font-bold text-slate-100 truncate">{report.employeeName || "Team"}</p>
+                            <p className="text-[10px] text-slate-300/90">
                               {report.timestamp ? new Date(report.timestamp).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
                             </p>
                           </div>
@@ -738,7 +743,7 @@ export default function JobReportsAdminView({ job, onClose }) {
                       {report.note && (
                         <div className="px-4 py-3 border-b border-green-400/10">
                           <p className="text-[10px] font-black uppercase tracking-widest mb-1.5" style={{ color: "rgba(76,122,45,0.6)" }}>Notes</p>
-                          <p className="text-sm leading-relaxed text-white/75">{report.note}</p>
+                          <p className="text-sm leading-relaxed text-slate-100/95">{report.note}</p>
                         </div>
                       )}
 
@@ -757,7 +762,7 @@ export default function JobReportsAdminView({ job, onClose }) {
                                   employeeName: report.employeeName,
                                   time: report.timestamp,
                                 })}
-                                className="aspect-square rounded-xl overflow-hidden bg-black border border-white/10 hover:opacity-80 transition-opacity"
+                                className="aspect-square rounded-xl overflow-hidden bg-slate-900/80 border border-white/15 hover:opacity-80 transition-opacity"
                               >
                                 <img src={url} alt={`Service photo ${photoIndex + 1}`} className="w-full h-full object-cover" />
                               </button>
@@ -823,26 +828,26 @@ export default function JobReportsAdminView({ job, onClose }) {
 
       {/* Share Link Generation Modal (nested configuration panel) */}
       {sharingReport && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 p-4">
-          <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-3xl p-5 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-110 flex items-center justify-center bg-slate-950/80 p-4">
+          <div className="w-full max-w-md bg-slate-900/90 border border-white/15 rounded-3xl p-5 space-y-4 shadow-2xl">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-black text-white flex items-center gap-1.5">
+              <span className="text-sm font-black text-slate-100 flex items-center gap-1.5">
                 <Lock className="w-4 h-4 text-green-400" /> Share Configurations
               </span>
               <button
                 type="button"
                 onClick={() => setSharingReport(null)}
-                className="w-7 h-7 rounded-lg bg-white/5 text-white/70 hover:bg-white/10 flex items-center justify-center"
+                className="w-7 h-7 rounded-lg bg-white/10 text-slate-100/90 hover:bg-white/15 flex items-center justify-center"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <p className="text-xs text-white/40">Customize access rules before generating the unguessable public token.</p>
+            <p className="text-xs text-slate-200/95">Customize access rules before generating the unguessable public token.</p>
 
             <div className="space-y-3.5 pt-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-white/80 font-bold">Include Photo Attachments</span>
+                <span className="text-xs text-slate-100/95 font-bold">Include Photo Attachments</span>
                 <input
                   type="checkbox"
                   checked={sharingConfig.allowPhotos}
@@ -852,7 +857,7 @@ export default function JobReportsAdminView({ job, onClose }) {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-xs text-white/80 font-bold">Include Video Attachments</span>
+                <span className="text-xs text-slate-100/95 font-bold">Include Video Attachments</span>
                 <input
                   type="checkbox"
                   checked={sharingConfig.allowVideos}
@@ -862,7 +867,7 @@ export default function JobReportsAdminView({ job, onClose }) {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-xs text-white/80 font-bold">Include Voice Notes & Audio</span>
+                <span className="text-xs text-slate-100/95 font-bold">Include Voice Notes & Audio</span>
                 <input
                   type="checkbox"
                   checked={sharingConfig.allowVoiceNotes}
@@ -872,7 +877,7 @@ export default function JobReportsAdminView({ job, onClose }) {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-xs text-white/80 font-bold">Allow Media Downloads</span>
+                <span className="text-xs text-slate-100/95 font-bold">Allow Media Downloads</span>
                 <input
                   type="checkbox"
                   checked={sharingConfig.allowDownload}
@@ -882,11 +887,11 @@ export default function JobReportsAdminView({ job, onClose }) {
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-xs text-white/80 font-bold block">Link Validity Period (Days)</span>
+                <span className="text-xs text-slate-100/95 font-bold block">Link Validity Period (Days)</span>
                 <select
                   value={sharingConfig.expiryDays}
                   onChange={(e) => setSharingConfig({ ...sharingConfig, expiryDays: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none"
+                  className="w-full bg-white/10 border border-white/15 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none"
                 >
                   <option value="1">1 Day</option>
                   <option value="3">3 Days</option>
@@ -900,7 +905,7 @@ export default function JobReportsAdminView({ job, onClose }) {
             <button
               type="button"
               onClick={handleCreateShareLink}
-              className="w-full py-2.5 px-4 rounded-xl bg-green-400 hover:bg-green-500 text-black text-xs font-black transition-colors"
+              className="w-full py-2.5 px-4 rounded-xl bg-green-400 hover:bg-green-500 text-black text-xs font-black transition-colors shadow-sm shadow-green-500/20"
             >
               Generate Public Secure Link
             </button>
@@ -911,7 +916,7 @@ export default function JobReportsAdminView({ job, onClose }) {
       {/* Responsive Lightbox Full-screen Overlay */}
       {lightbox && (
         <div
-          className="fixed inset-0 z-[120] flex flex-col items-center justify-center bg-black/95 p-4"
+          className="fixed inset-0 z-120 flex flex-col items-center justify-center bg-slate-950/95 p-4"
           onClick={() => setLightbox(null)}
         >
           <div className="absolute top-4 right-4 flex items-center gap-3">
@@ -920,14 +925,14 @@ export default function JobReportsAdminView({ job, onClose }) {
                 href={lightbox.url}
                 download
                 onClick={(e) => e.stopPropagation()}
-                className="p-2 bg-zinc-900 rounded-xl border border-white/10 text-white/80 hover:bg-zinc-800"
+                className="p-2 bg-slate-900/80 rounded-xl border border-white/15 text-slate-100/90 hover:bg-slate-800"
               >
                 <Download className="w-5 h-5" />
               </a>
             )}
             <button
               onClick={() => setLightbox(null)}
-              className="p-2 bg-zinc-900 rounded-xl border border-white/10 text-white/80 hover:bg-zinc-800"
+              className="p-2 bg-slate-900/80 rounded-xl border border-white/15 text-slate-100/90 hover:bg-slate-800"
             >
               <X className="w-5 h-5" />
             </button>
@@ -937,16 +942,16 @@ export default function JobReportsAdminView({ job, onClose }) {
             className="max-w-3xl max-h-[80vh] w-full flex items-center justify-center p-2"
             onClick={(e) => e.stopPropagation()}
           >
-            <img src={lightbox.url} alt="Fullscreen Preview" className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl border border-white/10" />
+            <img src={lightbox.url} alt="Fullscreen Preview" className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl border border-white/15" />
           </div>
 
           {lightbox.caption && (
             <div
-              className="max-w-xl text-center mt-4 bg-zinc-950/80 backdrop-blur border border-white/10 rounded-2xl p-4 text-xs space-y-1.5"
+              className="max-w-xl text-center mt-4 bg-slate-950/85 backdrop-blur border border-white/15 rounded-2xl p-4 text-xs space-y-1.5"
               onClick={(e) => e.stopPropagation()}
             >
-              <p className="text-white/90 leading-relaxed font-semibold">"{lightbox.caption}"</p>
-              <p className="text-[10px] text-white/40">Uploaded by {lightbox.employeeName} • {new Date(lightbox.time).toLocaleString()}</p>
+              <p className="text-slate-100/95 leading-relaxed font-semibold">"{lightbox.caption}"</p>
+              <p className="text-[10px] text-slate-300/90">Uploaded by {lightbox.employeeName} • {new Date(lightbox.time).toLocaleString()}</p>
             </div>
           )}
         </div>

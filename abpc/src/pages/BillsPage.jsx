@@ -803,9 +803,8 @@ export default function BillsPage() {
                 value={invoiceForm.paymentMode}
               >
                 <option value="UPI">UPI</option>
-                <option value="Cash">Cash</option>
-                <option value="Bank Transfer">Bank Transfer</option>
                 <option value="Cheque">Cheque</option>
+                <option value="Bank Transfer">Bank Transfer</option>
               </select>
               <textarea
                 className="field-input min-h-20"

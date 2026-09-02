@@ -7,9 +7,9 @@ export const A4_WIDTH_PX = 794;
 export function getDocPageStyles() {
   return {
     page: {
-      width: `${A4_WIDTH_MM}mm`,
+      width: "100%",
       maxWidth: `${A4_WIDTH_MM}mm`,
-      minHeight: `${A4_HEIGHT_MM}mm`,
+      minHeight: "auto",
       height: "auto",
       background: "#ffffff",
       margin: "0 auto",

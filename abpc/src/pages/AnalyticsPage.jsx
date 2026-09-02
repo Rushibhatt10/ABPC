@@ -1,9 +1,86 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { subscribeCollection } from "../utils/firestoreHelpers";
-import { formatCurrency, formatDateDisplay, getTodayISO } from "../utils/format";
-import { BarChart3, TrendingUp, Users, Briefcase, IndianRupee, CheckCircle2, Clock, Award, Calendar } from "lucide-react";
+import { formatCurrency, formatDateDisplay, getTodayISO, toDateObject } from "../utils/format";
+import { isDriveUploadConfigured, uploadFileToDrive } from "../utils/driveUpload";
+import { BarChart3, TrendingUp, Users, Briefcase, IndianRupee, CheckCircle2, Clock, Award, Calendar, Download, UploadCloud } from "lucide-react";
 import { EmployeeS } from "../constants/authProfiles";
+import * as XLSX from "xlsx";
+import FileSaver from "file-saver";
+
+const saveAs = FileSaver.saveAs || FileSaver;
+const CURRENCY_FORMAT = '"₹"#,##0.00';
+
+const toISODate = (value) => {
+  const date = toDateObject(value);
+  if (!date) return "";
+  return date.toISOString().split("T")[0];
+};
+
+const dateInRange = (value, from, to) => {
+  const iso = toISODate(value);
+  if (!iso) return from === "2020-01-01";
+  return iso >= from && iso <= to;
+};
+
+const joinItemNames = (items = []) => items.map((item) => item.itemName || item.serviceName || item.name).filter(Boolean).join(", ");
+
+const sumItems = (items = [], key) => items.reduce((sum, item) => sum + Number(item[key] || 0), 0);
+
+const isCompleted = (status) => String(status || "").toLowerCase() === "completed";
+const isCancelled = (status) => String(status || "").toLowerCase() === "cancelled";
+const isResolved = (status) => String(status || "").toLowerCase() === "resolved";
+
+const REPORT_OPTIONS = [
+  { key: "customers", label: "Customers" },
+  { key: "leads", label: "Leads / Enquiries" },
+  { key: "jobs", label: "Jobs / Service Visits" },
+  { key: "quotations", label: "Quotations" },
+  { key: "invoices", label: "Invoices" },
+  { key: "payments", label: "Payments" },
+  { key: "amc", label: "AMC Contracts" },
+  { key: "amcVisits", label: "AMC Visits" },
+  { key: "complaints", label: "Complaints / Feedback" },
+  { key: "employees", label: "Employees / Technicians" },
+  { key: "attendance", label: "Attendance" },
+  { key: "services", label: "Services" },
+];
+
+function appendJsonSheet(wb, name, rows) {
+  if (!rows.length) return false;
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!autofilter"] = { ref: ws["!ref"] || "A1" };
+  ws["!freeze"] = { xSplit: 0, ySplit: 1 };
+  const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+  for (let col = range.s.c; col <= range.e.c; col += 1) {
+    const headerCell = ws[XLSX.utils.encode_cell({ r: 0, c: col })];
+    if (headerCell) headerCell.s = { font: { bold: true } };
+  }
+  ws["!cols"] = Object.keys(rows[0] || {}).map((header) => ({
+    wch: Math.min(42, Math.max(String(header).length + 2, ...rows.map((row) => String(row[header] ?? "").length + 2))),
+  }));
+  for (let row = range.s.r + 1; row <= range.e.r; row += 1) {
+    for (let col = range.s.c; col <= range.e.c; col += 1) {
+      const cell = ws[XLSX.utils.encode_cell({ r: row, c: col })];
+      const header = Object.keys(rows[0] || {})[col] || "";
+      if (cell && typeof cell.v === "number" && /(amount|gst|value|paid|received|outstanding|subtotal|discount|balance|price|revenue)/i.test(header)) {
+        cell.z = CURRENCY_FORMAT;
+      }
+    }
+  }
+  XLSX.utils.book_append_sheet(wb, ws, name.slice(0, 31));
+  return true;
+}
+
+const buildFileName = (from, to, complete) => {
+  const fmt = (iso) => {
+    const [year, month, day] = String(iso).split("-");
+    return `${day}-${month}-${year}`;
+  };
+  const today = fmt(getTodayISO());
+  if (complete && from === "2020-01-01" && to === getTodayISO()) return `AB_Pest_Control_Complete_Report_${today}.xlsx`;
+  return `AB_Pest_Control_Report_${fmt(from)}_to_${fmt(to)}.xlsx`;
+};
 
 function MiniBar({ value, max, color = "bg-[var(--brand)]" }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
@@ -20,6 +97,14 @@ export default function AnalyticsPage() {
   const [jobs, setJobs] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [reports, setReports] = useState([]);
+  const [quotations, setQuotations] = useState([]);
+  const [amcs, setAmcs] = useState([]);
+  const [complaints, setComplaints] = useState([]);
+  const [services, setServices] = useState([]);
+  const [attendance, setAttendance] = useState([]);
+  const [exportMsg, setExportMsg] = useState({ type: "", text: "" });
+  const [exportBusy, setExportBusy] = useState(false);
+  const [selectedReports, setSelectedReports] = useState(() => Object.fromEntries(REPORT_OPTIONS.map((option) => [option.key, true])));
 
   // Date range filter — default: last 30 days
   const today = getTodayISO();
@@ -52,7 +137,12 @@ export default function AnalyticsPage() {
       subscribeCollection("customers", setCustomers),
       subscribeCollection("jobs", setJobs),
       subscribeCollection("invoices", setInvoices),
-      subscribeCollection("reports", setReports),
+      subscribeCollection("jobReports", setReports),
+      subscribeCollection("quotations", setQuotations),
+      subscribeCollection("amc", setAmcs),
+      subscribeCollection("complaints", setComplaints),
+      subscribeCollection("services", setServices),
+      subscribeCollection("attendance", setAttendance),
     ];
     return () => unsubs.forEach((u) => u());
   }, []);
@@ -122,6 +212,268 @@ export default function AnalyticsPage() {
 
   const maxMonthRevenue = Math.max(...monthlyRevenue.map((m) => m.revenue), 1);
 
+  const reportData = useMemo(() => {
+    const jobsInRange = jobs.filter((job) => dateInRange(job.scheduledDate || job.createdAt, dateFrom, dateTo));
+    const invoicesInRange = invoices.filter((invoice) => dateInRange(invoice.date || invoice.createdAt, dateFrom, dateTo));
+    const quotationsInRange = quotations.filter((quotation) => dateInRange(quotation.date || quotation.createdAt, dateFrom, dateTo));
+    const amcsInRange = amcs.filter((amc) => dateInRange(amc.startDate || amc.createdAt, dateFrom, dateTo));
+    const complaintsInRange = complaints.filter((complaint) => dateInRange(complaint.createdAt, dateFrom, dateTo));
+    const attendanceInRange = attendance.filter((record) => dateInRange(record.timestamp || record.createdAt, dateFrom, dateTo));
+    const reportsInRange = reports.filter((report) => dateInRange(report.timestamp || report.createdAt, dateFrom, dateTo));
+
+    const customerRows = customers.filter((customer) => dateInRange(customer.createdAt, dateFrom, dateTo) || dateFrom === "2020-01-01").map((customer) => {
+      const customerJobs = jobs.filter((job) => job.customerId === customer.id);
+      const customerInvoices = invoices.filter((invoice) => invoice.customerId === customer.id);
+      const customerAmc = amcs.find((amc) => amc.customerId === customer.id && amc.status === "Active");
+      return {
+        "Customer ID": customer.customerId || customer.id,
+        "Customer Name": customer.name || customer.customerName || "",
+        "Company Name": customer.companyName || "",
+        "Phone": customer.phone || customer.customerPhone || "",
+        "Email": customer.email || "",
+        "Address": customer.address || "",
+        "City": customer.city || "",
+        "GST Number": customer.gstNumber || customer.gstin || "",
+        "Customer Type": customer.customerType || customer.propertyType || "",
+        "Total Jobs": customerJobs.length,
+        "Total Invoice Amount": customerInvoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0),
+        "Amount Paid": customerInvoices.reduce((sum, invoice) => sum + Number(invoice.received || 0), 0),
+        "Outstanding Amount": customerInvoices.reduce((sum, invoice) => sum + Number(invoice.balance || 0), 0),
+        "AMC Status": customerAmc?.status || "No AMC",
+        "Created Date": formatDateDisplay(customer.createdAt),
+      };
+    });
+
+    const jobRows = jobsInRange.map((job) => {
+      const invoice = invoices.find((item) => item.id === job.invoiceId || item.jobId === job.id || item.jobIds?.includes?.(job.id));
+      return {
+        "Job ID": job.jobNumber || job.id,
+        "Customer": job.customerName || "",
+        "Service": job.serviceType || job.serviceName || job.treatmentLabel || "",
+        "Address": job.address || job.customerAddress || "",
+        "Assigned Technician": Array.isArray(job.assignedTo) ? job.assignedTo.join(", ") : (job.assignedTo || ""),
+        "Job Date": formatDateDisplay(job.scheduledDate),
+        "Time": job.scheduledTime || job.time || "",
+        "Status": job.status || "",
+        "Job Amount": Number(job.finalPrice || job.totalAmount || 0),
+        "Payment Status": invoice?.status || (invoice ? "Pending" : "Not Invoiced"),
+        "Invoice ID": invoice?.invoiceNumber || job.invoiceId || "",
+        "AMC/Non-AMC": job.amcId ? "AMC" : "Non-AMC",
+        "Created Date": formatDateDisplay(job.createdAt),
+        "Completed Date": formatDateDisplay(job.completedAt),
+      };
+    });
+
+    const quotationRows = quotationsInRange.map((quotation) => ({
+      "Quotation Number": quotation.estimateNumber || quotation.quotationNumber || quotation.id,
+      "Customer": quotation.customerName || "",
+      "Date": formatDateDisplay(quotation.date),
+      "Service": joinItemNames(quotation.items),
+      "Subtotal": Number(quotation.totalAmount || 0),
+      "Discount": sumItems(quotation.items, "discount"),
+      "GST": Number(quotation.gst || 0),
+      "Total Amount": Number(quotation.totalAmount || 0),
+      "Status": quotation.status || "",
+      "Converted to Invoice": quotation.status === "Converted to Invoice" ? "Yes" : "No",
+      "Invoice Number": invoices.find((invoice) => invoice.fromQuotation === quotation.estimateNumber)?.invoiceNumber || "",
+    }));
+
+    const invoiceRows = invoicesInRange.map((invoice) => ({
+      "Invoice Number": invoice.invoiceNumber || invoice.id,
+      "Customer": invoice.customerName || "",
+      "Invoice Date": formatDateDisplay(invoice.date),
+      "Service/Job": joinItemNames(invoice.items),
+      "Taxable Amount": Number(invoice.subtotal || 0),
+      "GST": Number(invoice.gst || 0),
+      "Total Amount": Number(invoice.total || 0),
+      "Paid Amount": Number(invoice.received || 0),
+      "Outstanding Amount": Number(invoice.balance || 0),
+      "Payment Status": invoice.status || "",
+      "Payment Date": formatDateDisplay(invoice.lastPaymentAt),
+    }));
+
+    const paymentRows = invoicesInRange.flatMap((invoice) => {
+      const history = invoice.paymentHistory?.length ? invoice.paymentHistory : Number(invoice.received || 0) > 0 ? [{
+        amount: Number(invoice.received || 0),
+        mode: invoice.paymentMode || "",
+        at: invoice.lastPaymentAt || invoice.date,
+        receivedIn: invoice.lastReceivedIn || invoice.receivedIn || "",
+      }] : [];
+      return history.map((payment, index) => ({
+        "Payment ID": `${invoice.invoiceNumber || invoice.id}-${index + 1}`,
+        "Customer": invoice.customerName || "",
+        "Invoice Number": invoice.invoiceNumber || "",
+        "Payment Date": formatDateDisplay(payment.at),
+        "Amount": Number(payment.amount || 0),
+        "Payment Method": payment.mode || invoice.paymentMode || "",
+        "Transaction/Reference ID": payment.referenceId || payment.transactionId || "",
+        "Receiving Account": payment.receivedIn || payment.bankName || "",
+        "Payment Status": invoice.status || "",
+        "Notes": payment.note || "",
+      }));
+    });
+
+    const amcRows = amcsInRange.map((amc) => {
+      const completedVisits = (amc.visitLog || []).length;
+      const visits = Number(amc.visits || 0);
+      return {
+        "AMC ID": amc.id,
+        "Customer": amc.customerName || "",
+        "Package/Service": joinItemNames(amc.services),
+        "Start Date": formatDateDisplay(amc.startDate),
+        "End Date": formatDateDisplay(amc.endDate),
+        "Contract Value": Number(amc.totalAmount || 0),
+        "Number of Visits": visits,
+        "Completed Visits": completedVisits,
+        "Remaining Visits": Math.max(0, visits - completedVisits),
+        "Next Visit Date": "",
+        "AMC Status": amc.status || "",
+        "Payment Status": Number(amc.balanceAmount || 0) > 0 ? "Pending" : "Paid",
+      };
+    });
+
+    const amcVisitRows = amcs.flatMap((amc) => (amc.visitLog || []).filter((visit) => dateInRange(visit.date || visit.loggedAt, dateFrom, dateTo)).map((visit, index) => ({
+      "AMC ID": amc.id,
+      "Customer": amc.customerName || "",
+      "Visit No": index + 1,
+      "Visit Date": formatDateDisplay(visit.date),
+      "Logged At": formatDateDisplay(visit.loggedAt),
+      "Notes": visit.notes || "",
+      "Status": "Completed",
+    })));
+
+    const complaintRows = complaintsInRange.map((complaint) => ({
+      "Complaint ID": complaint.id,
+      "Customer": complaint.customerName || "",
+      "Job ID": complaint.jobNumber || complaint.linkedJobId || "",
+      "Service": complaint.serviceType || "",
+      "Type": complaint.complaintType || "",
+      "Status": complaint.status || "",
+      "Description": complaint.description || "",
+      "Resolution": complaint.resolution || "",
+      "Created Date": formatDateDisplay(complaint.createdAt),
+      "Updated Date": formatDateDisplay(complaint.updatedAt),
+    }));
+
+    const summaryRows = [
+      { "Metric": "Total Customers", "Value": customers.length },
+      { "Metric": "New Customers", "Value": customerRows.length },
+      { "Metric": "Total Leads", "Value": 0 },
+      { "Metric": "Total Jobs", "Value": jobsInRange.length },
+      { "Metric": "Completed Jobs", "Value": jobsInRange.filter((job) => isCompleted(job.status)).length },
+      { "Metric": "Pending Jobs", "Value": jobsInRange.filter((job) => !isCompleted(job.status) && !isCancelled(job.status)).length },
+      { "Metric": "Cancelled Jobs", "Value": jobsInRange.filter((job) => isCancelled(job.status)).length },
+      { "Metric": "Total Quotations", "Value": quotationsInRange.length },
+      { "Metric": "Quotation Value", "Value": quotationsInRange.reduce((sum, quotation) => sum + Number(quotation.totalAmount || 0), 0) },
+      { "Metric": "Accepted Quotations", "Value": quotationsInRange.filter((quotation) => quotation.status === "Converted to Invoice").length },
+      { "Metric": "Total Invoices", "Value": invoicesInRange.length },
+      { "Metric": "Total Invoice Amount", "Value": invoicesInRange.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0) },
+      { "Metric": "Total GST", "Value": invoicesInRange.reduce((sum, invoice) => sum + Number(invoice.gst || 0), 0) },
+      { "Metric": "Total Payments Received", "Value": invoicesInRange.reduce((sum, invoice) => sum + Number(invoice.received || 0), 0) },
+      { "Metric": "Outstanding Amount", "Value": invoicesInRange.reduce((sum, invoice) => sum + Number(invoice.balance || 0), 0) },
+      { "Metric": "Pending Payments", "Value": invoicesInRange.filter((invoice) => Number(invoice.balance || 0) > 0).length },
+      { "Metric": "Active AMCs", "Value": amcs.filter((amc) => amc.status === "Active").length },
+      { "Metric": "Expired AMCs", "Value": amcs.filter((amc) => amc.status === "Expired" || (amc.endDate && toISODate(amc.endDate) < getTodayISO())).length },
+      { "Metric": "Upcoming AMC Visits", "Value": amcs.filter((amc) => amc.status === "Active").length },
+      { "Metric": "Total Complaints", "Value": complaintsInRange.length },
+      { "Metric": "Resolved Complaints", "Value": complaintsInRange.filter((complaint) => isResolved(complaint.status)).length },
+    ];
+
+    return {
+      summary: summaryRows,
+      customers: customerRows,
+      leads: [],
+      jobs: jobRows,
+      quotations: quotationRows,
+      invoices: invoiceRows,
+      payments: paymentRows,
+      amc: amcRows,
+      amcVisits: amcVisitRows,
+      complaints: complaintRows,
+      employees: EmployeeS.map((name) => ({ "Employee / Technician": name, "Assigned Jobs": jobsInRange.filter((job) => Array.isArray(job.assignedTo) ? job.assignedTo.includes(name) : job.assignedTo === name).length, "Submitted Reports": reportsInRange.filter((report) => (report.employeeName || report.EmployeeName) === name).length })),
+      attendance: attendanceInRange.map((record) => ({ "Employee": record.employeeName || "", "Job ID": record.jobId || "", "Customer": record.customerName || "", "Check In": formatDateDisplay(record.timestamp || record.createdAt), "Latitude": record.latitude || record.location?.lat || "", "Longitude": record.longitude || record.location?.lng || "", "Notes": record.notes || "" })),
+      services: services.map((service) => ({ "Service": service.name || service.label || service.serviceName || service.itemName || "", "Category": service.category || "", "Unit": service.unit || "", "Price": Number(service.price || service.basePrice || 0), "Warranty": service.warranty || service.warrantyPeriod || "", "Status": service.status || "" })),
+    };
+  }, [customers, jobs, invoices, reports, quotations, amcs, complaints, services, attendance, dateFrom, dateTo]);
+
+  const setQuickExportRange = (key) => {
+    const now = new Date();
+    let from = new Date(now);
+    let to = new Date(now);
+    if (key === "today") {
+      from = now;
+    } else if (key === "week") {
+      from.setDate(now.getDate() - now.getDay());
+    } else if (key === "month") {
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else if (key === "lastMonth") {
+      from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      to = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else if (key === "financialYear") {
+      const startYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+      from = new Date(startYear, 3, 1);
+    } else {
+      setDateFrom("2020-01-01");
+      setDateTo(today);
+      setRangeLabel("custom");
+      return;
+    }
+    setDateFrom(toISODate(from));
+    setDateTo(toISODate(to));
+    setRangeLabel("custom");
+  };
+
+  const createWorkbook = (keys, complete = false) => {
+    const wb = XLSX.utils.book_new();
+    appendJsonSheet(wb, "Dashboard Summary", reportData.summary);
+    const sheetMap = {
+      customers: ["Customers", reportData.customers],
+      leads: ["Leads", reportData.leads],
+      jobs: ["Jobs", reportData.jobs],
+      quotations: ["Quotations", reportData.quotations],
+      invoices: ["Invoices", reportData.invoices],
+      payments: ["Payments", reportData.payments],
+      amc: ["AMC Contracts", reportData.amc],
+      amcVisits: ["AMC Visits", reportData.amcVisits],
+      complaints: ["Complaints", reportData.complaints],
+      employees: ["Employees", reportData.employees],
+      attendance: ["Attendance", reportData.attendance],
+      services: ["Services", reportData.services],
+    };
+    keys.forEach((key) => appendJsonSheet(wb, sheetMap[key]?.[0] || key, sheetMap[key]?.[1] || []));
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true });
+    const fileName = buildFileName(dateFrom, dateTo, complete);
+    return new File([excelBuffer], fileName, { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  };
+
+  const handleExport = async ({ complete = false, drive = false } = {}) => {
+    const keys = complete ? REPORT_OPTIONS.map((option) => option.key) : REPORT_OPTIONS.filter((option) => selectedReports[option.key]).map((option) => option.key);
+    if (!keys.length) {
+      setExportMsg({ type: "error", text: "Select at least one report." });
+      return;
+    }
+    setExportBusy(true);
+    try {
+      const file = createWorkbook(keys, complete);
+      if (drive) {
+        if (!isDriveUploadConfigured()) {
+          setExportMsg({ type: "error", text: "Google Drive export is not configured in this build." });
+          return;
+        }
+        await uploadFileToDrive({ file, fileName: file.name, mimeType: file.type, target: "reports", metadata: { module: "analytics", from: dateFrom, to: dateTo, complete } });
+        setExportMsg({ type: "success", text: "Report generated and saved to Google Drive successfully." });
+        return;
+      }
+      saveAs(file, file.name);
+      setExportMsg({ type: "success", text: "Report generated successfully." });
+    } catch (error) {
+      setExportMsg({ type: "error", text: error.message || "Report generation failed." });
+    } finally {
+      setExportBusy(false);
+      setTimeout(() => setExportMsg({ type: "", text: "" }), 4000);
+    }
+  };
+
   if (isEmployee) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -158,6 +510,119 @@ export default function AnalyticsPage() {
             <span className="text-slate-400 text-xs">→</span>
             <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setRangeLabel("custom"); }}
               className="px-2 py-1.5 rounded-xl border border-slate-200 text-xs focus:border-[var(--brand)] focus:outline-none" />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-6">
+          <div className="lg:w-64 flex-shrink-0">
+            <h2 className="font-black text-slate-900">Reports & Export</h2>
+            <p className="text-sm text-slate-500 mt-1">Download complete business records and operational reports in Excel format.</p>
+          </div>
+
+          <div className="flex-1 space-y-4">
+            <div className="grid sm:grid-cols-2 gap-3">
+              <label className="block">
+                <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">From Date</span>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(event) => { setDateFrom(event.target.value); setRangeLabel("custom"); }}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
+                />
+              </label>
+              <label className="block">
+                <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">To Date</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(event) => { setDateTo(event.target.value); setRangeLabel("custom"); }}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:border-[var(--brand)] focus:outline-none"
+                />
+              </label>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {[
+                ["today", "Today"],
+                ["week", "This Week"],
+                ["month", "This Month"],
+                ["lastMonth", "Last Month"],
+                ["financialYear", "This Financial Year"],
+                ["all", "All Time"],
+              ].map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setQuickExportRange(key)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-600 hover:bg-[var(--brand-soft)] hover:text-[var(--brand)] transition-colors"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              <label className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={REPORT_OPTIONS.every((option) => selectedReports[option.key])}
+                  onChange={(event) => setSelectedReports(Object.fromEntries(REPORT_OPTIONS.map((option) => [option.key, event.target.checked])))}
+                  className="w-4 h-4 accent-[var(--brand)]"
+                />
+                Select All Reports
+              </label>
+              {REPORT_OPTIONS.map((option) => (
+                <label key={option.key} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(selectedReports[option.key])}
+                    onChange={(event) => setSelectedReports((prev) => ({ ...prev, [option.key]: event.target.checked }))}
+                    className="w-4 h-4 accent-[var(--brand)]"
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={exportBusy}
+                onClick={() => handleExport()}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-sm font-bold hover:bg-[var(--brand-dark)] disabled:opacity-60 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Download Selected Reports
+              </button>
+              <button
+                type="button"
+                disabled={exportBusy}
+                onClick={() => handleExport({ complete: true })}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-sm font-bold hover:bg-slate-50 disabled:opacity-60 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Download Complete Business Report
+              </button>
+              <button
+                type="button"
+                disabled={exportBusy}
+                onClick={() => handleExport({ complete: true, drive: true })}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-700 disabled:opacity-60 transition-colors"
+              >
+                <UploadCloud className="w-4 h-4" />
+                Save to Drive
+              </button>
+            </div>
+
+            {exportMsg.text && (
+              <div className={`px-4 py-3 rounded-xl text-sm font-semibold border ${
+                exportMsg.type === "success" ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-rose-50 border-rose-200 text-rose-700"
+              }`}>
+                {exportMsg.text}
+              </div>
+            )}
           </div>
         </div>
       </div>
